@@ -1,0 +1,418 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MEMORIES IN PRINTS — Design System
+   Inspired by warwickacoustics.com
+   Dark-first · Cinematic · Typographically bold
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ─── COLOR PALETTE ──────────────────────────────────────────────────── */
+  --color-bg-primary: #FDFCFA;       /* Warm Parchment */
+  --color-bg-secondary: #FAF8F5;     /* Linen — cards, surfaces */
+  --color-bg-alternate: #F7F4EF;     /* Cream — alternating sections */
+  --color-accent-gold: #C6A85C;       /* Warm Gold — universal CTA */
+  --color-accent-gold-hover: #A88A40;
+  --color-text-primary: #1C2530;      /* Primary Heading Color */
+  --color-text-heading: #1C2530;
+  --color-text-body: #4A4A4A;
+  --color-text-muted: #8A8F96;
+  --color-border: #E8E4DE;
+
+  /* Universal Dark Theme Colors for Dark Sections */
+  --color-dark-bg-primary: #0E1117;
+  --color-dark-bg-secondary: #151C24;
+  --color-dark-bg-surface: #1C2530;
+  --color-dark-text-primary: #F0EDE8;
+  --color-dark-border: #2A3340;
+  --color-dark-text-muted: #8A8F96;
+
+  /* Category CSS variables mapped to Tailwind class names */
+  --color-cat-bg: var(--cat-bg);
+  --color-cat-surface: var(--cat-surface);
+  --color-cat-accent: var(--cat-accent);
+  --color-cat-accent-dark: var(--cat-accent-dark);
+  --color-cat-heading: var(--cat-heading);
+  --color-cat-body: var(--cat-body);
+  --color-cat-muted: var(--cat-muted);
+  --color-cat-pill-bg: var(--cat-pill-bg);
+  --color-cat-pill-text: var(--cat-pill-text);
+
+  /* ─── FONTS ──────────────────────────────────────────────────────────── */
+  --font-display: var(--font-cormorant), "Georgia", serif;
+  --font-body: var(--font-dm-sans), "Helvetica Neue", sans-serif;
+  --font-mono: var(--font-dm-mono), "Courier New", monospace;
+
+  /* ─── FONT SIZES ─────────────────────────────────────────────────────── */
+  --text-display-xl: clamp(3rem, 8vw, 7rem);
+  --text-display-xl--line-height: 0.95;
+  --text-display-xl--letter-spacing: -0.03em;
+
+  --text-display-lg: clamp(2.2rem, 5vw, 4.5rem);
+  --text-display-lg--line-height: 1.0;
+  --text-display-lg--letter-spacing: -0.02em;
+
+  --text-display-md: clamp(1.6rem, 3vw, 2.8rem);
+  --text-display-md--line-height: 1.1;
+  --text-display-md--letter-spacing: -0.015em;
+
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.7;
+
+  --text-body-base: 1rem;
+  --text-body-base--line-height: 1.65;
+
+  --text-label: 0.8rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.12em;
+
+  /* ─── ANIMATIONS ─────────────────────────────────────────────────────── */
+  --animate-fade-in: fade-in 0.7s ease forwards;
+  --animate-slide-up: slide-up 0.7s ease forwards;
+  --animate-bounce-slow: bounce-slow 2s ease-in-out infinite;
+}
+
+/* ─── KEYFRAMES ──────────────────────────────────────────────────────────── */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ─── SCROLL REVEAL SYSTEM ───────────────────────────────────────────────── */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children */
+.reveal.visible [data-delay="1"] { transition-delay: 0.1s; }
+.reveal.visible [data-delay="2"] { transition-delay: 0.2s; }
+.reveal.visible [data-delay="3"] { transition-delay: 0.3s; }
+.reveal.visible [data-delay="4"] { transition-delay: 0.4s; }
+.reveal.visible [data-delay="5"] { transition-delay: 0.5s; }
+
+/* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .reveal.visible [data-delay] {
+    transition-delay: 0s !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── BASE STYLES ────────────────────────────────────────────────────────── */
+
+html {
+  /* scroll-behavior: smooth; -- Disabled to prevent conflict with Lenis */
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-body);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── SELECTION ──────────────────────────────────────────────────────────── */
+
+::selection {
+  background-color: var(--color-accent-gold);
+  color: var(--color-bg-primary);
+}
+
+/* ─── FOCUS STATES ───────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-gold);
+  outline-offset: 2px;
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ─── UTILITY CLASSES ────────────────────────────────────────────────────── */
+
+.container-wide {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .container-wide {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-wide {
+    padding-left: 5rem;
+    padding-right: 5rem;
+  }
+}
+
+/* Animated underline for text links */
+.link-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: var(--color-accent-gold);
+  transition: width 0.3s ease;
+}
+
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* Drag scroll for horizontal galleries */
+.drag-scroll {
+  cursor: grab;
+  user-select: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.drag-scroll:active {
+  cursor: grabbing;
+}
+
+.drag-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.drag-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glass morphism utility */
+.glass {
+  background: rgba(253, 252, 250, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Gold gradient text */
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--color-accent-gold) 0%, var(--color-accent-gold-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── CATEGORY SPECIFIC PALETTES ─────────────────────────────────────────── */
+
+[data-category="all"] {
+  --cat-bg:         #FDFCFA;   /* Warm Parchment */
+  --cat-surface:    #FAF8F5;   /* Linen */
+  --cat-accent:     #C6A85C;   /* Warm Gold */
+  --cat-accent-dark:#A88A40;
+  --cat-heading:    #1C2530;
+  --cat-body:       #4A4A4A;
+  --cat-muted:      #8A8F96;
+  --cat-pill-bg:    #C6A85C22;
+  --cat-pill-text:  #8A6A20;
+
+  --color-accent-gold: var(--cat-accent);
+  --color-accent-gold-hover: var(--cat-accent-dark);
+}
+
+[data-category="wedding"] {
+  --cat-bg:         #FDF7F5;   /* Bridal Ivory */
+  --cat-surface:    #E8D5C4;   /* Champagne */
+  --cat-accent:     #C4958F;   /* Dusty Rose */
+  --cat-accent-dark:#9A6A65;
+  --cat-heading:    #4A3028;   /* Deep Rosewood */
+  --cat-body:       #6A4A42;
+  --cat-muted:      #9A7A72;
+  --cat-pill-bg:    #C4958F22;
+  --cat-pill-text:  #7A4A44;
+
+  --color-accent-gold: var(--cat-accent);
+  --color-accent-gold-hover: var(--cat-accent-dark);
+}
+
+[data-category="funeral"] {
+  --cat-bg:         #F8F7FD;   /* Lavender Mist */
+  --cat-surface:    #D6D3EE;   /* Periwinkle */
+  --cat-accent:     #8B82C4;   /* Muted Violet */
+  --cat-accent-dark:#534AB7;
+  --cat-heading:    #26215C;   /* Deep Violet */
+  --cat-body:       #4A4560;
+  --cat-muted:      #7A7590;
+  --cat-pill-bg:    #8B82C422;
+  --cat-pill-text:  #534AB7;
+
+  --color-accent-gold: var(--cat-accent);
+  --color-accent-gold-hover: var(--cat-accent-dark);
+}
+
+[data-category="events"] {
+  --cat-bg:         #FDFAF5;   /* Candle Cream */
+  --cat-surface:    #F5DFB8;   /* Warm Sand */
+  --cat-accent:     #D4883A;   /* Burnt Amber */
+  --cat-accent-dark:#A86020;
+  --cat-heading:    #3A2208;   /* Dark Mahogany */
+  --cat-body:       #5A3A18;
+  --cat-muted:      #8A6A45;
+  --cat-pill-bg:    #D4883A22;
+  --cat-pill-text:  #633806;
+
+  --color-accent-gold: var(--cat-accent);
+  --color-accent-gold-hover: var(--cat-accent-dark);
+}
+
+[data-category="sports"] {
+  --cat-bg:         #F4FAF0;   /* Pitch White */
+  --cat-surface:    #C2DCBB;   /* Turf Mist */
+  --cat-accent:     #3D7A3A;   /* Forest Green */
+  --cat-accent-dark:#1F5C1C;
+  --cat-heading:    #132A11;   /* Dark Pitch */
+  --cat-body:       #2A4A28;
+  --cat-muted:      #5A7A58;
+  --cat-pill-bg:    #3D7A3A22;
+  --cat-pill-text:  #27500A;
+
+  --color-accent-gold: var(--cat-accent);
+  --color-accent-gold-hover: var(--cat-accent-dark);
+}
+
+[data-category="branding"] {
+  --cat-bg:         #F4F7FD;   /* Blueprint White */
+  --cat-surface:    #C2D4EE;   /* Blueprint Tint */
+  --cat-accent:     #2D5FA8;   /* Studio Blue */
+  --cat-accent-dark:#0C447C;
+  --cat-heading:    #0A1E3D;   /* Midnight Blue */
+  --cat-body:       #1A3A5C;
+  --cat-muted:      #4A6A8A;
+  --cat-pill-bg:    #2D5FA822;
+  --cat-pill-text:  #0C447C;
+
+  --color-accent-gold: var(--cat-accent);
+  --color-accent-gold-hover: var(--cat-accent-dark);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREMIUM DYNAMIC ANIMATIONS (Awwwards Inspired)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Foil Shimmer Effect */
+.shimmer-foil {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-foil::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 30%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0.25) 70%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  pointer-events: none;
+}
+
+.shimmer-foil:hover::after {
+  left: 150%;
+  transition: left 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Split Text Reveal Mask */
+.reveal-text-container {
+  display: inline-flex;
+  flex-wrap: wrap;
+  line-height: inherit;
+}
+
+.reveal-word-wrapper {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  line-height: inherit;
+}
+
+.reveal-word {
+  display: inline-block;
+  transform: translateY(115%);
+  opacity: 0;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.9s ease;
+  line-height: inherit;
+}
+
+.reveal-text-container.active .reveal-word {
+  transform: translateY(0);
+  opacity: 1;
+}
+
