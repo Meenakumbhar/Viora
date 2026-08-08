@@ -51,7 +51,16 @@ export default function PortfolioGrid({
 
   const [activeFilter, setActiveFilter] = useState<string>(initialFilter);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-  const [appearing, setAppearing] = useState<Set<string>>(new Set());
+  const [appearing, setAppearing] = useState<Set<string>>(() => {
+    const matched = FILTERS.find(
+      (f) => f.toLowerCase() === initialCategory.toLowerCase()
+    );
+    const filter = matched || 'All';
+    const initialFiltered = filter === 'All'
+      ? items
+      : items.filter((item) => item.category.toLowerCase() === filter.toLowerCase());
+    return new Set(initialFiltered.slice(0, ITEMS_PER_PAGE).map((item) => item.id));
+  });
   const gridRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
@@ -64,21 +73,24 @@ export default function PortfolioGrid({
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
-  // Stagger-animate newly appearing items
+  // Clean up appearing animation class after delay
   useEffect(() => {
-    const newIds = new Set(visible.map((item) => item.id));
-    setAppearing(newIds);
-
+    if (appearing.size === 0) return;
     const timer = setTimeout(() => {
       setAppearing(new Set());
     }, 600);
-
     return () => clearTimeout(timer);
-  }, [activeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [appearing]);
 
   function handleFilterChange(filter: string) {
     setActiveFilter(filter);
     setVisibleCount(ITEMS_PER_PAGE);
+
+    const nextFiltered = filter === 'All'
+      ? items
+      : items.filter((item) => item.category.toLowerCase() === filter.toLowerCase());
+    const nextVisible = nextFiltered.slice(0, ITEMS_PER_PAGE);
+    setAppearing(new Set(nextVisible.map((item) => item.id)));
     
     const categoryKey = filter === 'All' ? 'all' : filter.toLowerCase();
 
@@ -106,10 +118,6 @@ export default function PortfolioGrid({
     // Mark new items as appearing
     const newItems = filtered.slice(prevCount, prevCount + ITEMS_PER_PAGE);
     setAppearing(new Set(newItems.map((item) => item.id)));
-
-    setTimeout(() => {
-      setAppearing(new Set());
-    }, 600);
   }
 
   return (

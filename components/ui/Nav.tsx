@@ -105,8 +105,13 @@ function getHoverColorClass(href: string): string {
 
 export default function Nav() {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setMobileOpen(false);
+  }
+  const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -185,11 +190,7 @@ export default function Nav() {
     return () => document.removeEventListener('keydown', handleTab);
   }, [mobileOpen]);
 
-  /* ── Close mobile menu on route change ───────────────────────────────── */
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+  /* ── Close mobile menu on route change handled during render ── */
 
   /* ── Dropdown handlers ───────────────────────────────────────────────── */
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { createAdminClient } from '@/utils/supabase/admin';
 import type { Enquiry, Subscriber, PortfolioItem, Post } from '@/types/database';
 
@@ -68,9 +69,8 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded-sm ${
-        map[status] ?? 'bg-white/10 text-white/50 border-white/20'
-      }`}
+      className={`inline-flex items-center border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded-sm ${map[status] ?? 'bg-white/10 text-white/50 border-white/20'
+        }`}
     >
       {status}
     </span>
@@ -152,12 +152,12 @@ export default async function AdminPage() {
               Admin
             </span>
           </div>
-          <a
+          <Link
             href="/"
             className="font-mono text-xs uppercase tracking-widest text-white/40 transition-colors hover:text-white"
           >
             ← Back to site
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -261,9 +261,8 @@ export default async function AdminPage() {
                     {enquiries.slice(0, 20).map((e, i) => (
                       <tr
                         key={e.id}
-                        className={`border-b border-white/5 transition-colors hover:bg-white/5 ${
-                          i % 2 === 0 ? 'bg-transparent' : 'bg-white/2'
-                        }`}
+                        className={`border-b border-white/5 transition-colors hover:bg-white/5 ${i % 2 === 0 ? 'bg-transparent' : 'bg-white/2'
+                          }`}
                       >
                         <td className="px-4 py-3">
                           <p className="font-body text-sm text-white/80">{e.name}</p>
@@ -328,9 +327,8 @@ export default async function AdminPage() {
                           </p>
                         </div>
                         <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            s.active ? 'bg-emerald-500' : 'bg-white/20'
-                          }`}
+                          className={`h-1.5 w-1.5 rounded-full ${s.active ? 'bg-emerald-500' : 'bg-white/20'
+                            }`}
                         />
                       </li>
                     ))}
@@ -399,12 +397,12 @@ export default async function AdminPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
-                        <a
+                        <Link
                           href={`/blog/${p.slug}`}
                           className="font-mono text-xs text-white/30 hover:text-[#C6A85C] transition-colors"
                         >
                           /blog/{p.slug}
-                        </a>
+                        </Link>
                       </td>
                     </tr>
                   ))}
