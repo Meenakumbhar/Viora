@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { createAdminClient } from '@/utils/supabase/admin';
 import type { EnquiryPayload, ApiResponse, Enquiry } from '@/types/database';
 
 // POST /api/enquiries — Submit a new quote/contact enquiry
@@ -7,7 +7,6 @@ export async function POST(request: NextRequest) {
   try {
     const body: EnquiryPayload = await request.json();
 
-    // Validate required fields
     if (!body.name?.trim() || !body.email?.trim() || !body.service_type?.trim()) {
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'Name, email, and service type are required.' },
@@ -15,7 +14,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(body.email)) {
       return NextResponse.json<ApiResponse>(
@@ -24,7 +22,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
+
     const { data, error } = await supabase
       .from('enquiries')
       .insert({
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[enquiries] Supabase insert error:', error.message);
+      console.error('[enquiries] insert error:', error.message);
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'Failed to submit your enquiry. Please try again.' },
         { status: 500 }
@@ -50,11 +49,15 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json<ApiResponse<Enquiry>>(
-      { success: true, data, message: 'Your enquiry has been received. We\'ll be in touch within 1 business day.' },
+      {
+        success: true,
+        data,
+        message: "Your enquiry has been received. We'll be in touch within 1 business day.",
+      },
       { status: 201 }
     );
   } catch (err) {
-    console.error('[enquiries] Unexpected error:', err);
+    console.error('[enquiries] error:', err);
     return NextResponse.json<ApiResponse>(
       { success: false, error: 'Something went wrong. Please try again.' },
       { status: 500 }

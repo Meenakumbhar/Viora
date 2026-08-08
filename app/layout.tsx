@@ -42,14 +42,62 @@ export const metadata: Metadata = {
     template: '%s | Memories in Prints',
   },
   description:
-    'A full-service design and print studio for weddings, funerals, events, sports, and branding. Serving clients worldwide.',
+    'A full-service design and print studio for weddings, funerals, events, sports, and branding. Premium stationery, programmes, and print — serving clients in 30+ countries.',
   metadataBase: new URL('https://memoriesinprints.com'),
+  keywords: [
+    'wedding stationery',
+    'funeral order of service',
+    'memorial print',
+    'sports matchday programme',
+    'graphic design studio',
+    'custom print',
+    'wedding invitations',
+    'bespoke stationery',
+    'global print studio',
+  ],
+  authors: [{ name: 'Memories in Prints', url: 'https://memoriesinprints.com' }],
+  creator: 'Memories in Prints',
+  publisher: 'Memories in Prints',
   openGraph: {
     type: 'website',
     locale: 'en_GB',
     siteName: 'Memories in Prints',
+    title: 'Memories in Prints | Global Design & Print Studio',
+    description:
+      'Premium wedding stationery, funeral programmes, sports print, and brand identity — crafted with precision and shipped worldwide.',
+    url: 'https://memoriesinprints.com',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Memories in Prints — Global Design & Print Studio',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Memories in Prints | Global Design & Print Studio',
+    description:
+      'Premium wedding stationery, funeral programmes, sports print, and brand identity — shipped worldwide.',
+    images: ['/og-image.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://memoriesinprints.com',
   },
 };
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ROOT LAYOUT

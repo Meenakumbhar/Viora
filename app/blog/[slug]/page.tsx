@@ -21,14 +21,40 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = await getBlogPostBySlug(slug);
 
   if (!post) {
-    return {};
+    return {
+      title: 'Post Not Found',
+      description: 'This article could not be found.',
+    };
   }
 
+  const title = post.title;
+  const description = post.excerpt ?? `Read "${post.title}" on the Memories in Prints journal.`;
+  const url = `https://memoriesinprints.com/blog/${post.slug}`;
+  const image = post.image_url ?? '/og-image.jpg';
+
   return {
-    title: post.title,
-    description: post.excerpt,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      title,
+      description,
+      url,
+      siteName: 'Memories in Prints',
+      locale: 'en_GB',
+      publishedTime: post.published_at,
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
+    },
   };
 }
+
 
 // Custom editorial content for each blog post slug
 const blogContents: Record<

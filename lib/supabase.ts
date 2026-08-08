@@ -3,16 +3,18 @@ import { portfolioItems as staticPortfolio, blogPosts as staticBlog } from './da
 import type { PortfolioItem, Post } from '@/types/database';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  '';
 
-// ─── Server-side Supabase client ─────────────────────────────────────────────
+// Prefer service role key (bypasses RLS) for server-side reads; fall back to publishable key
 function getClient() {
-  if (!supabaseUrl || !supabaseKey) return null;
-  return createSupabaseClient(supabaseUrl, supabaseKey);
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !key) return null;
+  return createSupabaseClient(supabaseUrl, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 // ─── Portfolio ────────────────────────────────────────────────────────────────
