@@ -113,8 +113,9 @@ export default function RootLayout({
       lang="en"
       className={`${cormorant.variable} ${dmSans.variable} ${dmMono.variable}`}
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
     >
-      <body className="font-body bg-bg-primary text-text-body antialiased">
+      <body className="font-body bg-bg-primary text-text-body antialiased" suppressHydrationWarning>
         <Nav />
         <CategoryWrapper>
           <PageTransition>{children}</PageTransition>
