@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/utils/supabase/server';
+import { createAdminClient } from '@/utils/supabase/admin';
 import type { Enquiry, Subscriber, PortfolioItem, Post } from '@/types/database';
 
 export const metadata: Metadata = {
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 // ─── Data Fetchers ────────────────────────────────────────────────────────────
 
 async function getDashboardData() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const [enquiriesRes, subscribersRes, portfolioRes, postsRes] =
     await Promise.allSettled([

@@ -20,14 +20,38 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const service = getServiceBySlug(slug);
 
   if (!service) {
-    return {};
+    return {
+      title: 'Service Not Found',
+      description: 'This service page could not be found.',
+    };
   }
 
+  const title = `${service.title} ${service.titleAccent}`;
+  const description = service.description;
+  const url = `https://memoriesinprints.com/services/${service.slug}`;
+
   return {
-    title: `${service.title} ${service.titleAccent}`,
-    description: service.description,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url,
+      siteName: 'Memories in Prints',
+      locale: 'en_GB',
+      images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.jpg'],
+    },
   };
 }
+
 
 const serviceGradients: Record<string, string> = {
   'wedding-events': 'from-accent-blush/20 via-bg-secondary to-accent-gold/20',
