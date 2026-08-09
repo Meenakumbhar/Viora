@@ -38,14 +38,14 @@ export async function getPortfolioItems(category?: string): Promise<PortfolioIte
       let rows;
       if (category && category !== 'all') {
         rows = await sql`
-          SELECT id, title, category, image_url, description, location, published, created_at
+          SELECT id, title, category, filters, image_url, image_urls, description, location, published, created_at
           FROM portfolio_items
           WHERE published = true AND category = ${category}
           ORDER BY created_at DESC
         `;
       } else {
         rows = await sql`
-          SELECT id, title, category, image_url, description, location, published, created_at
+          SELECT id, title, category, filters, image_url, image_urls, description, location, published, created_at
           FROM portfolio_items
           WHERE published = true
           ORDER BY created_at DESC
@@ -55,6 +55,7 @@ export async function getPortfolioItems(category?: string): Promise<PortfolioIte
       if (rows && rows.length > 0) {
         return rows as PortfolioItem[];
       }
+
     } catch (err) {
       console.error('[db] getPortfolioItems error:', err);
     }
@@ -70,12 +71,46 @@ export async function getPortfolioItems(category?: string): Promise<PortfolioIte
     id: `static-portfolio-${index}`,
     title: item.title,
     category: item.category as ServiceCategory,
+    filters: item.filters,
     image_url: `/images/portfolio/${item.category}.jpg`,
     description: item.description,
     location: item.location,
     published: true,
     created_at: new Date().toISOString(),
   }));
+}
+
+export async function getPortfolioItemById(id: string): Promise<PortfolioItem | null> {
+  const sql = getDb();
+  if (sql) {
+    try {
+      const rows = await sql`
+        SELECT id, title, category, filters, image_url, image_urls, description, location, published, created_at
+        FROM portfolio_items
+        WHERE id = ${id} AND published = true
+        LIMIT 1
+      `;
+      if (rows.length > 0) return rows[0] as PortfolioItem;
+    } catch (err) {
+      console.error(`[db] getPortfolioItemById(${id}) error:`, err);
+    }
+  }
+
+  const index = id.startsWith('static-portfolio-') ? Number(id.replace('static-portfolio-', '')) : -1;
+  const item = Number.isInteger(index) && index >= 0 ? staticPortfolio[index] : undefined;
+  return item
+    ? {
+        id,
+        title: item.title,
+        category: item.category as ServiceCategory,
+        filters: item.filters,
+        image_url: `/images/portfolio/${item.category}.jpg`,
+        description: item.description,
+        location: item.location,
+        published: true,
+        created_at: new Date().toISOString(),
+      }
+    : null;
 }
 
 // ─── Blog Posts ───────────────────────────────────────────────────────────────

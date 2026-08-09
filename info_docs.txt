@@ -1,0 +1,15 @@
+update tags:
+UPDATE portfolio_items
+SET tags = ARRAY['memorial', 'religious', 'family']
+WHERE title = 'Remembering Anita Patel';
+
+
+UPDATE portfolio_items
+SET filters = '{
+  "style": ["minimal", "classic"],
+  "audience": ["family"],
+  "religion": ["hindu"],
+  "colour": ["gold"],
+  "format": ["booklet", "memorial card"]
+}'::jsonb
+WHERE title = 'Remembering Anita Patel';

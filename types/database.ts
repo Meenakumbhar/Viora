@@ -78,11 +78,21 @@ export interface PortfolioItem {
   id: string;
   title: string;
   category: ServiceCategory;
+  filters: PortfolioFilters;
   image_url: string;
+  image_urls?: string[] | null;
   description: string | null;
   location: string | null;
   published: boolean;
   created_at: string;
+}
+
+export interface PortfolioFilters {
+  style?: string[];
+  audience?: string[];
+  religion?: string[];
+  colour?: string[];
+  format?: string[];
 }
 
 export interface Post {

@@ -1,24 +1,24 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-
-const cartItems = [
-  {
-    name: 'Wedding stationery suite',
-    detail: 'Invitation set, RSVP card, envelope liner',
-    price: '£1,240',
-  },
-  {
-    name: 'Print production',
-    detail: 'Luxury stock, foil finish, tracked delivery',
-    price: '£380',
-  },
-];
+import { readPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
 
 export default function PricingPage() {
-  const subtotal = '£1,620';
+  const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
+
+  useEffect(() => {
+    const updateCart = () => setCartItems(readPortfolioCart());
+    updateCart();
+    window.addEventListener('portfolio-cart-updated', updateCart);
+    return () => window.removeEventListener('portfolio-cart-updated', updateCart);
+  }, []);
+
+  const subtotal = cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const tax = subtotal * 0.2;
+  const total = subtotal + tax;
 
   return (
     <div>
@@ -54,21 +54,23 @@ export default function PricingPage() {
                 </div>
 
                 <div className="mt-8 space-y-4">
-                  {cartItems.map((item) => (
-                    <div key={item.name} className="flex flex-col gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0 md:flex-row md:items-center md:justify-between">
+                  {cartItems.length === 0 ? (
+                    <p className="font-body text-body-base text-cat-muted">Your cart is empty. Add a portfolio asset to begin.</p>
+                  ) : cartItems.map((item) => (
+                    <div key={item.id} className="flex flex-col gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <h3 className="font-display text-xl text-cat-heading">{item.name}</h3>
-                        <p className="mt-1 font-body text-body-base text-cat-body">{item.detail}</p>
+                        <h3 className="font-display text-xl text-cat-heading">{item.title}</h3>
+                        <p className="mt-1 font-body text-body-base text-cat-body">{item.category} · quantity {item.quantity}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-label uppercase tracking-wider text-cat-accent-dark">
-                          {item.price}
+                          £{(item.unitPrice * item.quantity).toFixed(2)}
                         </span>
                         <button
                           type="button"
                           className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
                         >
-                          Remove
+                          Review
                         </button>
                       </div>
                     </div>
@@ -84,17 +86,17 @@ export default function PricingPage() {
                 <div className="mt-8 space-y-4 border-t border-border pt-6">
                   <div className="flex items-center justify-between font-body text-body-base text-cat-body">
                     <span>Subtotal</span>
-                    <span>{subtotal}</span>
+                    <span>£{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between font-body text-body-base text-cat-body">
-                    <span>Consultation</span>
-                    <span>Included</span>
+                    <span>VAT (20%)</span>
+                    <span>£{tax.toFixed(2)}</span>
                   </div>
                 </div>
                 <div className="mt-8 border-t border-border pt-6">
                   <div className="flex items-center justify-between font-display text-2xl text-cat-heading">
                     <span>Total</span>
-                    <span>{subtotal}</span>
+                    <span>£{total.toFixed(2)}</span>
                   </div>
                   <div className="mt-8">
                     <Button variant="primary" size="lg" href="/contact">

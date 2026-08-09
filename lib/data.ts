@@ -306,18 +306,18 @@ export const processSteps: ProcessStep[] = [
 // ─── PORTFOLIO ITEMS (placeholder data) ──────────────────────────────────────
 
 export const portfolioItems = [
-  { id: '1', title: 'Amara & James Wedding Suite', category: 'wedding' as const, description: 'Full invitation suite with foil-stamped details and custom envelope liner.', location: 'London, UK' },
-  { id: '2', title: 'Celebrating Margaret', category: 'funeral' as const, description: 'A 12-page order of service with hand-selected photography and hymn sheets.', location: 'Bath, UK' },
-  { id: '3', title: 'Riverside FC Season Programme', category: 'sports' as const, description: 'Matchday programme series with sponsor integration and squad profiles.', location: 'Manchester, UK' },
-  { id: '4', title: 'Bloom Botanicals Brand Identity', category: 'branding' as const, description: 'Logo, colour system, and stationery suite for an independent florist.', location: 'Portland, OR' },
-  { id: '5', title: 'Sophie & Raj Engagement Party', category: 'events' as const, description: 'Invitation set with bilingual copy and custom illustrated motifs.', location: 'Birmingham, UK' },
-  { id: '6', title: 'In Memory of Thomas Reid', category: 'funeral' as const, description: 'Memorial cards and memory book with archival photography.', location: 'Dublin, Ireland' },
-  { id: '7', title: 'Hawkfield Athletics Club', category: 'sports' as const, description: 'Complete rebrand including badge, kit templates, and event signage.', location: 'Melbourne, Australia' },
-  { id: '8', title: 'Clara & Daniel Save-the-Dates', category: 'wedding' as const, description: 'Letterpress save-the-date cards on cotton rag stock.', location: 'New York, NY' },
-  { id: '9', title: 'Oakwood Coffee Roasters', category: 'branding' as const, description: 'Packaging design, labels, and café menu system.', location: 'Copenhagen, Denmark' },
-  { id: '10', title: 'Summer Gala Invitations', category: 'events' as const, description: 'Gold-foiled invitations with reply cards and information inserts.', location: 'Dallas, TX' },
-  { id: '11', title: 'Remembering Anita Patel', category: 'funeral' as const, description: 'A celebration of life booklet with family photos and personal tributes.', location: 'Mumbai, India' },
-  { id: '12', title: 'Peninsula Rugby Sponsor Pack', category: 'sports' as const, description: 'Sponsor proposal deck with ROI metrics and partnership tiers.', location: 'Sydney, Australia' },
+  { id: '1', title: 'Amara & James Wedding Suite', category: 'wedding' as const, filters: { style: ['minimal', 'classic'], colour: ['gold', 'neutral'], format: ['invitation'] }, description: 'Full invitation suite with foil-stamped details and custom envelope liner.', location: 'London, UK' },
+  { id: '2', title: 'Celebrating Margaret', category: 'funeral' as const, filters: { style: ['warm', 'floral'], audience: ['family'], format: ['order of service'] }, description: 'A 12-page order of service with hand-selected photography and hymn sheets.', location: 'Bath, UK' },
+  { id: '3', title: 'Riverside FC Season Programme', category: 'sports' as const, filters: { style: ['bold', 'editorial'], audience: ['team', 'club'], colour: ['blue'], format: ['programme'] }, description: 'Matchday programme series with sponsor integration and squad profiles.', location: 'Manchester, UK' },
+  { id: '4', title: 'Bloom Botanicals Brand Identity', category: 'branding' as const, filters: { style: ['minimal', 'botanical'], audience: ['business'], colour: ['green'], format: ['branding'] }, description: 'Logo, colour system, and stationery suite for an independent florist.', location: 'Portland, OR' },
+  { id: '5', title: 'Sophie & Raj Engagement Party', category: 'events' as const, filters: { style: ['illustrated', 'joyful'], audience: ['couple'], format: ['invitation'], religion: ['multicultural'] }, description: 'Invitation set with bilingual copy and custom illustrated motifs.', location: 'Birmingham, UK' },
+  { id: '6', title: 'In Memory of Thomas Reid', category: 'funeral' as const, filters: { style: ['classic', 'photographic'], audience: ['family'], format: ['memory book', 'keepsake'] }, description: 'Memorial cards and memory book with archival photography.', location: 'Dublin, Ireland' },
+  { id: '7', title: 'Hawkfield Athletics Club', category: 'sports' as const, filters: { style: ['bold', 'modern'], audience: ['team', 'club'], colour: ['green'], format: ['branding', 'signage'] }, description: 'Complete rebrand including badge, kit templates, and event signage.', location: 'Melbourne, Australia' },
+  { id: '8', title: 'Clara & Daniel Save-the-Dates', category: 'wedding' as const, filters: { style: ['minimal', 'classic'], colour: ['neutral'], format: ['save the date'] }, description: 'Letterpress save-the-date cards on cotton rag stock.', location: 'New York, NY' },
+  { id: '9', title: 'Oakwood Coffee Roasters', category: 'branding' as const, filters: { style: ['craft', 'minimal'], audience: ['business'], colour: ['brown'], format: ['packaging'] }, description: 'Packaging design, labels, and café menu system.', location: 'Copenhagen, Denmark' },
+  { id: '10', title: 'Summer Gala Invitations', category: 'events' as const, filters: { style: ['luxury', 'classic'], colour: ['gold'], format: ['invitation'] }, description: 'Gold-foiled invitations with reply cards and information inserts.', location: 'Dallas, TX' },
+  { id: '11', title: 'Remembering Anita Patel', category: 'funeral' as const, filters: { style: ['warm', 'family'], audience: ['family'], religion: ['hindu'], format: ['memorial card', 'booklet'] }, description: 'A celebration of life booklet with family photos and personal tributes.', location: 'Mumbai, India' },
+  { id: '12', title: 'Peninsula Rugby Sponsor Pack', category: 'sports' as const, filters: { style: ['bold', 'corporate'], audience: ['team', 'club'], format: ['sponsor pack'] }, description: 'Sponsor proposal deck with ROI metrics and partnership tiers.', location: 'Sydney, Australia' },
 ];
 
 // ─── BLOG POSTS (placeholder data) ──────────────────────────────────────────

@@ -36,12 +36,20 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     category TEXT NOT NULL CHECK (category IN ('wedding', 'funeral', 'sports', 'branding', 'events')),
+    tags TEXT[] NOT NULL DEFAULT '{}',
+    filters JSONB NOT NULL DEFAULT '{}',
     image_url TEXT NOT NULL,
+    image_urls JSONB,
     description TEXT,
     location TEXT,
     published BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
+
+-- Add tags to an existing database without affecting current portfolio items.
+ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS filters JSONB NOT NULL DEFAULT '{}';
+ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS image_urls JSONB;
 
 -- 4. Create Posts Table (Blog)
 CREATE TABLE IF NOT EXISTS posts (
