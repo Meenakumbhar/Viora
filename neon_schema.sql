@@ -1,5 +1,9 @@
--- SQL Schema for Memories in Prints
--- Run this script in the Supabase SQL Editor to initialize the database tables and seed initial data.
+-- ==============================================================================
+-- Memories in Prints / Viora — Neon PostgreSQL Schema & Seed Script
+-- ==============================================================================
+-- Run this script in the Neon SQL Editor (https://console.neon.tech)
+-- to initialize tables, indexes, and initial content in one click.
+-- ==============================================================================
 
 -- 1. Create Enquiries Table
 CREATE TABLE IF NOT EXISTS enquiries (
@@ -13,12 +17,9 @@ CREATE TABLE IF NOT EXISTS enquiries (
     quantity_estimate TEXT,
     description TEXT,
     source TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     status TEXT DEFAULT 'new' NOT NULL CHECK (status IN ('new', 'read', 'replied', 'converted'))
 );
-
--- Migration if updating an existing database:
--- ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS phone TEXT;
 
 -- 2. Create Subscribers Table (Newsletter)
 CREATE TABLE IF NOT EXISTS subscribers (
@@ -26,7 +27,7 @@ CREATE TABLE IF NOT EXISTS subscribers (
     email TEXT UNIQUE NOT NULL,
     first_name TEXT,
     country TEXT,
-    subscribed_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    subscribed_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     active BOOLEAN DEFAULT TRUE NOT NULL
 );
 
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
     description TEXT,
     location TEXT,
     published BOOLEAN DEFAULT TRUE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- 4. Create Posts Table (Blog)
@@ -53,54 +54,18 @@ CREATE TABLE IF NOT EXISTS posts (
     image_url TEXT,
     published_at DATE DEFAULT CURRENT_DATE NOT NULL,
     published BOOLEAN DEFAULT TRUE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- Enable Row Level Security (RLS)
-ALTER TABLE enquiries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE portfolio_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
-
--- Create Policies
-
--- Enquiries: Anyone can insert (public contact form), only authenticated service_role can read/manage
-CREATE POLICY "Allow public insert to enquiries" ON enquiries
-    FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Allow service_role full control of enquiries" ON enquiries
-    FOR ALL USING (auth.role() = 'service_role');
-
--- Subscribers: Anyone can insert (public newsletter form), only authenticated service_role can read/manage
-CREATE POLICY "Allow public insert to subscribers" ON subscribers
-    FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Allow service_role full control of subscribers" ON subscribers
-    FOR ALL USING (auth.role() = 'service_role');
-
--- Portfolio Items: Public can read published items, only service_role can write/manage
-CREATE POLICY "Allow public read-only of published portfolio items" ON portfolio_items
-    FOR SELECT USING (published = true);
-
-CREATE POLICY "Allow service_role full control of portfolio items" ON portfolio_items
-    FOR ALL USING (auth.role() = 'service_role');
-
--- Posts: Public can read published posts, only service_role can write/manage
-CREATE POLICY "Allow public read-only of published posts" ON posts
-    FOR SELECT USING (published = true);
-
-CREATE POLICY "Allow service_role full control of posts" ON posts
-    FOR ALL USING (auth.role() = 'service_role');
-
--- Create Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_portfolio_items_published_category ON portfolio_items(published, category);
+-- ─── Indexes for Performance ──────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_subscribers_active ON subscribers(active, subscribed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_portfolio_items_published_category ON portfolio_items(published, category, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_published_slug ON posts(published, slug);
 CREATE INDEX IF NOT EXISTS idx_posts_published_date ON posts(published, published_at DESC);
 
 
--- 5. Seed Initial Data
-
--- Seed Portfolio Items
+-- ─── 5. Seed Initial Portfolio Items ──────────────────────────────────────────
 INSERT INTO portfolio_items (title, category, image_url, description, location, published) VALUES
 ('Amara & James Wedding Suite', 'wedding', '/images/portfolio/wedding.jpg', 'Full invitation suite with foil-stamped details and custom envelope liner.', 'London, UK', true),
 ('Celebrating Margaret', 'funeral', '/images/portfolio/funeral.jpg', 'A 12-page order of service with hand-selected photography and hymn sheets.', 'Bath, UK', true),
@@ -116,7 +81,8 @@ INSERT INTO portfolio_items (title, category, image_url, description, location, 
 ('Peninsula Rugby Sponsor Pack', 'sports', '/images/portfolio/sports.jpg', 'Sponsor proposal deck with ROI metrics and partnership tiers.', 'Sydney, Australia', true)
 ON CONFLICT DO NOTHING;
 
--- Seed Blog Posts
+
+-- ─── 6. Seed Initial Blog Posts ───────────────────────────────────────────────
 INSERT INTO posts (title, slug, excerpt, category, image_url, published_at, published, content) VALUES
 (
   'Choosing Paper Stock for Your Wedding Stationery',

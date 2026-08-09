@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PortfolioPageContent from '@/components/PortfolioPageContent';
-import { getPortfolioItems } from '@/lib/supabase';
+import { getPortfolioItems } from '@/lib/db';
 
 export const metadata: Metadata = {
   title: 'Portfolio',

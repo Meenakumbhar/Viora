@@ -3,7 +3,7 @@ import Link from 'next/link';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-import { getBlogPosts } from '@/lib/supabase';
+import { getBlogPosts } from '@/lib/db';
 
 export const metadata: Metadata = {
   title: 'Journal',

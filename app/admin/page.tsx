@@ -1,62 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { createAdminClient } from '@/utils/supabase/admin';
+import { getAdminDashboardData } from '@/lib/db';
 import type { Enquiry, Subscriber, PortfolioItem, Post } from '@/types/database';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard | Memories in Prints',
   robots: { index: false, follow: false },
 };
-
-// ─── Data Fetchers ────────────────────────────────────────────────────────────
-
-async function getDashboardData() {
-  const supabase = createAdminClient();
-
-  const [enquiriesRes, subscribersRes, portfolioRes, postsRes] =
-    await Promise.allSettled([
-      supabase
-        .from('enquiries')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50),
-      supabase
-        .from('subscribers')
-        .select('*')
-        .order('subscribed_at', { ascending: false })
-        .limit(50),
-      supabase
-        .from('portfolio_items')
-        .select('id, title, category, published, created_at')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('posts')
-        .select('id, title, slug, category, published, published_at')
-        .order('published_at', { ascending: false }),
-    ]);
-
-  const enquiries: Enquiry[] =
-    enquiriesRes.status === 'fulfilled' && !enquiriesRes.value.error
-      ? (enquiriesRes.value.data as Enquiry[]) ?? []
-      : [];
-
-  const subscribers: Subscriber[] =
-    subscribersRes.status === 'fulfilled' && !subscribersRes.value.error
-      ? (subscribersRes.value.data as Subscriber[]) ?? []
-      : [];
-
-  const portfolioItems: Partial<PortfolioItem>[] =
-    portfolioRes.status === 'fulfilled' && !portfolioRes.value.error
-      ? portfolioRes.value.data ?? []
-      : [];
-
-  const posts: Partial<Post>[] =
-    postsRes.status === 'fulfilled' && !postsRes.value.error
-      ? postsRes.value.data ?? []
-      : [];
-
-  return { enquiries, subscribers, portfolioItems, posts };
-}
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
@@ -107,7 +57,7 @@ function StatCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function AdminPage() {
-  const { enquiries, subscribers, portfolioItems, posts } = await getDashboardData();
+  const { enquiries, subscribers, portfolioItems, posts } = await getAdminDashboardData();
 
   const noData = enquiries.length === 0 && subscribers.length === 0;
 
@@ -177,11 +127,12 @@ export default async function AdminPage() {
         {noData && (
           <div className="mb-10 border border-amber-500/30 bg-amber-500/10 p-5">
             <p className="font-mono text-sm text-amber-400">
-              ⚠ No data found. Make sure you have:
+              ⚠ No database connection or data found. Make sure you have:
             </p>
             <ol className="mt-2 list-decimal pl-5 font-mono text-xs text-amber-300/70 space-y-1">
-              <li>Run the SQL schema in your Supabase SQL Editor (<code>supabase_schema.sql</code>)</li>
-              <li>Added <code>SUPABASE_SERVICE_ROLE_KEY</code> to <code>.env.local</code> for admin reads</li>
+              <li>Created a Neon project at <code>console.neon.tech</code></li>
+              <li>Run the SQL script in your Neon SQL Editor (<code>neon_schema.sql</code>)</li>
+              <li>Added <code>DATABASE_URL</code> to <code>.env.local</code></li>
               <li>Restarted the dev server after updating env variables</li>
             </ol>
           </div>
@@ -415,7 +366,7 @@ export default async function AdminPage() {
         {/* ── Footer ── */}
         <footer className="mt-16 border-t border-white/10 pt-8">
           <p className="font-mono text-xs text-white/20">
-            Memories in Prints · Admin Dashboard · Data from Supabase ·{' '}
+            Memories in Prints · Admin Dashboard · Powered by Neon PostgreSQL ·{' '}
             <span className="text-white/10">Not indexed by search engines</span>
           </p>
         </footer>

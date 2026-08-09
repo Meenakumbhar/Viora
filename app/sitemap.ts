@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getBlogPosts, getPortfolioItems } from '@/lib/supabase';
+import { getBlogPosts, getPortfolioItems } from '@/lib/db';
 import { services } from '@/lib/data';
 
 const BASE_URL = 'https://memoriesinprints.com';
