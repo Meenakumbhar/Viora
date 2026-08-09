@@ -206,8 +206,15 @@ export default async function BlogPostPage({ params }: PageProps) {
             </h1>
             <div className="mt-6 flex items-center gap-4 text-sm text-text-muted font-mono">
               <span>By Memories in Prints</span>
-              <span>•</span>
-              <time dateTime={post.published_at || undefined}>{post.published_at}</time>
+              <time dateTime={post.published_at || undefined}>
+                {post.published_at
+                  ? new Date(post.published_at).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })
+                  : ''}
+              </time>
             </div>
           </header>
 

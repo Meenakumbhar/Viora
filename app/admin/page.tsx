@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getAdminDashboardData } from '@/lib/db';
 import type { Enquiry, Subscriber, PortfolioItem, Post } from '@/types/database';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Admin Dashboard | Memories in Prints',
   robots: { index: false, follow: false },
@@ -344,7 +346,15 @@ export default async function AdminPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`font-mono text-[10px] ${p.published ? 'text-emerald-400' : 'text-white/30'}`}>
-                          {p.published ? p.published_at : 'Draft'}
+                          {p.published
+                            ? (p.published_at
+                                ? new Date(p.published_at).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })
+                                : 'Published')
+                            : 'Draft'}
                         </span>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
