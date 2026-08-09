@@ -416,3 +416,81 @@ body {
   opacity: 1;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUOTE FORM — animations & react-day-picker overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease both;
+}
+
+@keyframes successPop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  70%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* react-day-picker custom theme (v10) — custom header version */
+.rdp-custom {
+  --rdp-accent-color: #C6A85C;
+  --rdp-accent-color-dark: #A88A40;
+  --rdp-background-color: #FAF8F5;
+  --rdp-selected-font: 600;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.875rem;
+  /* Remove default root margin so it sits flush inside our popover */
+  margin: 0 !important;
+}
+
+/* Hide the built-in caption entirely — we render our own header */
+.rdp-custom .rdp-month_caption {
+  display: none !important;
+}
+
+/* Remove built-in nav buttons (we use hideNavigation prop, belt + braces) */
+.rdp-custom .rdp-nav {
+  display: none !important;
+}
+
+.rdp-custom .rdp-day_button {
+  border-radius: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.8125rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.rdp-custom .rdp-day_button:hover:not(:disabled) {
+  background: #C6A85C22;
+  color: #C6A85C;
+}
+
+.rdp-custom .rdp-selected .rdp-day_button {
+  background: #C6A85C !important;
+  color: #1C2530 !important;
+}
+
+.rdp-custom .rdp-today:not(.rdp-outside) .rdp-day_button {
+  font-weight: 700;
+  color: #C6A85C;
+}
+
+.rdp-custom .rdp-weekday {
+  font-family: var(--font-dm-mono), monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8A8F96;
+  padding-bottom: 0.25rem;
+}
+
+/* Wrapper div so DayPicker grid has consistent padding */
+.rdp-custom-wrapper {
+  padding: 0.5rem 0.75rem 0.75rem;
+}
+

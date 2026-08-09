@@ -17,10 +17,8 @@ const STUDIO_LINKS: FooterLink[] = [
 ];
 
 const SUPPORT_LINKS: FooterLink[] = [
-  { label: 'FAQ', href: '/pricing#faq' },
   { label: 'Contact', href: '/contact' },
   { label: 'Turnaround Times', href: '/process' },
-  { label: 'Shipping', href: '/pricing' },
 ];
 
 const LEGAL_LINKS: FooterLink[] = [

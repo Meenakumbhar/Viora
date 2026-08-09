@@ -1,145 +1,867 @@
 'use client';
 
-import { useState, type FormEvent, type ChangeEvent } from 'react';
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type FormEvent,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from 'react';
 import Link from 'next/link';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/src/style.css';
+
+/* ── Types ─────────────────────────────────────────────────────────────── */
 
 type FormState = 'idle' | 'loading' | 'success' | 'error';
+type Step = 1 | 2 | 3;
 
 interface FormData {
   name: string;
   email: string;
+  phone: string;
   country: string;
   serviceType: string;
-  eventDate: string;
+  eventDate: Date | undefined;
   quantity: string;
+  customQuantity: string;
   description: string;
   source: string;
 }
 
+/* ── Constants ─────────────────────────────────────────────────────────── */
+
 const INITIAL_DATA: FormData = {
   name: '',
   email: '',
+  phone: '',
   country: '',
   serviceType: '',
-  eventDate: '',
+  eventDate: undefined,
   quantity: '',
+  customQuantity: '',
   description: '',
   source: '',
 };
 
 const COUNTRIES = [
-  'United Kingdom',
-  'United States',
-  'Canada',
-  'Australia',
-  'New Zealand',
-  'Ireland',
-  'Germany',
-  'France',
-  'Spain',
-  'Italy',
-  'Netherlands',
-  'Belgium',
-  'Switzerland',
-  'Austria',
-  'Portugal',
-  'Sweden',
-  'Norway',
-  'Denmark',
-  'Finland',
-  'South Africa',
-  'Nigeria',
-  'Kenya',
-  'India',
-  'Pakistan',
-  'Japan',
-  'Singapore',
-  'Hong Kong',
-  'United Arab Emirates',
-  'Saudi Arabia',
-  'Brazil',
-  'Mexico',
-  'Argentina',
-  'Colombia',
-  'Philippines',
-  'Malaysia',
+  'United Kingdom','United States','Canada','Australia','New Zealand',
+  'Ireland','Germany','France','Spain','Italy','Netherlands','Belgium',
+  'Switzerland','Austria','Portugal','Sweden','Norway','Denmark','Finland',
+  'South Africa','Nigeria','Kenya','India','Pakistan','Japan','Singapore',
+  'Hong Kong','United Arab Emirates','Saudi Arabia','Brazil','Mexico',
+  'Argentina','Colombia','Philippines','Malaysia',
 ];
 
 const SERVICE_TYPES = [
-  'Wedding & Events',
-  'Funeral & Memorial',
-  'Sports & Branding',
-  'Graphic Design',
-  'Print & Production',
-  'Not sure',
+  { label: 'Wedding & Events', emoji: '💍' },
+  { label: 'Funeral & Memorial', emoji: '🕊️' },
+  { label: 'Sports & Branding', emoji: '🏆' },
+  { label: 'Graphic Design', emoji: '🎨' },
+  { label: 'Print & Production', emoji: '🖨️' },
+  { label: 'Not sure', emoji: '💬' },
 ];
 
 const QUANTITIES = [
-  '1–50',
-  '51–200',
-  '201–500',
-  '500+',
-  'Not yet decided',
+  { label: '1–50', sub: 'Small run' },
+  { label: '51–200', sub: 'Medium' },
+  { label: '201–500', sub: 'Large' },
+  { label: '500+', sub: 'Bulk' },
+  { label: 'Not yet decided', sub: "I'll decide later" },
+  { label: 'Custom', sub: 'Type exact amount' },
 ];
 
 const SOURCES = [
-  'Google',
-  'Instagram',
-  'Referral',
-  'Funeral Director',
-  'Wedding Planner',
-  'Other',
+  { label: 'Google', emoji: '🔍' },
+  { label: 'Instagram', emoji: '📸' },
+  { label: 'Referral', emoji: '👥' },
+  { label: 'Funeral Director', emoji: '🕊️' },
+  { label: 'Wedding Planner', emoji: '💐' },
+  { label: 'Other', emoji: '✨' },
 ];
+
+const EMAIL_DOMAINS = ['gmail.com','outlook.com','yahoo.com','icloud.com','hotmail.com','me.com','live.com'];
+
+const SERVICE_PROMPTS: Record<string, string> = {
+  'Wedding & Events': 'Tell us about your wedding date, venue style, colour palette, and approximate guest count...',
+  'Funeral & Memorial': 'Share the name of the person being honoured, any themes, photos, or specific wishes...',
+  'Sports & Branding': 'Describe your team, league, branding colours, and what you need printed...',
+  'Graphic Design': 'Describe the project, your brand style, target audience, and any existing assets...',
+  'Print & Production': 'Tell us about your print specs, quantities, finish preferences, and delivery timeline...',
+  'Not sure': 'Tell us anything about your project — we\'ll help figure out the best approach...',
+  default: 'Tell us about your project, style preferences, and any key details...',
+};
+
+/* ── Helpers ───────────────────────────────────────────────────────────── */
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-const inputClasses =
-  'w-full border border-border bg-cat-surface px-4 py-3 text-cat-heading transition-colors duration-300 focus:border-cat-accent focus:ring-1 focus:ring-cat-accent focus:outline-none placeholder:text-cat-muted';
+function toDateInputValue(d: Date): string {
+  return d.toISOString().split('T')[0];
+}
 
-const labelClasses = 'mb-2 block font-body text-body-base text-cat-heading';
+function formatDateDisplay(d: Date | undefined): string {
+  if (!d) return '';
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/* ── Step indicator ────────────────────────────────────────────────────── */
+
+function StepDots({ current, total }: { current: Step; total: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-8" aria-label={`Step ${current} of ${total}`}>
+      {Array.from({ length: total }, (_, i) => {
+        const step = (i + 1) as Step;
+        const active = step === current;
+        const done = step < current;
+        return (
+          <div key={step} className="flex items-center gap-2">
+            <div
+              className={[
+                'flex items-center justify-center rounded-full text-[10px] font-mono font-semibold transition-all duration-300',
+                active
+                  ? 'w-7 h-7 bg-accent-gold text-bg-primary scale-110'
+                  : done
+                  ? 'w-6 h-6 bg-accent-gold/30 text-accent-gold border border-accent-gold/50'
+                  : 'w-6 h-6 border border-border text-text-muted',
+              ].join(' ')}
+            >
+              {done ? '✓' : step}
+            </div>
+            {i < total - 1 && (
+              <div
+                className={`h-[1px] w-8 transition-all duration-500 ${done || active ? 'bg-accent-gold/40' : 'bg-border'}`}
+              />
+            )}
+          </div>
+        );
+      })}
+      <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-text-muted">
+        {current === 1 ? 'Who you are' : current === 2 ? 'Your project' : 'Extra details'}
+      </span>
+    </div>
+  );
+}
+
+/* ── Floating label input ──────────────────────────────────────────────── */
+
+function FloatingInput({
+  id,
+  label,
+  required,
+  type = 'text',
+  value,
+  onChange,
+  onBlur,
+  autoComplete,
+  children,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  type?: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  autoComplete?: string;
+  children?: React.ReactNode;
+}) {
+  const [focused, setFocused] = useState(false);
+  const lifted = focused || value.length > 0;
+
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        name={id.replace('quote-', '')}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        autoComplete={autoComplete}
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => { setFocused(false); onBlur?.(e); }}
+        className={[
+          'w-full border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none',
+          'focus:border-accent-gold focus:ring-1 focus:ring-accent-gold',
+          lifted ? 'border-border' : 'border-border',
+        ].join(' ')}
+      />
+      <label
+        htmlFor={id}
+        className={[
+          'absolute left-4 pointer-events-none transition-all duration-200 font-body',
+          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+        ].join(' ')}
+      >
+        {label}
+        {required && <span className="text-accent-gold ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+/* ── Pill chip selector ────────────────────────────────────────────────── */
+
+function PillChip({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'px-4 py-2.5 border font-body text-sm transition-all duration-200 text-left',
+        'hover:border-accent-gold hover:text-accent-gold',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold',
+        selected
+          ? 'border-accent-gold bg-accent-gold/10 text-accent-gold scale-[1.02]'
+          : 'border-border bg-cat-surface text-cat-heading',
+      ].join(' ')}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ── Country combobox ─────────────────────────────────────────────────── */
+
+function CountryCombobox({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const filtered = query.length === 0
+    ? COUNTRIES
+    : COUNTRIES.filter((c) => c.toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        // If user typed but didn't select, revert to last valid value
+        if (!COUNTRIES.includes(query)) setQuery(value);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [query, value]);
+
+  function handleKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlighted((h) => Math.min(h + 1, filtered.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlighted((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filtered[highlighted]) select(filtered[highlighted]);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  }
+
+  function select(country: string) {
+    onChange(country);
+    setQuery(country);
+    setOpen(false);
+  }
+
+  const [focused, setFocused] = useState(false);
+  const lifted = focused || query.length > 0;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        id="quote-country"
+        type="text"
+        value={query}
+        required
+        autoComplete="off"
+        onFocus={() => { setOpen(true); setFocused(true); setHighlighted(0); }}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setHighlighted(0); }}
+        onKeyDown={handleKey}
+        className="w-full border border-border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      />
+      <label
+        htmlFor="quote-country"
+        className={[
+          'absolute left-4 pointer-events-none transition-all duration-200 font-body',
+          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+        ].join(' ')}
+      >
+        Country<span className="text-accent-gold ml-0.5">*</span>
+      </label>
+      {/* Dropdown arrow */}
+      <svg
+        className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted pointer-events-none"
+        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+      </svg>
+
+      {open && filtered.length > 0 && (
+        <ul
+          role="listbox"
+          className="absolute z-50 left-0 right-0 top-full mt-1 max-h-52 overflow-y-auto border border-border bg-bg-primary shadow-lg"
+        >
+          {filtered.map((c, i) => (
+            <li
+              key={c}
+              role="option"
+              aria-selected={value === c}
+              onMouseDown={() => select(c)}
+              className={[
+                'px-4 py-2.5 font-body text-body-base cursor-pointer transition-colors',
+                i === highlighted ? 'bg-accent-gold/10 text-accent-gold' : 'text-cat-heading hover:bg-bg-secondary',
+              ].join(' ')}
+            >
+              {c}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ── Email input with domain autocomplete ─────────────────────────────── */
+
+function EmailInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = useState(false);
+  const lifted = focused || value.length > 0;
+
+  useEffect(() => {
+    const atIdx = value.indexOf('@');
+    if (atIdx !== -1) {
+      const afterAt = value.slice(atIdx + 1);
+      const matches = afterAt.length === 0
+        ? EMAIL_DOMAINS
+        : EMAIL_DOMAINS.filter((d) => d.startsWith(afterAt));
+      setSuggestions(matches);
+      setOpen(matches.length > 0);
+    } else {
+      setOpen(false);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  function selectDomain(domain: string) {
+    const atIdx = value.indexOf('@');
+    const base = atIdx !== -1 ? value.slice(0, atIdx + 1) : value + '@';
+    onChange(base + domain);
+    setOpen(false);
+  }
+
+  function handleKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (!open) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlighted((h) => Math.min(h + 1, suggestions.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlighted((h) => Math.max(h - 1, 0)); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { if (suggestions[highlighted]) { e.preventDefault(); selectDomain(suggestions[highlighted]); } }
+    else if (e.key === 'Escape') setOpen(false);
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        id="quote-email"
+        name="email"
+        type="email"
+        value={value}
+        required
+        autoComplete="email"
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKey}
+        className="w-full border border-border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+      />
+      <label
+        htmlFor="quote-email"
+        className={[
+          'absolute left-4 pointer-events-none transition-all duration-200 font-body',
+          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+        ].join(' ')}
+      >
+        Email<span className="text-accent-gold ml-0.5">*</span>
+      </label>
+
+      {open && (
+        <ul className="absolute z-50 left-0 right-0 top-full mt-1 border border-border bg-bg-primary shadow-lg">
+          {suggestions.map((d, i) => {
+            const atIdx = value.indexOf('@');
+            const base = atIdx !== -1 ? value.slice(0, atIdx + 1) : value + '@';
+            return (
+              <li
+                key={d}
+                onMouseDown={() => selectDomain(d)}
+                className={[
+                  'px-4 py-2.5 font-mono text-sm cursor-pointer flex items-center gap-1 transition-colors',
+                  i === highlighted ? 'bg-accent-gold/10 text-accent-gold' : 'text-cat-heading hover:bg-bg-secondary',
+                ].join(' ')}
+              >
+                <span className="text-text-muted">{base}</span>
+                <span className="font-semibold">{d}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ── Date picker ─────────────────────────────────────────────────────────── */
+
+const CURRENT_YEAR = new Date().getFullYear();
+const MONTH_NAMES = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
+];
+// Years: from current year to +8 years
+const YEAR_LIST = Array.from({ length: 9 }, (_, i) => CURRENT_YEAR + i);
+
+type DatePickerView = 'days' | 'months' | 'years';
+
+function DateField({
+  value,
+  onChange,
+}: {
+  value: Date | undefined;
+  onChange: (d: Date | undefined) => void;
+}) {
+  const today = new Date();
+  const [open, setOpen] = useState(false);
+  const [view, setView] = useState<DatePickerView>('days');
+  // controlled month shown in the calendar
+  const [month, setMonth] = useState<Date>(value ?? today);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = useState(false);
+  const yearListRef = useRef<HTMLDivElement>(null);
+
+  // close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setFocused(false);
+        setView('days');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // scroll selected year into view when year picker opens
+  useEffect(() => {
+    if (view === 'years' && yearListRef.current) {
+      const selected = yearListRef.current.querySelector('[data-selected="true"]');
+      selected?.scrollIntoView({ block: 'center', behavior: 'instant' });
+    }
+  }, [view]);
+
+  const displayValue = formatDateDisplay(value);
+  const lifted = focused || !!value;
+
+  function handleDaySelect(d: Date | undefined) {
+    onChange(d);
+    if (d) { setOpen(false); setFocused(false); setView('days'); }
+  }
+
+  function selectMonth(monthIdx: number) {
+    setMonth(new Date(month.getFullYear(), monthIdx, 1));
+    setView('days');
+  }
+
+  function selectYear(year: number) {
+    setMonth(new Date(year, month.getMonth(), 1));
+    setView('days');
+  }
+
+  // custom nav: prev / next month
+  function prevMonth() { setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)); }
+  function nextMonth() { setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)); }
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Trigger button */}
+      <button
+        type="button"
+        id="quote-date-btn"
+        onClick={() => { setOpen((o) => !o); setFocused(true); setView('days'); }}
+        className="w-full border border-border bg-cat-surface px-4 pt-6 pb-2 text-left text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+      >
+        {displayValue
+          ? <span>{displayValue}</span>
+          : <span className="text-text-muted/50 text-sm">Pick a date&hellip;</span>
+        }
+      </button>
+
+      {/* Floating label */}
+      <label
+        htmlFor="quote-date-btn"
+        className={[
+          'absolute left-4 pointer-events-none transition-all duration-200 font-body',
+          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+        ].join(' ')}
+      >
+        Event or delivery date
+      </label>
+
+      {/* Right icons */}
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+        {value && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onChange(undefined); }}
+            className="text-text-muted hover:text-accent-gold transition-colors"
+            aria-label="Clear date"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+        <svg className="h-4 w-4 text-text-muted pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </div>
+
+      {/* Popover */}
+      {open && (
+        <div className="absolute z-50 left-0 top-full mt-1 border border-border bg-bg-primary shadow-2xl" style={{ minWidth: '300px' }}>
+
+          {/* ── Custom header ─────────────────────────── */}
+          <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-border">
+            {/* Prev month — hidden during month/year view */}
+            {view === 'days' ? (
+              <button
+                type="button"
+                onClick={prevMonth}
+                className="p-1.5 text-text-muted hover:text-accent-gold transition-colors"
+                aria-label="Previous month"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            ) : (
+              <div className="w-7" />
+            )}
+
+            {/* Month + Year labels — clickable */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setView(view === 'months' ? 'days' : 'months')}
+                className={[
+                  'px-2 py-1 font-display text-base tracking-wide transition-colors',
+                  view === 'months' ? 'text-accent-gold' : 'text-text-heading hover:text-accent-gold',
+                ].join(' ')}
+              >
+                {MONTH_NAMES[month.getMonth()]}
+              </button>
+              <button
+                type="button"
+                onClick={() => setView(view === 'years' ? 'days' : 'years')}
+                className={[
+                  'px-2 py-1 font-mono text-sm transition-colors',
+                  view === 'years' ? 'text-accent-gold' : 'text-text-muted hover:text-accent-gold',
+                ].join(' ')}
+              >
+                {month.getFullYear()}
+              </button>
+            </div>
+
+            {/* Next month */}
+            {view === 'days' ? (
+              <button
+                type="button"
+                onClick={nextMonth}
+                className="p-1.5 text-text-muted hover:text-accent-gold transition-colors"
+                aria-label="Next month"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setView('days')}
+                className="p-1.5 text-text-muted hover:text-accent-gold transition-colors"
+                aria-label="Back to day view"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* ── Month grid ────────────────────────────── */}
+          {view === 'months' && (
+            <div className="grid grid-cols-3 gap-1 p-3">
+              {MONTH_NAMES.map((name, idx) => {
+                const isSelected = idx === month.getMonth();
+                const isPast = new Date(month.getFullYear(), idx + 1, 0) < today;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    disabled={isPast}
+                    onClick={() => selectMonth(idx)}
+                    className={[
+                      'py-2 text-sm font-body transition-all duration-150',
+                      isSelected
+                        ? 'bg-accent-gold text-bg-primary font-semibold'
+                        : isPast
+                        ? 'text-text-muted/30 cursor-not-allowed'
+                        : 'text-text-heading hover:bg-accent-gold/10 hover:text-accent-gold',
+                    ].join(' ')}
+                  >
+                    {name.slice(0, 3)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── Year list ─────────────────────────────── */}
+          {view === 'years' && (
+            <div
+              ref={yearListRef}
+              className="overflow-y-auto"
+              style={{ maxHeight: '200px' }}
+            >
+              {YEAR_LIST.map((year) => {
+                const isSelected = year === month.getFullYear();
+                return (
+                  <button
+                    key={year}
+                    type="button"
+                    data-selected={isSelected}
+                    onClick={() => selectYear(year)}
+                    className={[
+                      'w-full px-4 py-2.5 text-left font-mono text-sm transition-colors',
+                      isSelected
+                        ? 'bg-accent-gold text-bg-primary font-semibold'
+                        : 'text-text-heading hover:bg-accent-gold/10 hover:text-accent-gold',
+                    ].join(' ')}
+                  >
+                    {year}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── Day grid (DayPicker, no caption rendered) ── */}
+          {view === 'days' && (
+            <div className="rdp-custom-wrapper">
+              <DayPicker
+                mode="single"
+                month={month}
+                onMonthChange={setMonth}
+                selected={value}
+                onSelect={handleDaySelect}
+                disabled={{ before: today }}
+                hideNavigation
+                className="rdp-custom"
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/* ── Auto-grow textarea with char counter ───────────────────────────────── */
+
+const DESC_MAX = 800;
+
+function AutoTextarea({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder: string;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [focused, setFocused] = useState(false);
+  const lifted = focused || value.length > 0;
+  const remaining = DESC_MAX - value.length;
+  const nearLimit = remaining <= 100;
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.max(120, el.scrollHeight) + 'px';
+  }, [value]);
+
+  return (
+    <div className="relative">
+      <textarea
+        ref={textareaRef}
+        id="quote-description"
+        name="description"
+        value={value}
+        required
+        maxLength={DESC_MAX}
+        onChange={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        rows={4}
+        style={{ resize: 'none', overflow: 'hidden' }}
+        className="w-full border border-border bg-cat-surface px-4 pt-8 pb-3 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold font-body text-body-base leading-relaxed"
+        placeholder={focused ? placeholder : ''}
+      />
+      <label
+        htmlFor="quote-description"
+        className={[
+          'absolute left-4 pointer-events-none transition-all duration-200 font-body',
+          lifted ? 'top-2 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+        ].join(' ')}
+      >
+        Brief description<span className="text-accent-gold ml-0.5">*</span>
+      </label>
+      {/* Character counter */}
+      {(focused || value.length > 0) && (
+        <p className={`mt-1 text-right font-mono text-[10px] transition-colors ${
+          nearLimit ? 'text-accent-blush' : 'text-text-muted'
+        }`}>
+          {value.length} / {DESC_MAX}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function QuoteForm() {
   const [data, setData] = useState<FormData>(INITIAL_DATA);
+  const [step, setStep] = useState<Step>(1);
   const [state, setState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  /* ── Field handlers ───────────────────────────────────────────────────── */
 
   function handleChange(
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
-    if (state === 'error') {
-      setState('idle');
-      setErrorMessage('');
-    }
+    if (state === 'error') { setState('idle'); setErrorMessage(''); }
   }
 
-  function validate(): string | null {
+  function setField<K extends keyof FormData>(key: K, value: FormData[K]) {
+    setData((prev) => ({ ...prev, [key]: value }));
+    if (state === 'error') { setState('idle'); setErrorMessage(''); }
+  }
+
+  /* ── Step validation ─────────────────────────────────────────────────── */
+
+  function validateStep1(): string | null {
     if (!data.name.trim()) return 'Please enter your name.';
     if (!data.email.trim()) return 'Please enter your email address.';
     if (!isValidEmail(data.email)) return 'Please enter a valid email address.';
     if (!data.country) return 'Please select your country.';
+    return null;
+  }
+
+  function validateStep2(): string | null {
     if (!data.serviceType) return 'Please select a service type.';
     if (!data.quantity) return 'Please select an estimated quantity.';
+    if (data.quantity === 'Custom' && !data.customQuantity.trim()) return 'Please enter your custom quantity.';
+    return null;
+  }
+
+  function validateAll(): string | null {
+    const s1 = validateStep1();
+    if (s1) return s1;
+    const s2 = validateStep2();
+    if (s2) return s2;
     if (!data.description.trim()) return 'Please provide a brief description.';
     return null;
   }
 
+  function goNext() {
+    const err = step === 1 ? validateStep1() : step === 2 ? validateStep2() : null;
+    if (err) { setErrorMessage(err); setState('error'); return; }
+    setState('idle'); setErrorMessage('');
+    setStep((s) => Math.min(s + 1, 3) as Step);
+  }
+
+  function goBack() {
+    setState('idle'); setErrorMessage('');
+    setStep((s) => Math.max(s - 1, 1) as Step);
+  }
+
+  /* ── Submit ──────────────────────────────────────────────────────────── */
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setErrorMessage('');
-
-    const validationError = validate();
-    if (validationError) {
-      setErrorMessage(validationError);
-      setState('error');
-      return;
-    }
+    const validationError = validateAll();
+    if (validationError) { setErrorMessage(validationError); setState('error'); return; }
 
     setState('loading');
-
     try {
       const res = await fetch('/api/quote', {
         method: 'POST',
@@ -147,59 +869,44 @@ export default function QuoteForm() {
         body: JSON.stringify({
           name: data.name,
           email: data.email,
+          phone: data.phone || null,
           country: data.country,
           service_type: data.serviceType,
-          event_date: data.eventDate || null,
-          quantity_estimate: data.quantity,
+          event_date: data.eventDate ? toDateInputValue(data.eventDate) : null,
+          quantity_estimate: data.quantity === 'Custom' ? data.customQuantity : data.quantity,
           description: data.description,
           source: data.source || null,
         }),
       });
-
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || 'Something went wrong. Please try again.');
       }
-
       setState('success');
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Something went wrong. Please try again.'
-      );
+      setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setState('error');
     }
   }
 
-  // ─── SUCCESS STATE ───────────────────────────────────────────────────────
+  /* ── Success state ───────────────────────────────────────────────────── */
+
   if (state === 'success') {
     return (
       <div className="flex flex-col items-center py-16 text-center">
-        {/* Checkmark icon */}
-        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent-gold">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M5 13L9 17L19 7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-accent-gold"
-            />
+        <div
+          className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent-gold"
+          style={{ animation: 'successPop 0.4s ease' }}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-gold" />
           </svg>
         </div>
-
         <h3 className="font-display text-display-md text-text-primary">
           Thank you, {data.name.split(' ')[0]}
         </h3>
         <p className="mt-4 max-w-md font-body text-body-base text-text-muted">
-          We will be in touch within 24 hours.
+          Your request is with us. We&apos;ll be in touch within 24 hours.
         </p>
         <Link
           href="/portfolio"
@@ -211,188 +918,221 @@ export default function QuoteForm() {
     );
   }
 
-  // ─── FORM ────────────────────────────────────────────────────────────────
+  /* ── Description placeholder based on service ───────────────────────── */
+
+  const descPlaceholder = SERVICE_PROMPTS[data.serviceType] ?? SERVICE_PROMPTS['default'];
+
+  /* ── Form ────────────────────────────────────────────────────────────── */
+
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {/* Row 1: Name / Email */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label htmlFor="quote-name" className={labelClasses}>
-            Name <span className="text-accent-gold">*</span>
-          </label>
-          <input
+    <form onSubmit={handleSubmit} noValidate>
+      {/* Step dots */}
+      <StepDots current={step} total={3} />
+
+      {/* ── STEP 1: Who you are ───────────────────────────────────────── */}
+      {step === 1 && (
+        <div className="space-y-5 animate-fadeIn">
+          <h2 className="font-display text-xl text-text-heading mb-6">Tell us who you are</h2>
+
+          {/* Name */}
+          <FloatingInput
             id="quote-name"
-            name="name"
-            type="text"
+            label="Your full name"
+            required
             value={data.name}
-            onChange={handleChange}
-            required
-            className={inputClasses}
-            placeholder="Your full name"
+            onChange={(e) => {
+              setField('name', e.target.value);
+            }}
+            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+              setField(
+                'name',
+                e.target.value.replace(/\b\w/g, (c) => c.toUpperCase())
+              );
+            }}
+            autoComplete="name"
           />
-        </div>
-        <div>
-          <label htmlFor="quote-email" className={labelClasses}>
-            Email <span className="text-accent-gold">*</span>
-          </label>
-          <input
-            id="quote-email"
-            name="email"
-            type="email"
-            value={data.email}
+
+          {/* Email */}
+          <EmailInput value={data.email} onChange={(v) => setField('email', v)} />
+
+          {/* Phone — optional */}
+          <FloatingInput
+            id="quote-phone"
+            label="Phone number (optional)"
+            type="tel"
+            value={data.phone}
             onChange={handleChange}
-            required
-            className={inputClasses}
-            placeholder="you@example.com"
+            autoComplete="tel"
           />
-        </div>
-      </div>
 
-      {/* Row 2: Country / Service type */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label htmlFor="quote-country" className={labelClasses}>
-            Country <span className="text-accent-gold">*</span>
-          </label>
-          <select
-            id="quote-country"
-            name="country"
-            value={data.country}
-            onChange={handleChange}
-            required
-            className={inputClasses}
-          >
-            <option value="">Select country</option>
-            {COUNTRIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          {/* Country */}
+          <CountryCombobox value={data.country} onChange={(v) => setField('country', v)} />
         </div>
-        <div>
-          <label htmlFor="quote-service" className={labelClasses}>
-            Service type <span className="text-accent-gold">*</span>
-          </label>
-          <select
-            id="quote-service"
-            name="serviceType"
-            value={data.serviceType}
-            onChange={handleChange}
-            required
-            className={inputClasses}
-          >
-            <option value="">Select service</option>
-            {SERVICE_TYPES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      )}
 
-      {/* Row 3: Event date / Quantity */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label htmlFor="quote-date" className={labelClasses}>
-            Event or delivery date
-          </label>
-          <input
-            id="quote-date"
-            name="eventDate"
-            type="date"
-            value={data.eventDate}
+      {/* ── STEP 2: Your project ─────────────────────────────────────── */}
+      {step === 2 && (
+        <div className="space-y-8 animate-fadeIn">
+          <h2 className="font-display text-xl text-text-heading mb-6">About your project</h2>
+
+          {/* Service type — pill chips */}
+          <div>
+            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+              Service type<span className="text-accent-gold ml-0.5">*</span>
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {SERVICE_TYPES.map((s) => (
+                <PillChip
+                  key={s.label}
+                  selected={data.serviceType === s.label}
+                  onClick={() => setField('serviceType', s.label)}
+                >
+                  <span className="mr-1.5">{s.emoji}</span>
+                  {s.label}
+                </PillChip>
+              ))}
+            </div>
+          </div>
+
+          {/* Date */}
+          <div>
+            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+              Event or delivery date
+            </p>
+            <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
+          </div>
+
+          {/* Quantity — pill chips + custom input */}
+          <div>
+            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+              Estimated quantity<span className="text-accent-gold ml-0.5">*</span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {QUANTITIES.map((q) => (
+                <PillChip
+                  key={q.label}
+                  selected={data.quantity === q.label}
+                  onClick={() => {
+                    setField('quantity', q.label);
+                    if (q.label !== 'Custom') setField('customQuantity', '');
+                  }}
+                >
+                  <span className="font-semibold">{q.label}</span>
+                  <span className="block text-[10px] text-text-muted mt-0.5">{q.sub}</span>
+                </PillChip>
+              ))}
+            </div>
+
+            {/* Custom quantity text input — slides in when 'Custom' selected */}
+            {data.quantity === 'Custom' && (
+              <div className="mt-3 animate-fadeIn">
+                <input
+                  id="quote-custom-qty"
+                  type="text"
+                  value={data.customQuantity}
+                  onChange={(e) => setField('customQuantity', e.target.value)}
+                  autoFocus
+                  placeholder="e.g. 350 booklets, 12 large banners…"
+                  className="w-full border border-accent-gold/50 bg-cat-surface px-4 py-3 text-cat-heading font-body text-body-base outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-all duration-200 placeholder:text-text-muted/50"
+                />
+                <p className="mt-1 font-mono text-[10px] text-text-muted">
+                  Be as specific as you like — format, size, finish, all welcome.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── STEP 3: Details ──────────────────────────────────────────── */}
+      {step === 3 && (
+        <div className="space-y-8 animate-fadeIn">
+          <h2 className="font-display text-xl text-text-heading mb-6">Final details</h2>
+
+          {/* Description */}
+          <AutoTextarea
+            value={data.description}
             onChange={handleChange}
-            className={inputClasses}
+            placeholder={descPlaceholder}
           />
+
+          {/* How did you hear — pill chips */}
+          <div>
+            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+              How did you hear about us?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SOURCES.map((s) => (
+                <PillChip
+                  key={s.label}
+                  selected={data.source === s.label}
+                  onClick={() => setField('source', s.label)}
+                >
+                  <span className="mr-1.5">{s.emoji}</span>
+                  {s.label}
+                </PillChip>
+              ))}
+            </div>
+          </div>
         </div>
-        <div>
-          <label htmlFor="quote-quantity" className={labelClasses}>
-            Estimated quantity <span className="text-accent-gold">*</span>
-          </label>
-          <select
-            id="quote-quantity"
-            name="quantity"
-            value={data.quantity}
-            onChange={handleChange}
-            required
-            className={inputClasses}
-          >
-            <option value="">Select quantity</option>
-            {QUANTITIES.map((q) => (
-              <option key={q} value={q}>
-                {q}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      )}
 
-      {/* Row 4: Description */}
-      <div>
-        <label htmlFor="quote-description" className={labelClasses}>
-          Brief description <span className="text-accent-gold">*</span>
-        </label>
-        <textarea
-          id="quote-description"
-          name="description"
-          value={data.description}
-          onChange={handleChange}
-          required
-          rows={4}
-          className={inputClasses}
-          placeholder="Tell us about your project, style preferences, and any key details."
-        />
-      </div>
-
-      {/* Row 5: How did you hear */}
-      <div>
-        <label htmlFor="quote-source" className={labelClasses}>
-          How did you hear about us?
-        </label>
-        <select
-          id="quote-source"
-          name="source"
-          value={data.source}
-          onChange={handleChange}
-          className={inputClasses}
-        >
-          <option value="">Select an option</option>
-          {SOURCES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Error message */}
+      {/* ── Error message ─────────────────────────────────────────────── */}
       {state === 'error' && errorMessage && (
-        <p className="text-sm text-accent-blush" role="alert">
+        <p className="mt-4 text-sm text-accent-blush" role="alert">
           {errorMessage}
         </p>
       )}
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={state === 'loading'}
-        className={[
-          'w-full bg-accent-gold py-4 font-body font-medium uppercase tracking-wider text-bg-primary',
-          'transition-all duration-300 hover:bg-accent-gold-dark',
-          'focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
-          'disabled:opacity-50',
-          state === 'loading' ? 'animate-pulse' : '',
-        ].join(' ')}
-      >
-        {state === 'loading' ? 'Sending...' : 'Get a Quote'}
-      </button>
+      {/* ── Navigation buttons ────────────────────────────────────────── */}
+      <div className={`mt-8 flex ${step > 1 ? 'justify-between' : 'justify-end'} items-center gap-4`}>
+        {step > 1 && (
+          <button
+            type="button"
+            onClick={goBack}
+            className="font-body text-label uppercase tracking-wider text-text-muted hover:text-text-heading transition-colors flex items-center gap-2"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Back
+          </button>
+        )}
 
-      {/* Privacy note */}
-      <p className="text-center text-sm text-text-muted">
-        Your details are safe. We never share your information with third parties.
-      </p>
+        {step < 3 ? (
+          <button
+            type="button"
+            onClick={goNext}
+            className="bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider transition-all duration-300 hover:bg-accent-gold-dark focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary flex items-center gap-2"
+          >
+            Continue
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={state === 'loading'}
+            className={[
+              'bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider',
+              'transition-all duration-300 hover:bg-accent-gold-dark',
+              'focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
+              'disabled:opacity-50',
+              state === 'loading' ? 'animate-pulse' : '',
+            ].join(' ')}
+          >
+            {state === 'loading' ? 'Sending…' : 'Send My Request →'}
+          </button>
+        )}
+      </div>
+
+      {/* Privacy note — only on last step */}
+      {step === 3 && (
+        <p className="mt-4 text-center text-sm text-text-muted">
+          Your details are safe. We never share your information with third parties.
+        </p>
+      )}
     </form>
   );
 }

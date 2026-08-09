@@ -130,9 +130,6 @@ export default function ServicesPage() {
                       <Button variant="primary" size="md" href={`/services/${service.slug}`}>
                         Learn More
                       </Button>
-                      <Button variant="ghost" size="md" href="/contact">
-                        Get a Quote
-                      </Button>
                     </div>
                   </div>
                 </div>
@@ -154,7 +151,7 @@ export default function ServicesPage() {
             </p>
             <div className="mt-10 flex justify-center gap-6">
               <Button variant="primary" size="lg" href="/contact">
-                Get a Quote
+                Start a Project
               </Button>
               <Button variant="ghost" size="lg" href="/portfolio">
                 View Portfolio

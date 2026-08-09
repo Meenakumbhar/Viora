@@ -7,7 +7,7 @@ const LINKS = [
   { label: 'Return to Studio', href: '/', primary: true },
   { label: 'View Our Portfolio', href: '/portfolio', primary: false },
   { label: 'Browse Services', href: '/services', primary: false },
-  { label: 'Get a Quote', href: '/contact', primary: false },
+  { label: 'Contact Us', href: '/contact', primary: false },
 ];
 
 // Animated ink-bleed letters

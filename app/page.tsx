@@ -96,7 +96,7 @@ export default function Home() {
                 View Our Work
               </Button>
               <Button variant="ghost" size="lg" href="/contact">
-                Get a Quote →
+                Start a Project →
               </Button>
             </div>
           </div>
@@ -544,78 +544,21 @@ export default function Home() {
         <SectionReveal>
           <div className="container-wide">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              {/* Left — decorative world map */}
+              {/* Left — modern delivery map */}
               <div className="flex items-center justify-center" data-delay="1">
-                <svg
-                  viewBox="0 0 600 360"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-full max-w-lg"
-                  aria-hidden="true"
-                >
-                  {/* Grid dots for visual texture */}
-                  {Array.from({ length: 20 }, (_, row) =>
-                    Array.from({ length: 30 }, (_, col) => (
-                      <circle
-                        key={`dot-${row}-${col}`}
-                        cx={col * 20 + 10}
-                        cy={row * 18 + 9}
-                        r="1"
-                        fill="#E8E4DE"
-                        opacity="0.6"
-                      />
-                    ))
-                  )}
-
-                  {/* UK */}
-                  <circle cx="280" cy="100" r="10" fill="#C6A85C" opacity="0.9" />
-                  <circle cx="280" cy="100" r="16" stroke="#C6A85C" strokeWidth="1" opacity="0.3" />
-
-                  {/* Ireland */}
-                  <circle cx="265" cy="105" r="5" fill="#C6A85C" opacity="0.6" />
-
-                  {/* France */}
-                  <circle cx="290" cy="130" r="6" fill="#C6A85C" opacity="0.5" />
-
-                  {/* Germany */}
-                  <circle cx="310" cy="115" r="6" fill="#C6A85C" opacity="0.5" />
-
-                  {/* US East */}
-                  <circle cx="140" cy="140" r="9" fill="#C6A85C" opacity="0.7" />
-                  <circle cx="140" cy="140" r="15" stroke="#C6A85C" strokeWidth="1" opacity="0.3" />
-
-                  {/* US West */}
-                  <circle cx="80" cy="135" r="6" fill="#C6A85C" opacity="0.5" />
-
-                  {/* Canada */}
-                  <circle cx="130" cy="100" r="5" fill="#C6A85C" opacity="0.4" />
-
-                  {/* UAE */}
-                  <circle cx="380" cy="175" r="6" fill="#C6A85C" opacity="0.5" />
-
-                  {/* India */}
-                  <circle cx="420" cy="180" r="8" fill="#C6A85C" opacity="0.7" />
-                  <circle cx="420" cy="180" r="14" stroke="#C6A85C" strokeWidth="1" opacity="0.3" />
-
-                  {/* Australia */}
-                  <circle cx="500" cy="280" r="9" fill="#C6A85C" opacity="0.7" />
-                  <circle cx="500" cy="280" r="15" stroke="#C6A85C" strokeWidth="1" opacity="0.3" />
-
-                  {/* New Zealand */}
-                  <circle cx="540" cy="300" r="5" fill="#C6A85C" opacity="0.4" />
-
-                  {/* Singapore */}
-                  <circle cx="460" cy="220" r="5" fill="#C6A85C" opacity="0.4" />
-
-                  {/* South Africa */}
-                  <circle cx="340" cy="290" r="6" fill="#C6A85C" opacity="0.5" />
-                </svg>
+                <div className="w-full max-w-lg rounded-[2rem] border border-border/70 bg-[#f7efe6] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.08)] md:p-6">
+                  <img
+                    src="/world_map.png"
+                    alt="World map showing delivery coverage"
+                    className="w-full h-auto rounded-[1.25rem] object-contain"
+                  />
+                </div>
               </div>
 
               {/* Right — copy */}
               <div data-delay="2">
                 <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-                  Worldwide
+                  Delivery network
                 </span>
 
                 <h2 className="font-display text-display-lg text-text-heading mt-4">
@@ -624,29 +567,20 @@ export default function Home() {
                 </h2>
 
                 <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
-                  We work with families, planners, brands, and clubs across the US, UK,
-                  Europe, Australia, India, and beyond. Every order ships tracked. Digital
-                  delivery available for clients who print locally.
+                  We create custom print for families, planners, brands, and clubs across North
+                  America, United Kingdom, Europe. Each order
+                  ships tracked, with digital delivery available for clients who print locally.
                 </p>
 
-                <div className="flex flex-wrap gap-3 mt-8">
+                <div className="mt-8 flex flex-wrap gap-3">
                   {[
                     'United Kingdom',
                     'United States',
-                    'Australia',
-                    'India',
-                    'Germany',
-                    'France',
-                    'Ireland',
-                    'Canada',
-                    'UAE',
-                    'South Africa',
-                    'New Zealand',
-                    'Singapore',
+                    'Europe',
                   ].map((region) => (
                     <span
                       key={region}
-                      className="font-mono text-label text-text-muted border border-border px-3 py-1"
+                      className="border border-border bg-bg-primary/70 px-3 py-1 font-mono text-label uppercase tracking-wider text-text-muted"
                     >
                       {region}
                     </span>

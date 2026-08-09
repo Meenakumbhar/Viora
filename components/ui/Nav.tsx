@@ -47,7 +47,6 @@ const NAV_LINKS: NavLink[] = [
     href: '/about',
   },
   { label: 'Process', href: '/process' },
-  { label: 'Pricing', href: '/pricing' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -84,7 +83,6 @@ const MOBILE_NAV: MobileNavSection[] = [
     ],
   },
   { label: 'Process', href: '/process' },
-  { label: 'Pricing', href: '/pricing' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ];
@@ -300,6 +298,21 @@ export default function Nav() {
               ))}
             </div>
 
+            <Link
+              href="/pricing"
+              aria-label="View quote cart"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="20" r="1" />
+                <circle cx="19" cy="20" r="1" />
+                <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
+              </svg>
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-gold px-1 text-[10px] font-semibold text-bg-primary">
+                2
+              </span>
+            </Link>
+
             {/* CTA */}
             <Link
               href="/contact"
@@ -417,7 +430,7 @@ export default function Nav() {
 
           {/* CTA */}
           <div
-            className="mt-4"
+            className="mt-4 flex flex-col items-center gap-3"
             style={{
               opacity: mobileOpen ? 1 : 0,
               transform: mobileOpen ? 'translateY(0)' : 'translateY(16px)',
@@ -425,11 +438,16 @@ export default function Nav() {
             }}
           >
             <Link
-              href="/contact"
+              href="/pricing"
               onClick={() => setMobileOpen(false)}
-              className="border border-accent-gold text-accent-gold bg-transparent px-8 py-3 font-body text-label uppercase tracking-wider hover:bg-accent-gold hover:text-bg-primary transition-all duration-300 inline-block"
+              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
             >
-              Get a Quote
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="20" r="1" />
+                <circle cx="19" cy="20" r="1" />
+                <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
+              </svg>
+              Cart (2)
             </Link>
           </div>
         </div>

@@ -107,7 +107,7 @@ export default async function ServicePage({ params }: PageProps) {
 
           <div className="mt-10 flex gap-4">
             <Button variant="primary" size="lg" href="/contact">
-              Get a Quote
+              Start a Project
             </Button>
             <Button variant="ghost" size="lg" href="#pricing">
               View Pricing
@@ -346,7 +346,7 @@ export default async function ServicePage({ params }: PageProps) {
             </p>
             <div className="mt-10">
               <Button variant="primary" size="lg" href="/contact">
-                Get a Quote
+                Start a Project
               </Button>
             </div>
           </div>
