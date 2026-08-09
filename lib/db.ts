@@ -28,6 +28,88 @@ export function getDb(): NeonQueryFunction<false, false> | null {
   return sqlInstance;
 }
 
+// ─── Row Normalizers ─────────────────────────────────────────────────────────
+
+function toIsoDateString(val: unknown): string {
+  if (!val) return '';
+  if (val instanceof Date) {
+    return val.toISOString().split('T')[0];
+  }
+  if (typeof val === 'string') {
+    return val;
+  }
+  return String(val);
+}
+
+function toIsoTimestampString(val: unknown): string {
+  if (!val) return '';
+  if (val instanceof Date) {
+    return val.toISOString();
+  }
+  if (typeof val === 'string') {
+    return val;
+  }
+  return String(val);
+}
+
+function normalizePost(row: any): Post {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ''),
+    slug: String(row.slug ?? ''),
+    content: String(row.content ?? ''),
+    excerpt: row.excerpt != null ? String(row.excerpt) : null,
+    category: row.category != null ? String(row.category) : null,
+    image_url: row.image_url != null ? String(row.image_url) : null,
+    published_at: toIsoDateString(row.published_at),
+    published: Boolean(row.published),
+    created_at: toIsoTimestampString(row.created_at),
+  };
+}
+
+function normalizePortfolioItem(row: any): PortfolioItem {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ''),
+    category: row.category as ServiceCategory,
+    filters: typeof row.filters === 'object' && row.filters !== null ? row.filters : {},
+    image_url: String(row.image_url ?? ''),
+    image_urls: Array.isArray(row.image_urls) ? row.image_urls : null,
+    description: row.description != null ? String(row.description) : null,
+    location: row.location != null ? String(row.location) : null,
+    published: Boolean(row.published),
+    created_at: toIsoTimestampString(row.created_at),
+  };
+}
+
+function normalizeEnquiry(row: any): Enquiry {
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ''),
+    email: String(row.email ?? ''),
+    phone: row.phone != null ? String(row.phone) : null,
+    country: row.country != null ? String(row.country) : null,
+    service_type: String(row.service_type ?? ''),
+    event_date: row.event_date != null ? toIsoDateString(row.event_date) : null,
+    quantity_estimate: row.quantity_estimate != null ? String(row.quantity_estimate) : null,
+    description: row.description != null ? String(row.description) : null,
+    source: row.source != null ? String(row.source) : null,
+    created_at: toIsoTimestampString(row.created_at),
+    status: row.status,
+  };
+}
+
+function normalizeSubscriber(row: any): Subscriber {
+  return {
+    id: String(row.id),
+    email: String(row.email ?? ''),
+    first_name: row.first_name != null ? String(row.first_name) : null,
+    country: row.country != null ? String(row.country) : null,
+    subscribed_at: toIsoTimestampString(row.subscribed_at),
+    active: Boolean(row.active),
+  };
+}
+
 // ─── Portfolio ────────────────────────────────────────────────────────────────
 
 export async function getPortfolioItems(category?: string): Promise<PortfolioItem[]> {
@@ -53,7 +135,7 @@ export async function getPortfolioItems(category?: string): Promise<PortfolioIte
       }
 
       if (rows && rows.length > 0) {
-        return rows as PortfolioItem[];
+        return (rows as any[]).map(normalizePortfolioItem);
       }
 
     } catch (err) {
@@ -90,7 +172,7 @@ export async function getPortfolioItemById(id: string): Promise<PortfolioItem | 
         WHERE id = ${id} AND published = true
         LIMIT 1
       `;
-      if (rows.length > 0) return rows[0] as PortfolioItem;
+      if (rows.length > 0) return normalizePortfolioItem(rows[0]);
     } catch (err) {
       console.error(`[db] getPortfolioItemById(${id}) error:`, err);
     }
@@ -129,7 +211,7 @@ export async function getBlogPosts(limit = 20): Promise<Post[]> {
       `;
 
       if (rows && rows.length > 0) {
-        return rows as Post[];
+        return (rows as any[]).map(normalizePost);
       }
     } catch (err) {
       console.error('[db] getBlogPosts error:', err);
@@ -164,7 +246,7 @@ export async function getBlogPostBySlug(slug: string): Promise<Post | null> {
       `;
 
       if (rows && rows.length > 0) {
-        return rows[0] as Post;
+        return normalizePost(rows[0]);
       }
     } catch (err) {
       console.error(`[db] getBlogPostBySlug(${slug}) error:`, err);
@@ -226,7 +308,7 @@ export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
     RETURNING id, name, email, phone, country, service_type, event_date, quantity_estimate, description, source, created_at, status
   `;
 
-  return rows[0] as Enquiry;
+  return normalizeEnquiry(rows[0]);
 }
 
 // ─── Subscribers ──────────────────────────────────────────────────────────────
@@ -252,7 +334,7 @@ export async function upsertSubscriber(payload: SubscriberPayload): Promise<{
   `;
 
   if (existing && existing.length > 0) {
-    const sub = existing[0] as Subscriber;
+    const sub = normalizeSubscriber(existing[0]);
     if (sub.active) {
       return { subscriber: sub, alreadySubscribed: true, resubscribed: false };
     }
@@ -264,7 +346,7 @@ export async function upsertSubscriber(payload: SubscriberPayload): Promise<{
       WHERE id = ${sub.id}
       RETURNING id, email, first_name, country, subscribed_at, active
     `;
-    return { subscriber: updated[0] as Subscriber, alreadySubscribed: false, resubscribed: true };
+    return { subscriber: normalizeSubscriber(updated[0]), alreadySubscribed: false, resubscribed: true };
   }
 
   // Insert new subscriber
@@ -283,7 +365,7 @@ export async function upsertSubscriber(payload: SubscriberPayload): Promise<{
     RETURNING id, email, first_name, country, subscribed_at, active
   `;
 
-  return { subscriber: inserted[0] as Subscriber, alreadySubscribed: false, resubscribed: false };
+  return { subscriber: normalizeSubscriber(inserted[0]), alreadySubscribed: false, resubscribed: false };
 }
 
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
@@ -308,12 +390,13 @@ export async function getAdminDashboardData(): Promise<{
     ]);
 
     const enquiries =
-      enquiriesRes.status === 'fulfilled' ? (enquiriesRes.value as Enquiry[]) : [];
+      enquiriesRes.status === 'fulfilled' ? (enquiriesRes.value as any[]).map(normalizeEnquiry) : [];
     const subscribers =
-      subscribersRes.status === 'fulfilled' ? (subscribersRes.value as Subscriber[]) : [];
+      subscribersRes.status === 'fulfilled' ? (subscribersRes.value as any[]).map(normalizeSubscriber) : [];
     const portfolioItems =
-      portfolioRes.status === 'fulfilled' ? (portfolioRes.value as Partial<PortfolioItem>[]) : [];
-    const posts = postsRes.status === 'fulfilled' ? (postsRes.value as Partial<Post>[]) : [];
+      portfolioRes.status === 'fulfilled' ? (portfolioRes.value as any[]).map(normalizePortfolioItem) : [];
+    const posts =
+      postsRes.status === 'fulfilled' ? (postsRes.value as any[]).map(normalizePost) : [];
 
     return { enquiries, subscribers, portfolioItems, posts };
   } catch (err) {

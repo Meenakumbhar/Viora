@@ -60,7 +60,14 @@ export default async function BlogPage() {
                   <div className="lg:col-span-5 flex flex-col justify-between">
                     <div>
                       <span className="font-mono text-xs text-text-muted uppercase tracking-wider">
-                        {featuredPost.category} · {featuredPost.published_at}
+                        {featuredPost.category}
+                        {featuredPost.published_at
+                          ? ` · ${new Date(featuredPost.published_at).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}`
+                          : ''}
                       </span>
                       <h2 className="mt-4 font-display text-3xl md:text-4xl text-text-primary leading-tight hover:text-accent-gold transition-colors duration-300">
                         <Link href={`/blog/${featuredPost.slug}`}>
@@ -113,7 +120,14 @@ export default async function BlogPage() {
                     <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
                       <div>
                         <span className="font-mono text-xs text-text-muted uppercase tracking-wider">
-                          {post.category} · {post.published_at}
+                          {post.category}
+                          {post.published_at
+                            ? ` · ${new Date(post.published_at).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}`
+                            : ''}
                         </span>
                         <h3 className="mt-3 font-display text-2xl text-text-primary group-hover:text-accent-gold transition-colors duration-300 line-clamp-2">
                           <Link href={`/blog/${post.slug}`}>
