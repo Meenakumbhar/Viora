@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { PortfolioFilters } from '@/types/database';
 import {
   addToPortfolioCart,
@@ -18,6 +20,7 @@ interface PortfolioItemData {
   filters?: PortfolioFilters;
   description?: string | null;
   location?: string | null;
+  image_url?: string | null;
 }
 
 interface PortfolioGridProps {
@@ -46,6 +49,139 @@ const categoryGradients: Record<string, string> = {
 
 const aspectVariants = ['aspect-[3/4]', 'aspect-[4/3]', 'aspect-square'] as const;
 
+const IMAGE_SIZES = '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VISUAL — gradient backdrop + optional real photo, graceful on-error fallback
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PortfolioVisual = memo(function PortfolioVisual({
+  title,
+  category,
+  imageUrl,
+  className = '',
+  priority = false,
+  watermark = true,
+  children,
+}: {
+  title: string;
+  category: string;
+  imageUrl?: string | null;
+  className?: string;
+  priority?: boolean;
+  watermark?: boolean;
+  children?: React.ReactNode;
+}) {
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>(imageUrl ? 'loading' : 'error');
+  const gradient = categoryGradients[category] || categoryGradients.branding;
+  const showImage = Boolean(imageUrl) && status !== 'error';
+
+  return (
+    <div className={`relative overflow-hidden ${className}`} style={{ background: gradient }}>
+      {watermark && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 flex select-none items-center justify-center font-display text-[6rem] font-bold text-cat-heading opacity-[0.06]"
+        >
+          {title.charAt(0).toUpperCase()}
+        </span>
+      )}
+      {showImage && (
+        <Image
+          src={imageUrl as string}
+          alt={title}
+          fill
+          priority={priority}
+          sizes={IMAGE_SIZES}
+          className={`object-cover transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.05] ${
+            status === 'loaded' ? 'opacity-100' : 'opacity-0'
+          }`}
+          onLoad={() => setStatus('loaded')}
+          onError={() => setStatus('error')}
+        />
+      )}
+      {children}
+    </div>
+  );
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD — memoized so opening the modal/cart never re-renders the whole grid
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PortfolioCard = memo(function PortfolioCard({
+  item,
+  aspect,
+  isAppearing,
+  delayMs,
+  priority,
+  onBuy,
+}: {
+  item: PortfolioItemData;
+  aspect: string;
+  isAppearing: boolean;
+  delayMs: number;
+  priority: boolean;
+  onBuy: (item: PortfolioItemData) => void;
+}) {
+  return (
+    <article
+      data-category={item.category}
+      className={[
+        'group relative mb-4 break-inside-avoid overflow-hidden border border-border bg-cat-surface',
+        'transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-cat-accent hover:shadow-[0_20px_44px_rgba(24,31,39,0.12)]',
+        isAppearing ? 'animate-slide-up' : '',
+      ].join(' ')}
+      style={isAppearing ? { animationDelay: `${delayMs}ms` } : undefined}
+    >
+      {/* Whole-card link to the project page — sits above everything except Buy */}
+      <Link
+        href={`/portfolio/${item.id}`}
+        className="absolute inset-0 z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent"
+        aria-label={`View ${item.title}`}
+      />
+
+      {/* Visual — full-bleed photo/gradient */}
+      <PortfolioVisual
+        title={item.title}
+        category={item.category}
+        imageUrl={item.image_url}
+        className={`${aspect} w-full`}
+        priority={priority}
+      >
+        <span className="glass absolute left-3 top-3 inline-flex items-center gap-1.5 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-cat-heading">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-cat-accent" />
+          {item.category}
+        </span>
+      </PortfolioVisual>
+
+      {/* Caption */}
+      <div className="px-5 py-4">
+        <h3 className="font-display text-xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
+          {item.title}
+        </h3>
+        {item.description && (
+          <p className="mt-2 font-body text-sm text-cat-body line-clamp-2 leading-relaxed">
+            {item.description}
+          </p>
+        )}
+
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+          <span className="font-mono text-[10px] text-cat-muted uppercase tracking-wider">
+            {item.location || 'Worldwide'}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => onBuy(item)}
+            className="relative z-20 w-1/4 shrink-0 rounded-full border border-cat-accent bg-cat-accent px-3 py-2 text-center font-mono text-[10px] font-semibold uppercase tracking-widest text-cat-bg transition-all duration-200 hover:-translate-y-0.5 hover:bg-cat-accent-dark hover:shadow-[0_14px_30px_rgba(198,168,92,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2"
+          >
+            Buy
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+});
+
 export default function PortfolioGrid({
   items,
   showFilters = true,
@@ -62,9 +198,9 @@ export default function PortfolioGrid({
   const [activeFilter, setActiveFilter] = useState<string>(initialFilter);
   const [activeFilters, setActiveFilters] = useState<PortfolioFilters>({});
   const [openFilter, setOpenFilter] = useState<keyof PortfolioFilters | null>(null);
-  const [selectedItem, setSelectedItem] = useState<PortfolioItemData | null>(null);
   const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [toast, setToast] = useState<{ key: number; title: string } | null>(null);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [appearing, setAppearing] = useState<Set<string>>(() => {
     const matched = FILTERS.find(
@@ -82,6 +218,7 @@ export default function PortfolioGrid({
   const cartSubtotal = cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const cartTax = cartSubtotal * 0.2;
   const cartTotal = cartSubtotal + cartTax;
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
     const syncCart = () => setCartItems(readPortfolioCart());
@@ -89,6 +226,13 @@ export default function PortfolioGrid({
     window.addEventListener('portfolio-cart-updated', syncCart);
     return () => window.removeEventListener('portfolio-cart-updated', syncCart);
   }, []);
+
+  // Auto-dismiss the "added to cart" toast; restarts the timer on every new add
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const categoryItems = useMemo(() => {
     if (activeFilter === 'All') return items;
@@ -133,17 +277,6 @@ export default function PortfolioGrid({
   }, [appearing]);
 
   useEffect(() => {
-    if (!selectedItem) return;
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setSelectedItem(null);
-    }
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [selectedItem]);
-
-  useEffect(() => {
     if (!openFilter) return;
 
     function handleOutsideClick(event: MouseEvent) {
@@ -174,7 +307,7 @@ export default function PortfolioGrid({
       : items.filter((item) => item.category.toLowerCase() === filter.toLowerCase());
     const nextVisible = nextFiltered.slice(0, ITEMS_PER_PAGE);
     setAppearing(new Set(nextVisible.map((item) => item.id)));
-    
+
     const categoryKey = filter === 'All' ? 'all' : filter.toLowerCase();
 
     // Update URL query parameters without triggering full page reload
@@ -218,6 +351,17 @@ export default function PortfolioGrid({
     setAppearing(new Set(newItems.map((item) => item.id)));
   }
 
+  const handleBuyItem = useCallback((item: PortfolioItemData) => {
+    addToPortfolioCart({
+      id: item.id,
+      title: item.title,
+      category: item.category,
+      unitPrice: 95,
+    });
+    setCartItems(readPortfolioCart());
+    setToast({ key: Date.now(), title: item.title });
+  }, []);
+
   return (
     <div data-category={activeFilter === 'All' ? 'all' : activeFilter.toLowerCase()}>
       {/* Filter bar */}
@@ -230,13 +374,20 @@ export default function PortfolioGrid({
               aria-selected={activeFilter === filter}
               onClick={() => handleFilterChange(filter)}
               className={[
-                'pb-2 font-body text-body-base uppercase tracking-wider transition-all duration-300 cursor-pointer',
+                'relative pb-2 font-body text-body-base uppercase tracking-wider transition-colors duration-200 cursor-pointer',
                 activeFilter === filter
-                  ? 'border-b-2 border-cat-accent text-cat-accent font-medium'
-                  : 'border-b-2 border-transparent text-cat-muted hover:text-cat-heading',
+                  ? 'text-cat-accent font-medium'
+                  : 'text-cat-muted hover:text-cat-heading',
               ].join(' ')}
             >
               {filter}
+              {activeFilter === filter && (
+                <motion.span
+                  layoutId="portfolio-filter-underline"
+                  className="absolute inset-x-0 -bottom-[1px] h-[2px] bg-cat-accent"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                />
+              )}
             </button>
           ))}
         </div>
@@ -253,18 +404,27 @@ export default function PortfolioGrid({
             {(Object.keys(filterOptions) as (keyof PortfolioFilters)[]).map((group) => (
               filterOptions[group].size > 0 && (
                 <div key={group} className="relative">
-                  <button
+                  <motion.button
                     type="button"
                     aria-expanded={openFilter === group}
                     aria-controls={`portfolio-filter-${group}`}
                     onClick={() => setOpenFilter(openFilter === group ? null : group)}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     className={[
-                      'group/filter flex min-h-11 items-center gap-3 border px-6 py-3 font-mono text-[10px] uppercase tracking-[0.12em] transition-all duration-200',
+                      'group/filter flex min-h-11 items-center gap-3 border px-6 py-3 font-mono text-[10px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
                       openFilter === group
-                        ? 'border-cat-heading bg-cat-heading text-cat-bg'
-                        : 'border-border text-cat-heading hover:border-cat-accent',
+                        ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
+                        : 'border-border text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.08)]',
                     ].join(' ')}
                   >
+                    <span
+                      aria-hidden="true"
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-200 ${
+                        (activeFilters[group]?.length ?? 0) > 0 ? 'bg-cat-accent' : 'bg-border'
+                      }`}
+                    />
                     <span>{filterLabels[group]}</span>
                     {(activeFilters[group]?.length ?? 0) > 0 && (
                       <span className="opacity-70">({activeFilters[group]?.length})</span>
@@ -286,12 +446,12 @@ export default function PortfolioGrid({
                         strokeLinejoin="round"
                       />
                     </svg>
-                  </button>
+                  </motion.button>
 
                   {openFilter === group && (
                     <div
                       id={`portfolio-filter-${group}`}
-                      className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden rounded-xl border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
+                      className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
                       style={{ backgroundColor: 'var(--cat-bg)', opacity: 1 }}
                       role="region"
                       aria-label={`${filterLabels[group]} filter options`}
@@ -300,7 +460,7 @@ export default function PortfolioGrid({
                         {[...filterOptions[group].keys()].sort().map((value) => (
                           <label
                             key={value}
-                            className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg px-3 font-mono text-[11px] uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
+                            className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-[11px] uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
                           >
                             <input
                               type="checkbox"
@@ -327,90 +487,17 @@ export default function PortfolioGrid({
         ref={gridRef}
         className="columns-1 gap-4 md:columns-2 lg:columns-3"
       >
-        {visible.map((item, i) => {
-          const aspect = aspectVariants[i % aspectVariants.length];
-          const gradient = categoryGradients[item.category] || categoryGradients.branding;
-          const isAppearing = appearing.has(item.id);
-
-          return (
-            <article
-              key={item.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => setSelectedItem(item)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  setSelectedItem(item);
-                }
-              }}
-              data-category={item.category}
-              className={[
-                'group relative mb-4 break-inside-avoid overflow-hidden border border-border bg-cat-surface p-6',
-                'cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1 hover:border-cat-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent',
-                isAppearing ? 'animate-slide-up' : '',
-              ].join(' ')}
-              style={
-                isAppearing
-                  ? { animationDelay: `${(i % ITEMS_PER_PAGE) * 80}ms` }
-                  : undefined
-              }
-            >
-              {/* Visual Header - Gradient block */}
-              <div
-                className={`${aspect} w-full border border-border/20 mb-6`}
-                style={{ background: gradient }}
-              />
-
-              {/* Text Details Area */}
-              <div>
-                <span className="font-mono text-label uppercase text-cat-accent-dark block">
-                  {item.category}
-                </span>
-                <h3 className="mt-2 font-display text-2xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
-                  {item.title}
-                </h3>
-                {item.description && (
-                  <p className="mt-3 font-body text-body-base text-cat-body line-clamp-3 leading-relaxed">
-                    {item.description}
-                  </p>
-                )}
-                
-                <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between">
-                  <span className="font-mono text-[10px] text-cat-muted uppercase tracking-wider">
-                    {item.location || 'Worldwide'}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <Link
-                      href={`/portfolio/${item.id}`}
-                      onClick={(event) => event.stopPropagation()}
-                      className="inline-flex min-h-9 items-center gap-1 border border-cat-accent bg-cat-accent px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-wider text-cat-bg transition-all duration-200 hover:-translate-y-0.5 hover:bg-cat-accent-dark hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2"
-                    >
-                      View Project <span aria-hidden="true">&rarr;</span>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        addToPortfolioCart({
-                          id: item.id,
-                          title: item.title,
-                          category: item.category,
-                          unitPrice: 95,
-                        });
-                        setCartItems(readPortfolioCart());
-                        setCartOpen(true);
-                      }}
-                      className="inline-flex min-h-9 items-center border border-cat-heading bg-transparent px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-wider text-cat-heading transition-all duration-200 hover:-translate-y-0.5 hover:bg-cat-heading hover:text-cat-bg hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2"
-                    >
-                      Buy
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
+        {visible.map((item, i) => (
+          <PortfolioCard
+            key={item.id}
+            item={item}
+            aspect={aspectVariants[i % aspectVariants.length]}
+            isAppearing={appearing.has(item.id)}
+            delayMs={(i % ITEMS_PER_PAGE) * 80}
+            priority={i < 3}
+            onBuy={handleBuyItem}
+          />
+        ))}
       </div>
 
       {/* Empty state */}
@@ -425,56 +512,10 @@ export default function PortfolioGrid({
         <div className="mt-12 flex justify-center">
           <button
             onClick={handleLoadMore}
-            className="border border-accent-gold bg-transparent px-8 py-3 font-body text-label uppercase tracking-wider text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+            className="border border-accent-gold bg-transparent px-8 py-3 font-body text-label uppercase tracking-wider text-accent-gold transition-colors duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
           >
             Load more
           </button>
-        </div>
-      )}
-
-      {selectedItem && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setSelectedItem(null);
-          }}
-        >
-          <article
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="portfolio-detail-title"
-            className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto border border-[#D9D4CC] bg-[#FDFCFA] p-6 text-[#1C2530] shadow-2xl md:p-10"
-          >
-            <button
-              type="button"
-              onClick={() => setSelectedItem(null)}
-              className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center border border-[#D9D4CC] font-mono text-lg text-[#1C2530] transition-colors hover:border-[#A88A40] hover:text-[#A88A40] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A88A40]"
-              aria-label="Close project details"
-            >
-              &times;
-            </button>
-            <div className="mb-8 aspect-[16/7] w-full border border-border/30" style={{ background: categoryGradients[selectedItem.category] }} />
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#6B5420]">
-              {selectedItem.category}
-            </span>
-            <h2 id="portfolio-detail-title" className="mt-3 max-w-xl font-display text-4xl text-[#1C2530] md:text-5xl">
-              {selectedItem.title}
-            </h2>
-            {selectedItem.description && (
-              <p className="mt-5 max-w-xl font-body text-body-lg leading-relaxed text-[#374151]">
-                {selectedItem.description}
-              </p>
-            )}
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-[#D9D4CC] pt-5">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[#5B6470]">
-                {selectedItem.location || 'Worldwide'}
-              </span>
-              {Object.values(selectedItem.filters ?? {}).flat().map((value) => (
-                <span key={value} className="border border-[#D9D4CC] px-2 py-1 font-mono text-[9px] uppercase tracking-wider text-[#5B6470]">{value}</span>
-              ))}
-            </div>
-          </article>
         </div>
       )}
 
@@ -542,6 +583,65 @@ export default function PortfolioGrid({
           </aside>
         </div>
       )}
+
+      {/* Persistent cart trigger — lets people reopen the drawer without another Buy click */}
+      {!cartOpen && cartCount > 0 && (
+        <motion.button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="fixed bottom-6 left-6 z-[190] flex items-center gap-3 border border-cat-heading bg-cat-heading px-5 py-3 text-cat-bg shadow-[0_20px_50px_rgba(24,31,39,0.25)]"
+          aria-label={`Open cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="9" cy="20" r="1" />
+            <circle cx="19" cy="20" r="1" />
+            <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
+          </svg>
+          <span className="font-mono text-[10px] font-medium uppercase tracking-widest">Cart</span>
+          <span className="flex h-5 min-w-5 items-center justify-center bg-cat-accent px-1 font-mono text-[10px] font-semibold text-cat-heading">
+            {cartCount}
+          </span>
+        </motion.button>
+      )}
+
+      {/* "Added to cart" toast — confirms the add without blocking further browsing */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.key}
+            role="status"
+            aria-live="polite"
+            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+            className="fixed bottom-6 right-6 z-[220] flex max-w-sm items-center gap-4 border border-border bg-[#FDFCFA] px-5 py-4 shadow-[0_20px_50px_rgba(24,31,39,0.18)]"
+          >
+            <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center border border-cat-accent text-cat-accent">
+              &check;
+            </span>
+            <div className="min-w-0">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-cat-muted">Added to cart</p>
+              <p className="mt-0.5 truncate font-display text-base text-cat-heading">{toast.title}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCartOpen(true);
+                setToast(null);
+              }}
+              className="ml-1 shrink-0 font-mono text-[10px] font-medium uppercase tracking-wider text-cat-accent-dark transition-colors hover:text-cat-heading"
+            >
+              View cart &rarr;
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

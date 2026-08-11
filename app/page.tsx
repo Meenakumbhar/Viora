@@ -5,13 +5,11 @@ import Link from 'next/link';
 import HeroVideo from '@/components/ui/HeroVideo';
 import Button from '@/components/ui/Button';
 import SectionReveal from '@/components/ui/SectionReveal';
-import ServiceCard from '@/components/ui/ServiceCard';
 import TestimonialSlider from '@/components/ui/TestimonialSlider';
-import NewsletterForm from '@/components/ui/NewsletterForm';
 import AnimatedHeadline from '@/components/ui/AnimatedHeadline';
 import CurtainReveal from '@/components/ui/CurtainReveal';
 import CountUp from '@/components/ui/CountUp';
-import { services, portfolioItems, processSteps, blogPosts } from '@/lib/data';
+import { portfolioItems, processSteps, blogPosts } from '@/lib/data';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -226,52 +224,6 @@ export default function Home() {
         </SectionReveal>
       </section>
 
-      {/* ──────────────────── SECTION 3 — SERVICES GRID ──────────────────── */}
-      <section id="services" className="bg-bg-alternate py-24 md:py-36 lg:py-48">
-        <SectionReveal>
-          <div className="container-wide">
-            <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-              What We Do
-            </span>
-
-            <AnimatedHeadline
-              text="Every brief. Every occasion."
-              accentWord="occasion."
-              className="font-display text-display-lg text-text-heading mt-4"
-            />
-
-            {/* Desktop grid */}
-            <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-6 mt-16">
-              {services.slice(0, 5).map((s, i) => (
-                <ServiceCard
-                  key={s.slug}
-                  title={`${s.title} ${s.titleAccent}`}
-                  description={s.description}
-                  category={s.slug.replace('-', ' & ')}
-                  href={`/services/${s.slug}`}
-                  index={i}
-                />
-              ))}
-            </div>
-
-            {/* Mobile horizontal scroll */}
-            <div className="md:hidden overflow-x-auto flex gap-6 mt-16 snap-x snap-mandatory pb-4 -mx-6 px-6">
-              {services.slice(0, 5).map((s, i) => (
-                <div key={s.slug} className="min-w-[280px] flex-shrink-0 snap-start">
-                  <ServiceCard
-                    title={`${s.title} ${s.titleAccent}`}
-                    description={s.description}
-                    category={s.slug.replace('-', ' & ')}
-                    href={`/services/${s.slug}`}
-                    index={i}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </SectionReveal>
-      </section>
-
       {/* ──────────────────── SECTION 4 — FEATURED WORK (PORTFOLIO STRIP) ──────────────────── */}
       <section id="portfolio" className="py-24 md:py-36 lg:py-48 bg-bg-primary">
         <SectionReveal>
@@ -302,7 +254,7 @@ export default function Home() {
                   <div
                     key={item.id}
                     data-category={item.category}
-                    className="group border border-border bg-cat-surface p-6 flex flex-col justify-between h-[450px] w-[320px] flex-shrink-0 transition-all duration-300 hover:border-cat-accent hover:-translate-y-1"
+                    className="group border border-border bg-cat-surface p-6 flex flex-col justify-between h-[450px] w-[320px] flex-shrink-0 transition-[transform,border-color] duration-300 hover:border-cat-accent hover:-translate-y-1"
                   >
                     {/* Visual Header - Gradient block */}
                     <CurtainReveal delay={0.1} style={{ display: 'block', width: '100%', marginBottom: '1.5rem' }}>
@@ -590,24 +542,6 @@ export default function Home() {
             </div>
           </div>
         </SectionReveal>
-      </section>
-
-      {/* ──────────────────── SECTION 9 — NEWSLETTER ──────────────────── */}
-      <section id="newsletter" className="bg-accent-gold py-16 md:py-20">
-        <div className="container-wide text-center">
-          <h2 className="font-display text-display-md text-bg-primary">
-            Stay in the{' '}
-            <em className="italic text-bg-secondary">loop</em>
-          </h2>
-
-          <p className="font-body text-body-base text-bg-primary/80 mt-4">
-            New collections, print guides, and studio updates.
-          </p>
-
-          <div className="mt-8">
-            <NewsletterForm />
-          </div>
-        </div>
       </section>
 
       {/* ──────────────────── SECTION 10 — BLOG PREVIEW ──────────────────── */}

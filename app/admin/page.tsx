@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAdminDashboardData } from '@/lib/db';
 import type { Enquiry, Subscriber, PortfolioItem, Post } from '@/types/database';
+import LogoutButton from '@/components/admin/LogoutButton';
+import EnquiryOrderAction from '@/components/admin/EnquiryOrderAction';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,13 +20,16 @@ function StatusBadge({ status }: { status: string }) {
     read: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
     replied: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
     converted: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+    pending: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    in_progress: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+    completed: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   };
   return (
     <span
       className={`inline-flex items-center border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded-sm ${map[status] ?? 'bg-white/10 text-white/50 border-white/20'
         }`}
     >
-      {status}
+      {status.replace(/_/g, ' ')}
     </span>
   );
 }
@@ -59,7 +64,7 @@ function StatCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function AdminPage() {
-  const { enquiries, subscribers, portfolioItems, posts } = await getAdminDashboardData();
+  const { enquiries, subscribers, portfolioItems, posts, orders } = await getAdminDashboardData();
 
   const noData = enquiries.length === 0 && subscribers.length === 0;
 
@@ -68,6 +73,7 @@ export default async function AdminPage() {
   const activeSubscribers = subscribers.filter((s) => s.active).length;
   const publishedPosts = posts.filter((p) => p.published).length;
   const publishedPortfolio = portfolioItems.filter((p) => p.published).length;
+  const openOrders = orders.filter((o) => o.status !== 'completed').length;
 
   const enquiryByStatus = {
     new: enquiries.filter((e) => e.status === 'new').length,
@@ -75,6 +81,14 @@ export default async function AdminPage() {
     replied: enquiries.filter((e) => e.status === 'replied').length,
     converted: enquiries.filter((e) => e.status === 'converted').length,
   };
+
+  const orderByStatus = {
+    pending: orders.filter((o) => o.status === 'pending').length,
+    in_progress: orders.filter((o) => o.status === 'in_progress').length,
+    completed: orders.filter((o) => o.status === 'completed').length,
+  };
+
+  const orderByEnquiryId = new Map(orders.filter((o) => o.enquiry_id).map((o) => [o.enquiry_id as string, o]));
 
   return (
     /* Fixed overlay — covers root Nav + Footer entirely */
@@ -104,12 +118,27 @@ export default async function AdminPage() {
               Admin
             </span>
           </div>
-          <Link
-            href="/"
-            className="font-mono text-xs uppercase tracking-widest text-white/40 transition-colors hover:text-white"
-          >
-            ← Back to site
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/admin/orders"
+              className="font-mono text-xs uppercase tracking-widest text-[#C6A85C] transition-opacity hover:opacity-80"
+            >
+              Orders →
+            </Link>
+            <Link
+              href="/admin/portfolio"
+              className="font-mono text-xs uppercase tracking-widest text-[#C6A85C] transition-opacity hover:opacity-80"
+            >
+              Manage portfolio →
+            </Link>
+            <Link
+              href="/"
+              className="font-mono text-xs uppercase tracking-widest text-white/40 transition-colors hover:text-white"
+            >
+              ← Back to site
+            </Link>
+            <LogoutButton />
+          </div>
         </div>
       </header>
 
@@ -141,8 +170,14 @@ export default async function AdminPage() {
         )}
 
         {/* ── Stat Grid ── */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-12">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5 mb-12">
           <StatCard label="New Enquiries" value={newEnquiries} sub={`${enquiries.length} total`} />
+          <StatCard
+            label="Open Orders"
+            value={openOrders}
+            sub={`${orders.length} total`}
+            accent="#C6A85C"
+          />
           <StatCard
             label="Subscribers"
             value={activeSubscribers}
@@ -164,8 +199,27 @@ export default async function AdminPage() {
         </div>
 
         {/* ── Enquiry Status Breakdown ── */}
-        <div className="mb-12 grid grid-cols-4 gap-3">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-mono text-xs uppercase tracking-widest text-white/50">Enquiry pipeline</h2>
+        </div>
+        <div className="mb-10 grid grid-cols-4 gap-3">
           {(Object.entries(enquiryByStatus) as [string, number][]).map(([status, count]) => (
+            <div key={status} className="border border-white/8 bg-white/3 p-4 flex items-center justify-between">
+              <StatusBadge status={status} />
+              <span className="font-display text-3xl text-white/70">{count}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Order Status Breakdown ── */}
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-mono text-xs uppercase tracking-widest text-white/50">Order fulfillment</h2>
+          <Link href="/admin/orders" className="font-mono text-xs text-white/30 hover:text-[#C6A85C] transition-colors">
+            Manage orders →
+          </Link>
+        </div>
+        <div className="mb-12 grid grid-cols-3 gap-3">
+          {(Object.entries(orderByStatus) as [string, number][]).map(([status, count]) => (
             <div key={status} className="border border-white/8 bg-white/3 p-4 flex items-center justify-between">
               <StatusBadge status={status} />
               <span className="font-display text-3xl text-white/70">{count}</span>
@@ -196,6 +250,9 @@ export default async function AdminPage() {
                       <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
                         Name
                       </th>
+                      <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
+                        Item ordered
+                      </th>
                       <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40 hidden md:table-cell">
                         Service
                       </th>
@@ -207,6 +264,9 @@ export default async function AdminPage() {
                       </th>
                       <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
                         Status
+                      </th>
+                      <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
+                        Order
                       </th>
                     </tr>
                   </thead>
@@ -220,6 +280,18 @@ export default async function AdminPage() {
                         <td className="px-4 py-3">
                           <p className="font-body text-sm text-white/80">{e.name}</p>
                           <p className="font-mono text-[10px] text-white/30">{e.email}</p>
+                        </td>
+                        <td className="px-4 py-3 max-w-[220px]">
+                          {e.portfolio_items && e.portfolio_items.length > 0 ? (
+                            <p
+                              className="truncate font-body text-sm text-[#C6A85C]"
+                              title={e.portfolio_items.map((item) => item.title).join(', ')}
+                            >
+                              {e.portfolio_items.map((item) => item.title).join(', ')}
+                            </p>
+                          ) : (
+                            <span className="font-mono text-xs text-white/25">— general enquiry —</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
                           <span className="font-mono text-xs text-white/50">{e.service_type}</span>
@@ -240,6 +312,9 @@ export default async function AdminPage() {
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={e.status} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <EnquiryOrderAction enquiry={e} existingOrder={orderByEnquiryId.get(e.id)} />
                         </td>
                       </tr>
                     ))}
@@ -317,6 +392,53 @@ export default async function AdminPage() {
 
           </div>
         </div>
+
+        {/* ── Recent Orders ── */}
+        {orders.length > 0 && (
+          <div className="mt-12">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-mono text-xs uppercase tracking-widest text-white/50">
+                Recent Orders
+              </h2>
+              <Link href="/admin/orders" className="font-mono text-xs text-white/30 hover:text-[#C6A85C] transition-colors">
+                View all →
+              </Link>
+            </div>
+            <div className="border border-white/10 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/5">
+                    <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">Customer</th>
+                    <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40 hidden md:table-cell">Service</th>
+                    <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">Placed</th>
+                    <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.slice(0, 10).map((order, i) => (
+                    <tr key={order.id} className={`border-b border-white/5 hover:bg-white/5 transition-colors ${i % 2 === 0 ? '' : 'bg-white/2'}`}>
+                      <td className="px-4 py-3">
+                        <p className="font-body text-sm text-white/80">{order.customer_name}</p>
+                        <p className="font-mono text-[10px] text-white/30">{order.customer_email}</p>
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <span className="font-mono text-xs text-white/50">{order.service_type}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[10px] text-white/30">
+                          {new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={order.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* ── Recent Blog Posts ── */}
         {posts.length > 0 && (

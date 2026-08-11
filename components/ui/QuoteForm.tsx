@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/src/style.css';
+import { readPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -299,7 +300,6 @@ function CountryCombobox({
         id="quote-country"
         type="text"
         value={query}
-        required
         autoComplete="off"
         onFocus={() => { setOpen(true); setFocused(true); setHighlighted(0); }}
         onBlur={() => setFocused(false)}
@@ -317,7 +317,7 @@ function CountryCombobox({
           lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
-        Country<span className="text-accent-gold ml-0.5">*</span>
+        Country (optional)
       </label>
       {/* Dropdown arrow */}
       <svg
@@ -801,6 +801,15 @@ export default function QuoteForm() {
   const [state, setState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
+  /* ── Portfolio cart context — so a quote raised from "Buy" on a portfolio
+     item stays linked to that item, instead of arriving as a generic request ── */
+  const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
+  const [includeCartItems, setIncludeCartItems] = useState(true);
+
+  useEffect(() => {
+    setCartItems(readPortfolioCart());
+  }, []);
+
   /* ── Field handlers ───────────────────────────────────────────────────── */
 
   function handleChange(
@@ -822,7 +831,6 @@ export default function QuoteForm() {
     if (!data.name.trim()) return 'Please enter your name.';
     if (!data.email.trim()) return 'Please enter your email address.';
     if (!isValidEmail(data.email)) return 'Please enter a valid email address.';
-    if (!data.country) return 'Please select your country.';
     return null;
   }
 
@@ -876,6 +884,9 @@ export default function QuoteForm() {
           quantity_estimate: data.quantity === 'Custom' ? data.customQuantity : data.quantity,
           description: data.description,
           source: data.source || null,
+          portfolio_items: includeCartItems && cartItems.length > 0
+            ? cartItems.map((item) => ({ id: item.id, title: item.title, category: item.category }))
+            : null,
         }),
       });
       if (!res.ok) {
@@ -928,6 +939,27 @@ export default function QuoteForm() {
     <form onSubmit={handleSubmit} noValidate>
       {/* Step dots */}
       <StepDots current={step} total={3} />
+
+      {/* ── Portfolio cart context banner ───────────────────────────────── */}
+      {cartItems.length > 0 && includeCartItems && (
+        <div className="mb-8 flex items-start justify-between gap-4 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">
+              Requesting a quote for {cartItems.length} item{cartItems.length === 1 ? '' : 's'} from your cart
+            </p>
+            <p className="mt-1.5 font-body text-sm text-text-muted">
+              {cartItems.map((item) => item.title).join(', ')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIncludeCartItems(false)}
+            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
+          >
+            Not about this
+          </button>
+        </div>
+      )}
 
       {/* ── STEP 1: Who you are ───────────────────────────────────────── */}
       {step === 1 && (

@@ -17,9 +17,13 @@ CREATE TABLE IF NOT EXISTS enquiries (
     quantity_estimate TEXT,
     description TEXT,
     source TEXT,
+    portfolio_items JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     status TEXT DEFAULT 'new' NOT NULL CHECK (status IN ('new', 'read', 'replied', 'converted'))
 );
+
+-- Add portfolio_items to an existing database without affecting current enquiries.
+ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS portfolio_items JSONB;
 
 -- 2. Create Subscribers Table (Newsletter)
 CREATE TABLE IF NOT EXISTS subscribers (
@@ -65,12 +69,44 @@ CREATE TABLE IF NOT EXISTS posts (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- 5. Create Orders Table (fulfillment tracker, separate from enquiry CRM status)
+CREATE TABLE IF NOT EXISTS orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enquiry_id UUID REFERENCES enquiries(id) ON DELETE SET NULL,
+    customer_name TEXT NOT NULL,
+    customer_email TEXT NOT NULL,
+    service_type TEXT NOT NULL,
+    event_date DATE,
+    quantity_estimate TEXT,
+    details TEXT,
+    portfolio_items JSONB,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed')),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Add event_date/quantity_estimate/portfolio_items to an existing database without affecting current orders.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS event_date DATE;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS quantity_estimate TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS portfolio_items JSONB;
+
+-- 6. Create Order Status History Table (the visual tracker's timeline data)
+CREATE TABLE IF NOT EXISTS order_status_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'in_progress', 'completed')),
+    note TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
 -- ─── Indexes for Performance ──────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_subscribers_active ON subscribers(active, subscribed_at DESC);
 CREATE INDEX IF NOT EXISTS idx_portfolio_items_published_category ON portfolio_items(published, category, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_published_slug ON posts(published, slug);
+CREATE INDEX IF NOT EXISTS idx_order_status_history_order ON order_status_history(order_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_posts_published_date ON posts(published, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status, created_at DESC);
 
 
 -- ─── 5. Seed Initial Portfolio Items ──────────────────────────────────────────

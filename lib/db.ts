@@ -8,6 +8,12 @@ import type {
   EnquiryPayload,
   SubscriberPayload,
   ServiceCategory,
+  PortfolioFilters,
+  Order,
+  OrderInput,
+  OrderStatus,
+  OrderStatusHistoryEntry,
+  PortfolioItemRef,
 } from '@/types/database';
 
 /**
@@ -82,6 +88,17 @@ function normalizePortfolioItem(row: any): PortfolioItem {
   };
 }
 
+function normalizePortfolioItemRefs(value: unknown): PortfolioItemRef[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  return value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((item) => ({
+      id: String(item.id ?? ''),
+      title: String(item.title ?? ''),
+      category: String(item.category ?? ''),
+    }));
+}
+
 function normalizeEnquiry(row: any): Enquiry {
   return {
     id: String(row.id),
@@ -94,8 +111,36 @@ function normalizeEnquiry(row: any): Enquiry {
     quantity_estimate: row.quantity_estimate != null ? String(row.quantity_estimate) : null,
     description: row.description != null ? String(row.description) : null,
     source: row.source != null ? String(row.source) : null,
+    portfolio_items: normalizePortfolioItemRefs(row.portfolio_items),
     created_at: toIsoTimestampString(row.created_at),
     status: row.status,
+  };
+}
+
+function normalizeOrder(row: any): Order {
+  return {
+    id: String(row.id),
+    enquiry_id: row.enquiry_id != null ? String(row.enquiry_id) : null,
+    customer_name: String(row.customer_name ?? ''),
+    customer_email: String(row.customer_email ?? ''),
+    service_type: String(row.service_type ?? ''),
+    event_date: row.event_date != null ? toIsoDateString(row.event_date) : null,
+    quantity_estimate: row.quantity_estimate != null ? String(row.quantity_estimate) : null,
+    details: row.details != null ? String(row.details) : null,
+    portfolio_items: normalizePortfolioItemRefs(row.portfolio_items),
+    status: row.status,
+    created_at: toIsoTimestampString(row.created_at),
+    updated_at: toIsoTimestampString(row.updated_at),
+  };
+}
+
+function normalizeOrderHistoryEntry(row: any): OrderStatusHistoryEntry {
+  return {
+    id: String(row.id),
+    order_id: String(row.order_id),
+    status: row.status,
+    note: row.note != null ? String(row.note) : null,
+    created_at: toIsoTimestampString(row.created_at),
   };
 }
 
@@ -195,6 +240,97 @@ export async function getPortfolioItemById(id: string): Promise<PortfolioItem | 
     : null;
 }
 
+export interface PortfolioItemInput {
+  title: string;
+  category: ServiceCategory;
+  filters: PortfolioFilters;
+  image_url: string;
+  image_urls?: string[] | null;
+  description: string | null;
+  location: string | null;
+  published: boolean;
+}
+
+// Admin-only: every item regardless of published state
+export async function getAllPortfolioItemsForAdmin(): Promise<PortfolioItem[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  try {
+    const rows = await sql`
+      SELECT id, title, category, filters, image_url, image_urls, description, location, published, created_at
+      FROM portfolio_items
+      ORDER BY created_at DESC
+    `;
+    return (rows as any[]).map(normalizePortfolioItem);
+  } catch (err) {
+    console.error('[db] getAllPortfolioItemsForAdmin error:', err);
+    return [];
+  }
+}
+
+export async function createPortfolioItem(input: PortfolioItemInput): Promise<PortfolioItem> {
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const imageUrlsJson = input.image_urls && input.image_urls.length > 0 ? JSON.stringify(input.image_urls) : null;
+
+  const rows = await sql`
+    INSERT INTO portfolio_items (title, category, filters, image_url, image_urls, description, location, published)
+    VALUES (
+      ${input.title.trim()},
+      ${input.category},
+      ${JSON.stringify(input.filters ?? {})}::jsonb,
+      ${input.image_url},
+      ${imageUrlsJson}::jsonb,
+      ${input.description?.trim() || null},
+      ${input.location?.trim() || null},
+      ${input.published}
+    )
+    RETURNING id, title, category, filters, image_url, image_urls, description, location, published, created_at
+  `;
+
+  return normalizePortfolioItem(rows[0]);
+}
+
+export async function updatePortfolioItem(id: string, input: PortfolioItemInput): Promise<PortfolioItem | null> {
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const imageUrlsJson = input.image_urls && input.image_urls.length > 0 ? JSON.stringify(input.image_urls) : null;
+
+  const rows = await sql`
+    UPDATE portfolio_items
+    SET
+      title = ${input.title.trim()},
+      category = ${input.category},
+      filters = ${JSON.stringify(input.filters ?? {})}::jsonb,
+      image_url = ${input.image_url},
+      image_urls = ${imageUrlsJson}::jsonb,
+      description = ${input.description?.trim() || null},
+      location = ${input.location?.trim() || null},
+      published = ${input.published}
+    WHERE id = ${id}
+    RETURNING id, title, category, filters, image_url, image_urls, description, location, published, created_at
+  `;
+
+  return rows.length > 0 ? normalizePortfolioItem(rows[0]) : null;
+}
+
+export async function deletePortfolioItem(id: string): Promise<boolean> {
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const rows = await sql`DELETE FROM portfolio_items WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
+}
+
 // ─── Blog Posts ───────────────────────────────────────────────────────────────
 
 export async function getBlogPosts(limit = 20): Promise<Post[]> {
@@ -281,6 +417,10 @@ export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
+  const portfolioItemsJson = payload.portfolio_items && payload.portfolio_items.length > 0
+    ? JSON.stringify(payload.portfolio_items)
+    : null;
+
   const rows = await sql`
     INSERT INTO enquiries (
       name,
@@ -292,6 +432,7 @@ export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
       quantity_estimate,
       description,
       source,
+      portfolio_items,
       status
     ) VALUES (
       ${payload.name.trim()},
@@ -303,12 +444,119 @@ export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
       ${payload.quantity_estimate || null},
       ${payload.description?.trim() || null},
       ${payload.source || 'website'},
+      ${portfolioItemsJson}::jsonb,
       'new'
     )
-    RETURNING id, name, email, phone, country, service_type, event_date, quantity_estimate, description, source, created_at, status
+    RETURNING id, name, email, phone, country, service_type, event_date, quantity_estimate, description, source, portfolio_items, created_at, status
   `;
 
   return normalizeEnquiry(rows[0]);
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+export async function createOrder(input: OrderInput): Promise<Order> {
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const portfolioItemsJson = input.portfolio_items && input.portfolio_items.length > 0
+    ? JSON.stringify(input.portfolio_items)
+    : null;
+
+  const rows = await sql`
+    INSERT INTO orders (enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status)
+    VALUES (
+      ${input.enquiry_id ?? null},
+      ${input.customer_name.trim()},
+      ${input.customer_email.trim().toLowerCase()},
+      ${input.service_type.trim()},
+      ${input.event_date || null},
+      ${input.quantity_estimate?.trim() || null},
+      ${input.details?.trim() || null},
+      ${portfolioItemsJson}::jsonb,
+      'pending'
+    )
+    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+  `;
+
+  const order = normalizeOrder(rows[0]);
+
+  await sql`
+    INSERT INTO order_status_history (order_id, status, note)
+    VALUES (${order.id}, 'pending', NULL)
+  `;
+
+  return order;
+}
+
+export async function getAllOrders(): Promise<Order[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  try {
+    const rows = await sql`
+      SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+      FROM orders
+      ORDER BY created_at DESC
+    `;
+    return (rows as any[]).map(normalizeOrder);
+  } catch (err) {
+    console.error('[db] getAllOrders error:', err);
+    return [];
+  }
+}
+
+export async function getOrderById(id: string): Promise<Order | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  const rows = await sql`
+    SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+    FROM orders
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+
+  return rows.length > 0 ? normalizeOrder(rows[0]) : null;
+}
+
+export async function updateOrderStatus(id: string, status: OrderStatus, note?: string | null): Promise<Order | null> {
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const rows = await sql`
+    UPDATE orders
+    SET status = ${status}, updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+  `;
+
+  if (rows.length === 0) return null;
+
+  await sql`
+    INSERT INTO order_status_history (order_id, status, note)
+    VALUES (${id}, ${status}, ${note?.trim() || null})
+  `;
+
+  return normalizeOrder(rows[0]);
+}
+
+export async function getOrderHistory(orderId: string): Promise<OrderStatusHistoryEntry[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  const rows = await sql`
+    SELECT id, order_id, status, note, created_at
+    FROM order_status_history
+    WHERE order_id = ${orderId}
+    ORDER BY created_at ASC
+  `;
+
+  return (rows as any[]).map(normalizeOrderHistoryEntry);
 }
 
 // ─── Subscribers ──────────────────────────────────────────────────────────────
@@ -375,18 +623,20 @@ export async function getAdminDashboardData(): Promise<{
   subscribers: Subscriber[];
   portfolioItems: Partial<PortfolioItem>[];
   posts: Partial<Post>[];
+  orders: Order[];
 }> {
   const sql = getDb();
   if (!sql) {
-    return { enquiries: [], subscribers: [], portfolioItems: [], posts: [] };
+    return { enquiries: [], subscribers: [], portfolioItems: [], posts: [], orders: [] };
   }
 
   try {
-    const [enquiriesRes, subscribersRes, portfolioRes, postsRes] = await Promise.allSettled([
+    const [enquiriesRes, subscribersRes, portfolioRes, postsRes, ordersRes] = await Promise.allSettled([
       sql`SELECT * FROM enquiries ORDER BY created_at DESC LIMIT 50`,
       sql`SELECT * FROM subscribers ORDER BY subscribed_at DESC LIMIT 50`,
       sql`SELECT id, title, category, published, created_at FROM portfolio_items ORDER BY created_at DESC`,
       sql`SELECT id, title, slug, category, published, published_at FROM posts ORDER BY published_at DESC`,
+      sql`SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT 50`,
     ]);
 
     const enquiries =
@@ -397,10 +647,12 @@ export async function getAdminDashboardData(): Promise<{
       portfolioRes.status === 'fulfilled' ? (portfolioRes.value as any[]).map(normalizePortfolioItem) : [];
     const posts =
       postsRes.status === 'fulfilled' ? (postsRes.value as any[]).map(normalizePost) : [];
+    const orders =
+      ordersRes.status === 'fulfilled' ? (ordersRes.value as any[]).map(normalizeOrder) : [];
 
-    return { enquiries, subscribers, portfolioItems, posts };
+    return { enquiries, subscribers, portfolioItems, posts, orders };
   } catch (err) {
     console.error('[db] getAdminDashboardData error:', err);
-    return { enquiries: [], subscribers: [], portfolioItems: [], posts: [] };
+    return { enquiries: [], subscribers: [], portfolioItems: [], posts: [], orders: [] };
   }
 }

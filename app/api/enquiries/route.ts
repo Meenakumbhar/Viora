@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { insertEnquiry } from '@/lib/db';
-import type { EnquiryPayload, ApiResponse, Enquiry } from '@/types/database';
+import type { EnquiryPayload, ApiResponse, Enquiry, PortfolioItemRef } from '@/types/database';
+
+// Public endpoint — sanitize the client-supplied portfolio item list rather than trusting it verbatim.
+function sanitizePortfolioItems(value: unknown): PortfolioItemRef[] | null {
+  if (!Array.isArray(value)) return null;
+  const items = value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .slice(0, 20)
+    .map((item) => ({
+      id: typeof item.id === 'string' ? item.id.slice(0, 100) : '',
+      title: typeof item.title === 'string' ? item.title.slice(0, 200) : '',
+      category: typeof item.category === 'string' ? item.category.slice(0, 50) : '',
+    }))
+    .filter((item) => item.id && item.title);
+  return items.length > 0 ? items : null;
+}
 
 // POST /api/enquiries — Submit a new quote/contact enquiry
 export async function POST(request: NextRequest) {
@@ -22,7 +37,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const enquiry = await insertEnquiry(body);
+    const enquiry = await insertEnquiry({
+      ...body,
+      portfolio_items: sanitizePortfolioItems(body.portfolio_items),
+    });
 
     return NextResponse.json<ApiResponse<Enquiry>>(
       {

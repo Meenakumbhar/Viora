@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { PortfolioItem } from '@/types/database';
 import { addToPortfolioCart } from '@/utils/portfolio-cart';
 
@@ -11,6 +12,7 @@ export default function PortfolioProject({ item }: { item: PortfolioItem }) {
     [item.image_urls, item.image_url]
   );
   const [activeImage, setActiveImage] = useState(0);
+  const [imageErrored, setImageErrored] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const unitPrice = 95;
   const subtotal = unitPrice * quantity;
@@ -18,6 +20,7 @@ export default function PortfolioProject({ item }: { item: PortfolioItem }) {
   const total = subtotal + tax;
 
   function moveImage(direction: number) {
+    setImageErrored(false);
     setActiveImage((current) => (current + direction + images.length) % images.length);
   }
 
@@ -36,7 +39,19 @@ export default function PortfolioProject({ item }: { item: PortfolioItem }) {
         <div className="mt-10 grid gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <section>
             <div className="relative overflow-hidden border border-border bg-cat-surface">
-              <div className="aspect-[4/3] w-full" style={{ backgroundImage: `url(${images[activeImage]})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+              <div className="relative aspect-[4/3] w-full">
+                {images[activeImage] && !imageErrored ? (
+                  <Image
+                    src={images[activeImage]}
+                    alt={item.title}
+                    fill
+                    priority
+                    sizes="(min-width: 1024px) 60vw, 100vw"
+                    className="object-contain"
+                    onError={() => setImageErrored(true)}
+                  />
+                ) : null}
+              </div>
               {images.length > 1 && (
                 <>
                   <button type="button" onClick={() => moveImage(-1)} aria-label="Previous project image" className="absolute left-4 top-1/2 h-11 w-11 -translate-y-1/2 rounded-full border border-white/60 bg-black/30 text-white backdrop-blur">←</button>

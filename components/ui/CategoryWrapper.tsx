@@ -5,8 +5,10 @@ import type { ReactNode } from 'react';
 import { useLenis } from '@/lib/lenis';
 
 export default function CategoryWrapper({ children }: { children: ReactNode }) {
-  useLenis();
   const pathname = usePathname();
+  // Admin pages are fixed-position dashboard overlays with their own native
+  // scroll regions — Lenis's global wheel hijacking breaks scrolling inside them.
+  useLenis(!pathname.startsWith('/admin'));
 
   let category = 'all';
 

@@ -23,16 +23,18 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
           playsInline
         />
       ) : (
-        <div
-          className="absolute inset-0 h-full w-full"
-          style={{
-            background: [
-              'linear-gradient(135deg, #F7F4EF 0%, #FAF8F5 30%, #FDFCFA 60%, #F7F4EF 100%)',
-            ].join(', '),
-            backgroundSize: '400% 400%',
-            animation: 'hero-gradient-shift 12s ease infinite',
-          }}
-        />
+        <div className="absolute inset-0 h-full w-full overflow-hidden">
+          <div
+            className="absolute inset-y-0 left-0 h-full"
+            style={{
+              width: '200%',
+              background:
+                'linear-gradient(135deg, #F7F4EF 0%, #FAF8F5 25%, #FDFCFA 50%, #FAF8F5 75%, #F7F4EF 100%)',
+              animation: 'hero-gradient-shift 12s ease-in-out infinite',
+              willChange: 'transform',
+            }}
+          />
+        </div>
       )}
 
       {/* Gradient overlay — transparent top, solid warm bottom */}
@@ -52,14 +54,12 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
       {/* Inline keyframes for the animated gradient */}
       <style jsx>{`
         @keyframes hero-gradient-shift {
-          0% {
-            background-position: 0% 50%;
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0);
           }
           50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
+            transform: translate3d(-25%, 0, 0);
           }
         }
       `}</style>

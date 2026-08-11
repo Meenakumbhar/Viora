@@ -1,10 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-import { readPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
+import {
+  readPortfolioCart,
+  removeFromPortfolioCart,
+  updatePortfolioCartQuantity,
+  type PortfolioCartItem,
+} from '@/utils/portfolio-cart';
 
 export default function PricingPage() {
   const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
@@ -60,17 +66,44 @@ export default function PricingPage() {
                     <div key={item.id} className="flex flex-col gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0 md:flex-row md:items-center md:justify-between">
                       <div>
                         <h3 className="font-display text-xl text-cat-heading">{item.title}</h3>
-                        <p className="mt-1 font-body text-body-base text-cat-body">{item.category} · quantity {item.quantity}</p>
+                        <p className="mt-1 font-body text-body-base text-cat-body">{item.category}</p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center rounded-full border border-border">
+                          <button
+                            type="button"
+                            onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity - 1))}
+                            aria-label={`Decrease quantity of ${item.title}`}
+                            className="flex h-9 w-9 items-center justify-center text-cat-heading transition-colors hover:text-accent-gold"
+                          >
+                            &minus;
+                          </button>
+                          <span className="w-8 text-center font-mono text-sm text-cat-heading">{item.quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity + 1))}
+                            aria-label={`Increase quantity of ${item.title}`}
+                            className="flex h-9 w-9 items-center justify-center text-cat-heading transition-colors hover:text-accent-gold"
+                          >
+                            +
+                          </button>
+                        </div>
                         <span className="font-mono text-label uppercase tracking-wider text-cat-accent-dark">
                           £{(item.unitPrice * item.quantity).toFixed(2)}
                         </span>
-                        <button
-                          type="button"
+                        <Link
+                          href={`/portfolio/${item.id}`}
                           className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
                         >
                           Review
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setCartItems(removeFromPortfolioCart(item.id))}
+                          aria-label={`Remove ${item.title} from cart`}
+                          className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:border-[#7A4A44] hover:text-[#7A4A44]"
+                        >
+                          Remove
                         </button>
                       </div>
                     </div>

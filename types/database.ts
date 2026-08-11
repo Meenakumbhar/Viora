@@ -50,6 +50,14 @@ export interface ServiceData {
   relatedSlugs: string[];
 }
 
+// Denormalized snapshot of a portfolio item at the time a quote/order referenced it —
+// kept even if the portfolio item is later edited or deleted.
+export interface PortfolioItemRef {
+  id: string;
+  title: string;
+  category: string;
+}
+
 export interface Enquiry {
   id: string;
   name: string;
@@ -61,8 +69,49 @@ export interface Enquiry {
   quantity_estimate: string | null;
   description: string | null;
   source: string | null;
+  portfolio_items: PortfolioItemRef[] | null;
   created_at: string;
   status: EnquiryStatus;
+}
+
+export type OrderStatus = 'pending' | 'in_progress' | 'completed';
+
+export interface Order {
+  id: string;
+  enquiry_id: string | null;
+  customer_name: string;
+  customer_email: string;
+  service_type: string;
+  event_date: string | null;
+  quantity_estimate: string | null;
+  details: string | null;
+  portfolio_items: PortfolioItemRef[] | null;
+  status: OrderStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrderStatusHistoryEntry {
+  id: string;
+  order_id: string;
+  status: OrderStatus;
+  note: string | null;
+  created_at: string;
+}
+
+export interface OrderWithHistory extends Order {
+  history: OrderStatusHistoryEntry[];
+}
+
+export interface OrderInput {
+  customer_name: string;
+  customer_email: string;
+  service_type: string;
+  event_date?: string | null;
+  quantity_estimate?: string | null;
+  details?: string | null;
+  enquiry_id?: string | null;
+  portfolio_items?: PortfolioItemRef[] | null;
 }
 
 export interface Subscriber {
@@ -123,6 +172,7 @@ export interface EnquiryPayload {
   quantity_estimate?: string;
   description?: string;
   source?: string;
+  portfolio_items?: PortfolioItemRef[] | null;
 }
 
 export interface SubscriberPayload {
