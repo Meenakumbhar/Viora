@@ -9,9 +9,12 @@ import TestimonialSlider from '@/components/ui/TestimonialSlider';
 import AnimatedHeadline from '@/components/ui/AnimatedHeadline';
 import CurtainReveal from '@/components/ui/CurtainReveal';
 import CountUp from '@/components/ui/CountUp';
-import { portfolioItems, processSteps, blogPosts } from '@/lib/data';
+import { portfolioItems as allPortfolioItems, processSteps, blogPosts } from '@/lib/data';
+import { isCategoryActive } from '@/lib/active-services';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+const portfolioItems = allPortfolioItems.filter((item) => isCategoryActive(item.category));
 
 
 /* ───────────────────────────────────────────────────────────────────────────

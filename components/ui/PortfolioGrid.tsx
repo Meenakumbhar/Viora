@@ -12,6 +12,7 @@ import {
   updatePortfolioCartQuantity,
   type PortfolioCartItem,
 } from '@/utils/portfolio-cart';
+import { isCategoryActive } from '@/lib/active-services';
 
 interface PortfolioItemData {
   id: string;
@@ -32,7 +33,8 @@ interface PortfolioGridProps {
 
 const ITEMS_PER_PAGE = 12;
 
-const FILTERS = ['All', 'Wedding', 'Funeral', 'Events', 'Sports', 'Branding'] as const;
+const ALL_FILTERS = ['All', 'Wedding', 'Funeral', 'Events', 'Sports', 'Branding'] as const;
+const FILTERS = ALL_FILTERS.filter((f) => f === 'All' || isCategoryActive(f.toLowerCase()));
 
 const categoryGradients: Record<string, string> = {
   wedding:

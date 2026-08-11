@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import OrderStepper from '@/components/admin/OrderStepper';
+import OrderStepper from '@/components/ui/OrderStepper';
 import type { Order, OrderStatus, OrderWithHistory } from '@/types/database';
 
 const STATUSES: OrderStatus[] = ['pending', 'in_progress', 'completed'];

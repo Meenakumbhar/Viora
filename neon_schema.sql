@@ -5,6 +5,20 @@
 -- to initialize tables, indexes, and initial content in one click.
 -- ==============================================================================
 
+-- 0. Create Users Table (customer accounts, email-verified via Resend)
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    email_verified BOOLEAN DEFAULT FALSE NOT NULL,
+    verification_token TEXT,
+    verification_token_expires TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_verification_token ON users(verification_token);
+
 -- 1. Create Enquiries Table
 CREATE TABLE IF NOT EXISTS enquiries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

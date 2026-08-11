@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPortfolioItemById } from '@/lib/db';
 import PortfolioProject from '@/components/PortfolioProject';
+import { isCategoryActive } from '@/lib/active-services';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const item = await getPortfolioItemById((await params).id);
@@ -14,6 +15,6 @@ export default async function PortfolioProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const item = await getPortfolioItemById((await params).id);
-  if (!item) notFound();
+  if (!item || !isCategoryActive(item.category)) notFound();
   return <PortfolioProject item={item} />;
 }

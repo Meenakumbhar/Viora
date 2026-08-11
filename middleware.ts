@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, computeAdminToken } from "@/utils/admin-auth";
+import { USER_SESSION_COOKIE, verifySessionToken } from "@/lib/user-session";
 
 const PUBLIC_ADMIN_PATHS = new Set(["/admin/login"]);
+const USER_PROTECTED_PREFIXES = ["/account"];
 
 function isProtectedApiRoute(pathname: string, method: string): boolean {
   if (pathname === "/api/upload") return true; // upload/delete to R2 — admin only
@@ -14,6 +16,18 @@ function isProtectedApiRoute(pathname: string, method: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ── Customer account pages (separate from admin auth) ──────────────────────
+  if (USER_PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    if (session) {
+      return NextResponse.next();
+    }
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // ── Admin dashboard + admin-only API routes ─────────────────────────────────
   const isAdminPage = pathname.startsWith("/admin") && !PUBLIC_ADMIN_PATHS.has(pathname);
   const isAdminApi = isProtectedApiRoute(pathname, request.method);
 

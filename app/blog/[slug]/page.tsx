@@ -4,6 +4,7 @@ import Link from 'next/link';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
 import { getBlogPosts, getBlogPostBySlug } from '@/lib/db';
+import { SITE_URL } from '@/lib/site-url';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = post.title;
   const description = post.excerpt ?? `Read "${post.title}" on the Memories in Prints journal.`;
-  const url = `https://memoriesinprints.com/blog/${post.slug}`;
+  const url = `${SITE_URL}/blog/${post.slug}`;
   const image = post.image_url ?? '/og-image.jpg';
 
   return {

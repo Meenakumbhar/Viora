@@ -4,20 +4,22 @@ import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
 import { services, getServiceBySlug, getRelatedServices } from '@/lib/data';
+import { isServiceSlugActive } from '@/lib/active-services';
+import { SITE_URL } from '@/lib/site-url';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  return services.map((s) => ({
+  return services.filter((s) => isServiceSlugActive(s.slug)).map((s) => ({
     slug: s.slug,
   }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const service = getServiceBySlug(slug);
+  const service = isServiceSlugActive(slug) ? getServiceBySlug(slug) : undefined;
 
   if (!service) {
     return {
@@ -28,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = `${service.title} ${service.titleAccent}`;
   const description = service.description;
-  const url = `https://memoriesinprints.com/services/${service.slug}`;
+  const url = `${SITE_URL}/services/${service.slug}`;
 
   return {
     title,
@@ -63,13 +65,13 @@ const serviceGradients: Record<string, string> = {
 
 export default async function ServicePage({ params }: PageProps) {
   const { slug } = await params;
-  const service = getServiceBySlug(slug);
+  const service = isServiceSlugActive(slug) ? getServiceBySlug(slug) : undefined;
 
   if (!service) {
     notFound();
   }
 
-  const related = getRelatedServices(service.relatedSlugs);
+  const related = getRelatedServices(service.relatedSlugs).filter((r) => isServiceSlugActive(r.slug));
   const gradientClass = serviceGradients[service.slug] || 'from-bg-surface to-bg-secondary';
 
   // Determine the category for this service

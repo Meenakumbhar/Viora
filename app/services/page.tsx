@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-import { services } from '@/lib/data';
+import { services as allServices } from '@/lib/data';
+import { isServiceSlugActive } from '@/lib/active-services';
+
+const services = allServices.filter((s) => isServiceSlugActive(s.slug));
 
 export const metadata: Metadata = {
   title: 'Services',

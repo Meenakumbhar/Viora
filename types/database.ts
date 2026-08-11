@@ -114,6 +114,39 @@ export interface OrderInput {
   portfolio_items?: PortfolioItemRef[] | null;
 }
 
+// ─── User Accounts ─────────────────────────────────────────────────────────────
+
+export interface User {
+  id: string;
+  email: string;
+  password_hash: string;
+  name: string | null;
+  email_verified: boolean;
+  verification_token: string | null;
+  verification_token_expires: string | null;
+  created_at: string;
+}
+
+// Safe to send to the client — never include password_hash or the raw token.
+export interface PublicUser {
+  id: string;
+  email: string;
+  name: string | null;
+  email_verified: boolean;
+  created_at: string;
+}
+
+export interface SignupPayload {
+  email: string;
+  password: string;
+  name?: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
 export interface Subscriber {
   id: string;
   email: string;

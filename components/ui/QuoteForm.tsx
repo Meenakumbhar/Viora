@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/src/style.css';
 import { readPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
+import { isServiceSlugActive } from '@/lib/active-services';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -56,14 +57,17 @@ const COUNTRIES = [
   'Argentina','Colombia','Philippines','Malaysia',
 ];
 
-const SERVICE_TYPES = [
-  { label: 'Wedding & Events', emoji: '💍' },
-  { label: 'Funeral & Memorial', emoji: '🕊️' },
-  { label: 'Sports & Branding', emoji: '🏆' },
-  { label: 'Graphic Design', emoji: '🎨' },
-  { label: 'Print & Production', emoji: '🖨️' },
-  { label: 'Not sure', emoji: '💬' },
+const ALL_SERVICE_TYPES = [
+  { label: 'Wedding & Events', emoji: '💍', slug: 'wedding-events' },
+  { label: 'Funeral & Memorial', emoji: '🕊️', slug: 'funeral-memorial' },
+  { label: 'Sports & Branding', emoji: '🏆', slug: 'sports-branding' },
+  { label: 'Graphic Design', emoji: '🎨', slug: 'graphic-design' },
+  { label: 'Print & Production', emoji: '🖨️', slug: 'print-production' },
+  { label: 'Not sure', emoji: '💬', slug: null },
 ];
+
+// "Not sure" always stays — it's a catch-all, not a specific paused service.
+const SERVICE_TYPES = ALL_SERVICE_TYPES.filter((s) => !s.slug || isServiceSlugActive(s.slug));
 
 const QUANTITIES = [
   { label: '1–50', sub: 'Small run' },

@@ -4,6 +4,7 @@ import Nav from '@/components/ui/Nav';
 import Footer from '@/components/ui/Footer';
 import CategoryWrapper from '@/components/ui/CategoryWrapper';
 import { PageTransition } from '@/components/ui/PageTransition';
+import { SITE_URL } from '@/lib/site-url';
 import './globals.css';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
   },
   description:
     'A full-service design and print studio for weddings, funerals, events, sports, and branding. Premium stationery, programmes, and print — serving clients in 30+ countries.',
-  metadataBase: new URL('https://memoriesinprints.com'),
+  metadataBase: new URL(SITE_URL),
   keywords: [
     'wedding stationery',
     'funeral order of service',
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
     'bespoke stationery',
     'global print studio',
   ],
-  authors: [{ name: 'Memories in Prints', url: 'https://memoriesinprints.com' }],
+  authors: [{ name: 'Memories in Prints', url: SITE_URL }],
   creator: 'Memories in Prints',
   publisher: 'Memories in Prints',
   openGraph: {
@@ -65,7 +66,7 @@ export const metadata: Metadata = {
     title: 'Memories in Prints | Global Design & Print Studio',
     description:
       'Premium wedding stationery, funeral programmes, sports print, and brand identity — crafted with precision and shipped worldwide.',
-    url: 'https://memoriesinprints.com',
+    url: SITE_URL,
     images: [
       {
         url: '/og-image.jpg',
@@ -94,7 +95,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: 'https://memoriesinprints.com',
+    canonical: SITE_URL,
   },
 };
 

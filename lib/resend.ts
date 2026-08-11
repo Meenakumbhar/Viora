@@ -1,7 +1,8 @@
 // Resend email client for Memories in Prints
-// Handles enquiry notifications, auto-reply emails, and order status updates
+// Handles enquiry notifications, auto-reply emails, order status updates, and account verification
 
 import type { OrderStatus } from '@/types/database';
+import { SITE_URL } from '@/lib/site-url';
 
 interface SendEmailOptions {
   to: string;
@@ -152,7 +153,7 @@ export async function sendOrderPlacedEmail(order: {
         <hr style="border: none; border-top: 1px solid #2A3340; margin: 32px 0;" />
         <p style="color: #8A8F96; font-size: 14px;">
           Memories in Prints · Global Design & Print Studio<br />
-          <a href="https://memoriesinprints.com" style="color: #C6A85C;">memoriesinprints.com</a>
+          <a href="${SITE_URL}" style="color: #C6A85C;">${SITE_URL.replace(/^https?:\/\//, '')}</a>
         </p>
       </div>
     `,
@@ -190,7 +191,42 @@ export async function sendOrderStatusUpdateEmail(order: {
         <hr style="border: none; border-top: 1px solid #2A3340; margin: 32px 0;" />
         <p style="color: #8A8F96; font-size: 14px;">
           Memories in Prints · Global Design & Print Studio<br />
-          <a href="https://memoriesinprints.com" style="color: #C6A85C;">memoriesinprints.com</a>
+          <a href="${SITE_URL}" style="color: #C6A85C;">${SITE_URL.replace(/^https?:\/\//, '')}</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendVerificationEmail(user: { email: string; name?: string | null; token: string; baseUrl: string }) {
+  const verifyUrl = `${user.baseUrl}/api/auth/verify?token=${encodeURIComponent(user.token)}`;
+  const greetingName = user.name ? escapeHtml(user.name) : 'there';
+
+  return sendEmail({
+    to: user.email,
+    subject: 'Verify your email — Memories in Prints',
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 28px; font-weight: 300;">Hi ${greetingName}, confirm your email</h1>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          Thanks for creating an account with Memories in Prints. Click below to verify your email address and activate your account.
+        </p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${verifyUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            Verify email
+          </a>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: #8A8F96;">
+          Or paste this link into your browser:<br />
+          <a href="${verifyUrl}" style="color: #C6A85C; word-break: break-all;">${verifyUrl}</a>
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #8A8F96;">
+          This link expires in 24 hours. If you didn't create this account, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #2A3340; margin: 32px 0;" />
+        <p style="color: #8A8F96; font-size: 14px;">
+          Memories in Prints · Global Design & Print Studio<br />
+          <a href="${SITE_URL}" style="color: #C6A85C;">${SITE_URL.replace(/^https?:\/\//, '')}</a>
         </p>
       </div>
     `,
@@ -208,13 +244,13 @@ export async function sendEnquiryAutoReply(clientEmail: string, clientName: stri
           We've received your enquiry and will be in touch within 24 hours.
         </p>
         <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
-          In the meantime, feel free to browse our <a href="https://memoriesinprints.com/portfolio" style="color: #C6A85C;">portfolio</a> 
-          or read about our <a href="https://memoriesinprints.com/process" style="color: #C6A85C;">process</a>.
+          In the meantime, feel free to browse our <a href="${SITE_URL}/portfolio" style="color: #C6A85C;">portfolio</a>
+          or read about our <a href="${SITE_URL}/process" style="color: #C6A85C;">process</a>.
         </p>
         <hr style="border: none; border-top: 1px solid #2A3340; margin: 32px 0;" />
         <p style="color: #8A8F96; font-size: 14px;">
           Memories in Prints · Global Design & Print Studio<br />
-          <a href="https://memoriesinprints.com" style="color: #C6A85C;">memoriesinprints.com</a>
+          <a href="${SITE_URL}" style="color: #C6A85C;">${SITE_URL.replace(/^https?:\/\//, '')}</a>
         </p>
       </div>
     `,

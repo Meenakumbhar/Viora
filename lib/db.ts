@@ -14,6 +14,8 @@ import type {
   OrderStatus,
   OrderStatusHistoryEntry,
   PortfolioItemRef,
+  User,
+  PublicUser,
 } from '@/types/database';
 
 /**
@@ -56,6 +58,29 @@ function toIsoTimestampString(val: unknown): string {
     return val;
   }
   return String(val);
+}
+
+function normalizeUser(row: any): User {
+  return {
+    id: String(row.id),
+    email: String(row.email ?? ''),
+    password_hash: String(row.password_hash ?? ''),
+    name: row.name != null ? String(row.name) : null,
+    email_verified: Boolean(row.email_verified),
+    verification_token: row.verification_token != null ? String(row.verification_token) : null,
+    verification_token_expires: row.verification_token_expires != null ? toIsoTimestampString(row.verification_token_expires) : null,
+    created_at: toIsoTimestampString(row.created_at),
+  };
+}
+
+export function toPublicUser(user: User): PublicUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    email_verified: user.email_verified,
+    created_at: user.created_at,
+  };
 }
 
 function normalizePost(row: any): Post {
@@ -453,6 +478,93 @@ export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
   return normalizeEnquiry(rows[0]);
 }
 
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+export async function createUser(input: {
+  email: string;
+  passwordHash: string;
+  name?: string | null;
+  verificationToken: string;
+  verificationTokenExpires: Date;
+}): Promise<User> {
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const rows = await sql`
+    INSERT INTO users (email, password_hash, name, email_verified, verification_token, verification_token_expires)
+    VALUES (
+      ${input.email.trim().toLowerCase()},
+      ${input.passwordHash},
+      ${input.name?.trim() || null},
+      false,
+      ${input.verificationToken},
+      ${input.verificationTokenExpires.toISOString()}
+    )
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, created_at
+  `;
+
+  return normalizeUser(rows[0]);
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  const rows = await sql`
+    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, created_at
+    FROM users
+    WHERE email = ${email.trim().toLowerCase()}
+    LIMIT 1
+  `;
+
+  return rows.length > 0 ? normalizeUser(rows[0]) : null;
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  const rows = await sql`
+    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, created_at
+    FROM users
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+
+  return rows.length > 0 ? normalizeUser(rows[0]) : null;
+}
+
+// Verifies a token, atomically marking the account verified only if the token
+// matches and hasn't expired — returns null for any invalid/expired/reused token.
+export async function verifyUserByToken(token: string): Promise<User | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  const rows = await sql`
+    UPDATE users
+    SET email_verified = true, verification_token = NULL, verification_token_expires = NULL
+    WHERE verification_token = ${token} AND verification_token_expires > NOW()
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, created_at
+  `;
+
+  return rows.length > 0 ? normalizeUser(rows[0]) : null;
+}
+
+export async function setUserVerificationToken(userId: string, token: string, expires: Date): Promise<void> {
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  await sql`
+    UPDATE users
+    SET verification_token = ${token}, verification_token_expires = ${expires.toISOString()}
+    WHERE id = ${userId}
+  `;
+}
+
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 export async function createOrder(input: OrderInput): Promise<Order> {
@@ -504,6 +616,27 @@ export async function getAllOrders(): Promise<Order[]> {
     return (rows as any[]).map(normalizeOrder);
   } catch (err) {
     console.error('[db] getAllOrders error:', err);
+    return [];
+  }
+}
+
+// Orders aren't tied to a user_id — a customer can place a quote as a guest
+// before ever creating an account. Matching by email means their history
+// still shows up correctly the moment they sign up with the same address.
+export async function getOrdersByEmail(email: string): Promise<Order[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  try {
+    const rows = await sql`
+      SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+      FROM orders
+      WHERE customer_email = ${email.trim().toLowerCase()}
+      ORDER BY created_at DESC
+    `;
+    return (rows as any[]).map(normalizeOrder);
+  } catch (err) {
+    console.error('[db] getOrdersByEmail error:', err);
     return [];
   }
 }

@@ -3,6 +3,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { isServiceSlugActive, isCategoryActive } from '@/lib/active-services';
+
+function isNavHrefActive(href: string): boolean {
+  const serviceMatch = href.match(/^\/services\/([a-z-]+)$/);
+  if (serviceMatch) return isServiceSlugActive(serviceMatch[1]);
+  const categoryMatch = href.match(/category=([a-z]+)/);
+  if (categoryMatch) return isCategoryActive(categoryMatch[1]);
+  return true;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DROPDOWN DATA
@@ -279,7 +288,7 @@ export default function Nav() {
                       }`}
                       role="menu"
                     >
-                      {link.dropdown.map((item) => {
+                      {link.dropdown.filter((item) => isNavHrefActive(item.href)).map((item) => {
                         const hoverColor = getHoverColorClass(item.href);
                         return (
                           <Link
@@ -297,6 +306,17 @@ export default function Nav() {
                 </div>
               ))}
             </div>
+
+            <Link
+              href="/account"
+              aria-label="Account — log in or view your account"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
+              </svg>
+            </Link>
 
             <Link
               href="/pricing"
@@ -413,7 +433,7 @@ export default function Nav() {
 
               {section.children && (
                 <div className="mt-2 flex flex-col items-center gap-1">
-                  {section.children.map((child) => (
+                  {section.children.filter((child) => isNavHrefActive(child.href)).map((child) => (
                     <Link
                       key={child.href}
                       href={child.href}
@@ -448,6 +468,17 @@ export default function Nav() {
                 <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
               </svg>
               Cart (2)
+            </Link>
+            <Link
+              href="/account"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
+              </svg>
+              Account
             </Link>
           </div>
         </div>
