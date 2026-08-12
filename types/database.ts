@@ -75,6 +75,7 @@ export interface Enquiry {
 }
 
 export type OrderStatus = 'pending' | 'in_progress' | 'completed';
+export type PaymentStatus = 'unpaid' | 'paid' | 'failed';
 
 export interface Order {
   id: string;
@@ -87,6 +88,11 @@ export interface Order {
   details: string | null;
   portfolio_items: PortfolioItemRef[] | null;
   status: OrderStatus;
+  payment_status: PaymentStatus;
+  payment_amount: number | null;
+  paypal_order_id: string | null;
+  // Which designer the proofreader has routed this order to — null until assigned.
+  assigned_designer_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -103,6 +109,56 @@ export interface OrderWithHistory extends Order {
   history: OrderStatusHistoryEntry[];
 }
 
+// ─── Design Review ─────────────────────────────────────────────────────────────
+
+// A revision must clear the proofreader gate before a customer ever sees it:
+// designer uploads (pending_proofreader_review) -> proofreader either bounces it
+// back (returned_to_designer) or lets it through (pending_review) -> customer
+// approves or requests changes -> designer's next revision starts the cycle over.
+export type DesignRevisionStatus =
+  | 'pending_proofreader_review'
+  | 'returned_to_designer'
+  | 'pending_review'
+  | 'changes_requested'
+  | 'approved';
+
+export type DesignCommentAuthorRole = 'customer' | 'proofreader';
+
+export type CommentResolutionField = 'designer_resolved' | 'proofreader_resolved';
+
+export interface DesignComment {
+  id: string;
+  revision_id: string;
+  image_index: number;
+  x: number;
+  y: number;
+  comment: string;
+  // Independent — the designer marking their own fix done never implies the
+  // proofreader has confirmed it, and vice versa.
+  designer_resolved: boolean;
+  proofreader_resolved: boolean;
+  author_role: DesignCommentAuthorRole;
+  created_at: string;
+}
+
+export interface DesignRevision {
+  id: string;
+  order_id: string;
+  version: number;
+  image_urls: string[];
+  notes: string | null;
+  status: DesignRevisionStatus;
+  created_at: string;
+  comments: DesignComment[];
+}
+
+export interface DesignCommentInput {
+  image_index: number;
+  x: number;
+  y: number;
+  comment: string;
+}
+
 export interface OrderInput {
   customer_name: string;
   customer_email: string;
@@ -116,6 +172,11 @@ export interface OrderInput {
 
 // ─── User Accounts ─────────────────────────────────────────────────────────────
 
+// Self-serve signup always creates 'user' — the other roles are staff, assigned
+// by an admin via /admin/users, never chosen by the person signing up.
+export type UserRole = 'user' | 'employee' | 'designer' | 'proofreader' | 'admin';
+export const USER_ROLES: UserRole[] = ['user', 'employee', 'designer', 'proofreader', 'admin'];
+
 export interface User {
   id: string;
   email: string;
@@ -124,6 +185,7 @@ export interface User {
   email_verified: boolean;
   verification_token: string | null;
   verification_token_expires: string | null;
+  role: UserRole;
   created_at: string;
 }
 
@@ -133,6 +195,7 @@ export interface PublicUser {
   email: string;
   name: string | null;
   email_verified: boolean;
+  role: UserRole;
   created_at: string;
 }
 
@@ -171,10 +234,10 @@ export interface PortfolioItem {
 
 export interface PortfolioFilters {
   style?: string[];
-  audience?: string[];
+  passion?: string[];
   religion?: string[];
   colour?: string[];
-  format?: string[];
+  tribute?: string[];
 }
 
 export interface Post {

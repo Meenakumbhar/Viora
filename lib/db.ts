@@ -16,6 +16,12 @@ import type {
   PortfolioItemRef,
   User,
   PublicUser,
+  UserRole,
+  DesignRevision,
+  DesignComment,
+  DesignRevisionStatus,
+  DesignCommentInput,
+  CommentResolutionField,
 } from '@/types/database';
 
 /**
@@ -60,7 +66,10 @@ function toIsoTimestampString(val: unknown): string {
   return String(val);
 }
 
+const VALID_ROLES = new Set<UserRole>(['user', 'employee', 'designer', 'proofreader', 'admin']);
+
 function normalizeUser(row: any): User {
+  const role = VALID_ROLES.has(row.role) ? (row.role as UserRole) : 'user';
   return {
     id: String(row.id),
     email: String(row.email ?? ''),
@@ -69,6 +78,7 @@ function normalizeUser(row: any): User {
     email_verified: Boolean(row.email_verified),
     verification_token: row.verification_token != null ? String(row.verification_token) : null,
     verification_token_expires: row.verification_token_expires != null ? toIsoTimestampString(row.verification_token_expires) : null,
+    role,
     created_at: toIsoTimestampString(row.created_at),
   };
 }
@@ -79,6 +89,7 @@ export function toPublicUser(user: User): PublicUser {
     email: user.email,
     name: user.name,
     email_verified: user.email_verified,
+    role: user.role,
     created_at: user.created_at,
   };
 }
@@ -154,6 +165,10 @@ function normalizeOrder(row: any): Order {
     details: row.details != null ? String(row.details) : null,
     portfolio_items: normalizePortfolioItemRefs(row.portfolio_items),
     status: row.status,
+    payment_status: (row.payment_status as string) === 'paid' ? 'paid' : row.payment_status === 'failed' ? 'failed' : 'unpaid',
+    payment_amount: row.payment_amount != null ? Number(row.payment_amount) : null,
+    paypal_order_id: row.paypal_order_id != null ? String(row.paypal_order_id) : null,
+    assigned_designer_id: row.assigned_designer_id != null ? String(row.assigned_designer_id) : null,
     created_at: toIsoTimestampString(row.created_at),
     updated_at: toIsoTimestampString(row.updated_at),
   };
@@ -493,16 +508,17 @@ export async function createUser(input: {
   }
 
   const rows = await sql`
-    INSERT INTO users (email, password_hash, name, email_verified, verification_token, verification_token_expires)
+    INSERT INTO users (email, password_hash, name, email_verified, verification_token, verification_token_expires, role)
     VALUES (
       ${input.email.trim().toLowerCase()},
       ${input.passwordHash},
       ${input.name?.trim() || null},
       false,
       ${input.verificationToken},
-      ${input.verificationTokenExpires.toISOString()}
+      ${input.verificationTokenExpires.toISOString()},
+      'user'
     )
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, created_at
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
   `;
 
   return normalizeUser(rows[0]);
@@ -513,7 +529,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   if (!sql) return null;
 
   const rows = await sql`
-    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, created_at
+    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
     FROM users
     WHERE email = ${email.trim().toLowerCase()}
     LIMIT 1
@@ -527,7 +543,7 @@ export async function getUserById(id: string): Promise<User | null> {
   if (!sql) return null;
 
   const rows = await sql`
-    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, created_at
+    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
     FROM users
     WHERE id = ${id}
     LIMIT 1
@@ -546,7 +562,7 @@ export async function verifyUserByToken(token: string): Promise<User | null> {
     UPDATE users
     SET email_verified = true, verification_token = NULL, verification_token_expires = NULL
     WHERE verification_token = ${token} AND verification_token_expires > NOW()
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, created_at
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
   `;
 
   return rows.length > 0 ? normalizeUser(rows[0]) : null;
@@ -563,6 +579,60 @@ export async function setUserVerificationToken(userId: string, token: string, ex
     SET verification_token = ${token}, verification_token_expires = ${expires.toISOString()}
     WHERE id = ${userId}
   `;
+}
+
+// ─── Roles (admin-assigned only — never settable from public signup) ──────────
+
+export async function getAllUsers(): Promise<User[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  const rows = await sql`
+    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
+    FROM users
+    ORDER BY created_at DESC
+  `;
+
+  return rows.map(normalizeUser);
+}
+
+// For the proofreader's "assign to" dropdown — just enough to identify each designer.
+export async function getDesigners(): Promise<Pick<User, 'id' | 'name' | 'email'>[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  const rows = await sql`
+    SELECT id, name, email
+    FROM users
+    WHERE role = 'designer'
+    ORDER BY name ASC NULLS LAST, email ASC
+  `;
+
+  return (rows as any[]).map((row) => ({
+    id: String(row.id),
+    name: row.name != null ? String(row.name) : null,
+    email: String(row.email ?? ''),
+  }));
+}
+
+export async function updateUserRole(id: string, role: UserRole): Promise<User | null> {
+  if (!VALID_ROLES.has(role)) {
+    throw new Error(`Invalid role: ${role}`);
+  }
+
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const rows = await sql`
+    UPDATE users
+    SET role = ${role}
+    WHERE id = ${id}
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
+  `;
+
+  return rows.length > 0 ? normalizeUser(rows[0]) : null;
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
@@ -590,7 +660,7 @@ export async function createOrder(input: OrderInput): Promise<Order> {
       ${portfolioItemsJson}::jsonb,
       'pending'
     )
-    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
   `;
 
   const order = normalizeOrder(rows[0]);
@@ -609,7 +679,7 @@ export async function getAllOrders(): Promise<Order[]> {
 
   try {
     const rows = await sql`
-      SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+      SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
       FROM orders
       ORDER BY created_at DESC
     `;
@@ -629,7 +699,7 @@ export async function getOrdersByEmail(email: string): Promise<Order[]> {
 
   try {
     const rows = await sql`
-      SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+      SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
       FROM orders
       WHERE customer_email = ${email.trim().toLowerCase()}
       ORDER BY created_at DESC
@@ -646,7 +716,7 @@ export async function getOrderById(id: string): Promise<Order | null> {
   if (!sql) return null;
 
   const rows = await sql`
-    SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+    SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
     FROM orders
     WHERE id = ${id}
     LIMIT 1
@@ -665,7 +735,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus, note?: 
     UPDATE orders
     SET status = ${status}, updated_at = NOW()
     WHERE id = ${id}
-    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at
+    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
   `;
 
   if (rows.length === 0) return null;
@@ -690,6 +760,52 @@ export async function getOrderHistory(orderId: string): Promise<OrderStatusHisto
   `;
 
   return (rows as any[]).map(normalizeOrderHistoryEntry);
+}
+
+// Set the quoted price for an order (admin sets this so customer can pay)
+export async function setOrderPaymentAmount(id: string, amount: number): Promise<Order | null> {
+  const sql = getDb();
+  if (!sql) throw new Error('Database is not configured.');
+
+  const rows = await sql`
+    UPDATE orders
+    SET payment_amount = ${amount}, updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
+  `;
+
+  return rows.length > 0 ? normalizeOrder(rows[0]) : null;
+}
+
+// Mark order as paid after PayPal capture succeeds
+export async function markOrderPaid(id: string, paypalOrderId: string): Promise<Order | null> {
+  const sql = getDb();
+  if (!sql) throw new Error('Database is not configured.');
+
+  const rows = await sql`
+    UPDATE orders
+    SET payment_status = 'paid', paypal_order_id = ${paypalOrderId}, updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
+  `;
+
+  return rows.length > 0 ? normalizeOrder(rows[0]) : null;
+}
+
+// Proofreader routes an order to a specific designer — pass null to unassign.
+// Only that designer can then see or act on the order under /staff.
+export async function assignOrderToDesigner(orderId: string, designerId: string | null): Promise<Order | null> {
+  const sql = getDb();
+  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const rows = await sql`
+    UPDATE orders
+    SET assigned_designer_id = ${designerId}, updated_at = NOW()
+    WHERE id = ${orderId}
+    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
+  `;
+
+  return rows.length > 0 ? normalizeOrder(rows[0]) : null;
 }
 
 // ─── Subscribers ──────────────────────────────────────────────────────────────
@@ -769,7 +885,8 @@ export async function getAdminDashboardData(): Promise<{
       sql`SELECT * FROM subscribers ORDER BY subscribed_at DESC LIMIT 50`,
       sql`SELECT id, title, category, published, created_at FROM portfolio_items ORDER BY created_at DESC`,
       sql`SELECT id, title, slug, category, published, published_at FROM posts ORDER BY published_at DESC`,
-      sql`SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT 50`,
+      sql`SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT 50`,
+
     ]);
 
     const enquiries =
@@ -788,4 +905,255 @@ export async function getAdminDashboardData(): Promise<{
     console.error('[db] getAdminDashboardData error:', err);
     return { enquiries: [], subscribers: [], portfolioItems: [], posts: [], orders: [] };
   }
+}
+
+// ─── Design Review ─────────────────────────────────────────────────────────────
+
+function normalizeDesignComment(row: any): DesignComment {
+  return {
+    id: String(row.id),
+    revision_id: String(row.revision_id),
+    image_index: Number(row.image_index) || 0,
+    x: Number(row.x),
+    y: Number(row.y),
+    comment: String(row.comment ?? ''),
+    designer_resolved: Boolean(row.designer_resolved),
+    proofreader_resolved: Boolean(row.proofreader_resolved),
+    author_role: row.author_role === 'proofreader' ? 'proofreader' : 'customer',
+    created_at: toIsoTimestampString(row.created_at),
+  };
+}
+
+function normalizeDesignRevision(row: any, comments: DesignComment[] = []): DesignRevision {
+  const rawUrls = row.image_urls;
+  const image_urls = Array.isArray(rawUrls) ? rawUrls.map(String) : [];
+  return {
+    id: String(row.id),
+    order_id: String(row.order_id),
+    version: Number(row.version),
+    image_urls,
+    notes: row.notes != null ? String(row.notes) : null,
+    status: row.status as DesignRevisionStatus,
+    created_at: toIsoTimestampString(row.created_at),
+    comments,
+  };
+}
+
+// One order can have many rounds of revisions; each carries its own comment thread.
+export async function getDesignRevisionsForOrder(orderId: string): Promise<DesignRevision[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  const revisionRows = await sql`
+    SELECT id, order_id, version, image_urls, notes, status, created_at
+    FROM design_revisions
+    WHERE order_id = ${orderId}
+    ORDER BY version ASC
+  `;
+
+  if (revisionRows.length === 0) return [];
+
+  const commentRows = await sql`
+    SELECT id, revision_id, image_index, x, y, comment, designer_resolved, proofreader_resolved, author_role, created_at
+    FROM design_comments
+    WHERE revision_id = ANY(${revisionRows.map((r: any) => r.id)})
+    ORDER BY created_at ASC
+  `;
+
+  const commentsByRevision = new Map<string, DesignComment[]>();
+  for (const row of commentRows as any[]) {
+    const comment = normalizeDesignComment(row);
+    const list = commentsByRevision.get(comment.revision_id) ?? [];
+    list.push(comment);
+    commentsByRevision.set(comment.revision_id, list);
+  }
+
+  return (revisionRows as any[]).map((row) =>
+    normalizeDesignRevision(row, commentsByRevision.get(String(row.id)) ?? [])
+  );
+}
+
+// Same as getDesignRevisionsForOrder, but filtered to what a customer is allowed
+// to see — a revision the proofreader hasn't cleared yet (or bounced back to the
+// designer) never reaches the client, by design.
+const CUSTOMER_VISIBLE_STATUSES = new Set<DesignRevisionStatus>(['pending_review', 'changes_requested', 'approved']);
+
+export async function getDesignRevisionsForCustomer(orderId: string): Promise<DesignRevision[]> {
+  const revisions = await getDesignRevisionsForOrder(orderId);
+  return revisions.filter((r) => CUSTOMER_VISIBLE_STATUSES.has(r.status));
+}
+
+export async function getDesignRevisionById(id: string): Promise<DesignRevision | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  const rows = await sql`
+    SELECT id, order_id, version, image_urls, notes, status, created_at
+    FROM design_revisions
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+  if (rows.length === 0) return null;
+
+  const commentRows = await sql`
+    SELECT id, revision_id, image_index, x, y, comment, designer_resolved, proofreader_resolved, author_role, created_at
+    FROM design_comments
+    WHERE revision_id = ${id}
+    ORDER BY created_at ASC
+  `;
+
+  return normalizeDesignRevision(rows[0], (commentRows as any[]).map(normalizeDesignComment));
+}
+
+// Designer/admin uploads a new proof — version auto-increments per order. Every
+// revision starts awaiting the proofreader's gate, never goes straight to the customer.
+//
+// A new upload is only allowed when there's no revision yet, or the proofreader
+// has explicitly routed the latest one back ('returned_to_designer') — never
+// directly off a customer's change request, and never while something is still
+// mid-review with the proofreader or the customer. This is the server-side
+// half of the gate; the UI hides the upload control for the same reason.
+export async function createDesignRevision(input: {
+  orderId: string;
+  imageUrls: string[];
+  notes?: string | null;
+}): Promise<DesignRevision> {
+  const sql = getDb();
+  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const latest = await sql`
+    SELECT status FROM design_revisions
+    WHERE order_id = ${input.orderId}
+    ORDER BY version DESC
+    LIMIT 1
+  `;
+
+  if (latest.length > 0 && latest[0].status !== 'returned_to_designer') {
+    throw new Error(
+      'This order already has a revision in progress — a new upload is only allowed once the proofreader routes it back to you.'
+    );
+  }
+
+  const rows = await sql`
+    INSERT INTO design_revisions (order_id, version, image_urls, notes, status)
+    VALUES (
+      ${input.orderId},
+      COALESCE((SELECT MAX(version) FROM design_revisions WHERE order_id = ${input.orderId}), 0) + 1,
+      ${input.imageUrls},
+      ${input.notes?.trim() || null},
+      'pending_proofreader_review'
+    )
+    RETURNING id, order_id, version, image_urls, notes, status, created_at
+  `;
+
+  return normalizeDesignRevision(rows[0]);
+}
+
+// Proofreader approves a revision awaiting their review, sending it on to the customer.
+export async function proofreaderApproveRevision(revisionId: string): Promise<DesignRevision | null> {
+  const sql = getDb();
+  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const rows = await sql`
+    UPDATE design_revisions
+    SET status = 'pending_review'
+    WHERE id = ${revisionId} AND status = 'pending_proofreader_review'
+    RETURNING id, order_id, version, image_urls, notes, status, created_at
+  `;
+
+  return rows.length > 0 ? normalizeDesignRevision(rows[0]) : null;
+}
+
+// Proofreader routes a revision back to the designer, with their own pinned
+// marks added on top. Valid from either state that's currently on the
+// proofreader's desk: a fresh proof awaiting their first look
+// ('pending_proofreader_review'), or a customer's change request they're
+// relaying on to the designer ('changes_requested') — the customer's own
+// pins already justify that one, so additional marks here are optional.
+export async function proofreaderReturnToDesigner(
+  revisionId: string,
+  comments: DesignCommentInput[]
+): Promise<DesignRevision | null> {
+  const sql = getDb();
+  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const rows = await sql`
+    UPDATE design_revisions
+    SET status = 'returned_to_designer'
+    WHERE id = ${revisionId} AND status IN ('pending_proofreader_review', 'changes_requested')
+    RETURNING id, order_id, version, image_urls, notes, status, created_at
+  `;
+
+  if (rows.length === 0) return null;
+
+  for (const c of comments) {
+    await sql`
+      INSERT INTO design_comments (revision_id, image_index, x, y, comment, author_role)
+      VALUES (${revisionId}, ${c.image_index}, ${c.x}, ${c.y}, ${c.comment.trim()}, 'proofreader')
+    `;
+  }
+
+  return getDesignRevisionById(revisionId);
+}
+
+// Customer approves, or requests changes with a batch of pinned comments. Only
+// valid while the revision is still awaiting review — prevents acting twice on
+// the same round, or reviewing a round the studio has already superseded.
+export async function submitDesignReview(
+  revisionId: string,
+  action: 'approve' | 'request_changes',
+  comments: DesignCommentInput[]
+): Promise<DesignRevision | null> {
+  const sql = getDb();
+  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const newStatus: DesignRevisionStatus = action === 'approve' ? 'approved' : 'changes_requested';
+
+  const rows = await sql`
+    UPDATE design_revisions
+    SET status = ${newStatus}
+    WHERE id = ${revisionId} AND status = 'pending_review'
+    RETURNING id, order_id, version, image_urls, notes, status, created_at
+  `;
+
+  if (rows.length === 0) return null;
+
+  if (action === 'request_changes') {
+    for (const c of comments) {
+      await sql`
+        INSERT INTO design_comments (revision_id, image_index, x, y, comment)
+        VALUES (${revisionId}, ${c.image_index}, ${c.x}, ${c.y}, ${c.comment.trim()})
+      `;
+    }
+  }
+
+  return getDesignRevisionById(revisionId);
+}
+
+// Designer and proofreader each have their own resolution flag on a comment —
+// one marking their own fix done never implies the other has confirmed it.
+export async function setCommentResolution(
+  commentId: string,
+  field: CommentResolutionField,
+  value: boolean
+): Promise<DesignComment | null> {
+  const sql = getDb();
+  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const rows =
+    field === 'designer_resolved'
+      ? await sql`
+          UPDATE design_comments
+          SET designer_resolved = ${value}
+          WHERE id = ${commentId}
+          RETURNING id, revision_id, image_index, x, y, comment, designer_resolved, proofreader_resolved, author_role, created_at
+        `
+      : await sql`
+          UPDATE design_comments
+          SET proofreader_resolved = ${value}
+          WHERE id = ${commentId}
+          RETURNING id, revision_id, image_index, x, y, comment, designer_resolved, proofreader_resolved, author_role, created_at
+        `;
+
+  return rows.length > 0 ? normalizeDesignComment(rows[0]) : null;
 }

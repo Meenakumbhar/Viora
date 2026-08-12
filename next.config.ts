@@ -15,7 +15,40 @@ const r2Hostname = process.env.R2_PUBLIC_URL || process.env.NEXT_PUBLIC_R2_URL
     })()
   : null;
 
+const isDev = process.env.NODE_ENV !== 'production';
+
+const CSP = [
+  "default-src 'self'",
+  // React dev mode needs eval() for its debugging/stack-trace features — never used in production builds.
+  `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ''}https://*.paypal.com https://*.paypalobjects.com`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.paypal.com https://*.paypalobjects.com",
+  "frame-src https://*.paypal.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+  "upgrade-insecure-requests",
+].join('; ');
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'Content-Security-Policy', value: CSP },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       // Cloudflare R2 public domains (e.g. pub-xxxx.r2.dev)

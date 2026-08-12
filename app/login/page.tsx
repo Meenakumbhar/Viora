@@ -43,7 +43,16 @@ export default function LoginPage() {
         throw new Error(json.error || 'Login failed.');
       }
 
-      window.location.href = '/account';
+      const role = json.data?.user?.role;
+      const isStaff = role === 'designer' || role === 'employee' || role === 'proofreader';
+      const fallback = isStaff ? '/staff' : '/account';
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('next');
+      // Only honor `next` if it actually matches where this role belongs —
+      // otherwise a customer link could strand a staff login on /account, or vice versa.
+      const destination = next && next.startsWith(isStaff ? '/staff' : '/account') ? next : fallback;
+
+      window.location.href = destination;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed.');
     } finally {

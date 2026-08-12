@@ -9,7 +9,6 @@ const ALLOWED_MIME_TYPES = [
   'image/png',
   'image/webp',
   'image/avif',
-  'image/svg+xml',
   'image/gif',
   'application/pdf',
 ];
@@ -50,7 +49,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
-          error: `Unsupported file type (${contentType}). Allowed types: JPG, PNG, WebP, AVIF, SVG, GIF, PDF.`,
+          error: `Unsupported file type (${contentType}). Allowed types: JPG, PNG, WebP, AVIF, GIF, PDF.`,
         },
         { status: 400 }
       );

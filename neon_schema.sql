@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     email_verified BOOLEAN DEFAULT FALSE NOT NULL,
     verification_token TEXT,
     verification_token_expires TIMESTAMPTZ,
+    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'employee', 'designer', 'proofreader', 'admin')),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -103,6 +104,10 @@ CREATE TABLE IF NOT EXISTS orders (
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS event_date DATE;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS quantity_estimate TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS portfolio_items JSONB;
+-- Which designer the proofreader has routed this order to — null until assigned.
+-- A designer only sees/acts on orders assigned to them.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS assigned_designer_id UUID REFERENCES users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_orders_assigned_designer_id ON orders(assigned_designer_id);
 
 -- 6. Create Order Status History Table (the visual tracker's timeline data)
 CREATE TABLE IF NOT EXISTS order_status_history (
@@ -112,6 +117,39 @@ CREATE TABLE IF NOT EXISTS order_status_history (
     note TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
+
+-- 7. Create Design Revisions Table (proofs submitted for review, one row per round).
+-- Every revision must clear the proofreader gate (pending_proofreader_review ->
+-- returned_to_designer or pending_review) before a customer ever sees it.
+CREATE TABLE IF NOT EXISTS design_revisions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    version INTEGER NOT NULL,
+    image_urls TEXT[] NOT NULL,
+    notes TEXT,
+    status TEXT NOT NULL DEFAULT 'pending_proofreader_review' CHECK (status IN ('pending_proofreader_review', 'returned_to_designer', 'pending_review', 'changes_requested', 'approved')),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE (order_id, version)
+);
+CREATE INDEX IF NOT EXISTS idx_design_revisions_order_id ON design_revisions(order_id);
+
+-- 8. Create Design Comments Table (pinned markup on a revision's image(s), left by
+-- either the customer during their review or the proofreader sending it back to the designer)
+CREATE TABLE IF NOT EXISTS design_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    revision_id UUID NOT NULL REFERENCES design_revisions(id) ON DELETE CASCADE,
+    image_index INTEGER NOT NULL DEFAULT 0,
+    x NUMERIC(6,5) NOT NULL CHECK (x >= 0 AND x <= 1),
+    y NUMERIC(6,5) NOT NULL CHECK (y >= 0 AND y <= 1),
+    comment TEXT NOT NULL,
+    -- Tracked independently: the designer marking their own fix done never
+    -- implies the proofreader has actually confirmed it, and vice versa.
+    designer_resolved BOOLEAN NOT NULL DEFAULT FALSE,
+    proofreader_resolved BOOLEAN NOT NULL DEFAULT FALSE,
+    author_role TEXT NOT NULL DEFAULT 'customer' CHECK (author_role IN ('customer', 'proofreader')),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_design_comments_revision_id ON design_comments(revision_id);
 
 -- ─── Indexes for Performance ──────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries(status, created_at DESC);

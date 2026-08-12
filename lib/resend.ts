@@ -233,6 +233,159 @@ export async function sendVerificationEmail(user: { email: string; name?: string
   });
 }
 
+// ─── Design Review ─────────────────────────────────────────────────────────────
+
+export async function sendDesignReadyEmail(order: {
+  id: string;
+  customer_name: string;
+  customer_email: string;
+  service_type: string;
+}, version: number) {
+  const reference = order.id.slice(0, 8).toUpperCase();
+  const name = escapeHtml(order.customer_name);
+  const serviceType = escapeHtml(order.service_type);
+  const reviewUrl = `${SITE_URL}/account/orders/${order.id}/review`;
+
+  return sendEmail({
+    to: order.customer_email,
+    subject: `Your design is ready for review — ${order.service_type} (#${reference})`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 28px; font-weight: 300;">Hi ${name}, your design is ready.</h1>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          We've uploaded proof v${version} for your <strong>${serviceType}</strong> order (#${reference}). Take a look and let us know what you think — approve it, or mark up anything you'd like changed.
+        </p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${reviewUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            Review your design
+          </a>
+        </div>
+        <hr style="border: none; border-top: 1px solid #2A3340; margin: 32px 0;" />
+        <p style="color: #8A8F96; font-size: 14px;">
+          Memories in Prints · Global Design & Print Studio<br />
+          <a href="${SITE_URL}" style="color: #C6A85C;">${SITE_URL.replace(/^https?:\/\//, '')}</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendDesignReadyForProofreadingEmail(order: {
+  id: string;
+  customer_name: string;
+  service_type: string;
+}, version: number) {
+  const reference = order.id.slice(0, 8).toUpperCase();
+  const name = escapeHtml(order.customer_name);
+  const serviceType = escapeHtml(order.service_type);
+  const manageUrl = `${SITE_URL}/staff/orders/${order.id}`;
+
+  return sendEmail({
+    to: STUDIO_EMAIL,
+    subject: `Awaiting proofreading — ${order.service_type} (#${reference})`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 24px; font-weight: 300;">Ready for proofreading</h1>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          Proof v${version} for ${name}'s <strong>${serviceType}</strong> order (#${reference}) is waiting on the proofreader before it goes to the customer.
+        </p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${manageUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            Review the proof
+          </a>
+        </div>
+      </div>
+    `,
+  });
+}
+
+export async function sendDesignReturnedToDesignerEmail(order: {
+  id: string;
+  customer_name: string;
+  service_type: string;
+}, version: number, commentCount: number) {
+  const reference = order.id.slice(0, 8).toUpperCase();
+  const name = escapeHtml(order.customer_name);
+  const serviceType = escapeHtml(order.service_type);
+  const manageUrl = `${SITE_URL}/staff/orders/${order.id}`;
+
+  return sendEmail({
+    to: STUDIO_EMAIL,
+    subject: `Proofreader returned a design — ${order.service_type} (#${reference})`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 24px; font-weight: 300;">Sent back for revisions</h1>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          The proofreader left <strong>${commentCount} mark${commentCount === 1 ? '' : 's'}</strong> on proof v${version} for ${name}'s <strong>${serviceType}</strong> order (#${reference}) and sent it back for revisions.
+        </p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${manageUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            View the marks
+          </a>
+        </div>
+      </div>
+    `,
+  });
+}
+
+export async function sendDesignChangesRequestedEmail(order: {
+  id: string;
+  customer_name: string;
+  service_type: string;
+}, version: number, commentCount: number) {
+  const reference = order.id.slice(0, 8).toUpperCase();
+  const name = escapeHtml(order.customer_name);
+  const serviceType = escapeHtml(order.service_type);
+  const manageUrl = `${SITE_URL}/admin/orders/${order.id}/designs`;
+
+  return sendEmail({
+    to: STUDIO_EMAIL,
+    subject: `Changes requested — ${order.service_type} (#${reference})`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 24px; font-weight: 300;">Design changes requested</h1>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          ${name} left <strong>${commentCount} comment${commentCount === 1 ? '' : 's'}</strong> on proof v${version} for order #${reference} (${serviceType}).
+        </p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${manageUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            View comments
+          </a>
+        </div>
+      </div>
+    `,
+  });
+}
+
+export async function sendDesignApprovedEmail(order: {
+  id: string;
+  customer_name: string;
+  service_type: string;
+}, version: number) {
+  const reference = order.id.slice(0, 8).toUpperCase();
+  const name = escapeHtml(order.customer_name);
+  const serviceType = escapeHtml(order.service_type);
+  const manageUrl = `${SITE_URL}/admin/orders/${order.id}/designs`;
+
+  return sendEmail({
+    to: STUDIO_EMAIL,
+    subject: `Design approved — ${order.service_type} (#${reference})`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 24px; font-weight: 300;">Design approved ✓</h1>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          ${name} approved proof v${version} for order #${reference} (${serviceType}). Ready to move to production.
+        </p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${manageUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            View order
+          </a>
+        </div>
+      </div>
+    `,
+  });
+}
+
 export async function sendEnquiryAutoReply(clientEmail: string, clientName: string) {
   return sendEmail({
     to: clientEmail,

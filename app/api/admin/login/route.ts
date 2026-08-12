@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ADMIN_SESSION_COOKIE, computeAdminToken } from '@/utils/admin-auth';
+import { ADMIN_SESSION_COOKIE, createAdminToken } from '@/utils/admin-auth';
+import { rateLimit, getClientIp, timingSafeEqualStr } from '@/lib/rate-limit';
 import type { ApiResponse } from '@/types/database';
 
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { allowed, retryAfterMs } = rateLimit(`admin-login:${ip}`, RATE_LIMIT, RATE_WINDOW_MS);
+
+  if (!allowed) {
+    return NextResponse.json<ApiResponse>(
+      { success: false, error: 'Too many login attempts. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(retryAfterMs / 1000)) } }
+    );
+  }
+
   const adminPassword = process.env.ADMIN_PASSWORD;
 
   if (!adminPassword) {
@@ -15,14 +29,14 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const password = typeof body?.password === 'string' ? body.password : '';
 
-  if (!password || password !== adminPassword) {
+  if (!password || !timingSafeEqualStr(password, adminPassword)) {
     return NextResponse.json<ApiResponse>(
       { success: false, error: 'Incorrect password.' },
       { status: 401 }
     );
   }
 
-  const token = await computeAdminToken(adminPassword);
+  const token = await createAdminToken(adminPassword);
   const response = NextResponse.json<ApiResponse>({ success: true, data: null });
   response.cookies.set(ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,

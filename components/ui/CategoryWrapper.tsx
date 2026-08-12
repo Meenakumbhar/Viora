@@ -6,9 +6,12 @@ import { useLenis } from '@/lib/lenis';
 
 export default function CategoryWrapper({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  // Admin pages are fixed-position dashboard overlays with their own native
-  // scroll regions — Lenis's global wheel hijacking breaks scrolling inside them.
-  useLenis(!pathname.startsWith('/admin'));
+  // Admin, staff, and account pages are fixed-position dashboard overlays
+  // (DashboardShell) with their own native scroll regions — Lenis's global
+  // wheel hijacking breaks scrolling inside them.
+  const isDashboard =
+    pathname.startsWith('/admin') || pathname.startsWith('/staff') || pathname.startsWith('/account');
+  useLenis(!isDashboard);
 
   let category = 'all';
 

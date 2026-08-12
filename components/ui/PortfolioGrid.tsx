@@ -94,9 +94,8 @@ const PortfolioVisual = memo(function PortfolioVisual({
           fill
           priority={priority}
           sizes={IMAGE_SIZES}
-          className={`object-cover transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.05] ${
-            status === 'loaded' ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`object-cover transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.05] ${status === 'loaded' ? 'opacity-100' : 'opacity-0'
+            }`}
           onLoad={() => setStatus('loaded')}
           onError={() => setStatus('error')}
         />
@@ -245,7 +244,7 @@ export default function PortfolioGrid({
 
   const filterOptions = useMemo(() => {
     const groups: Record<keyof PortfolioFilters, Map<string, number>> = {
-      style: new Map(), audience: new Map(), religion: new Map(), colour: new Map(), format: new Map(),
+      style: new Map(), passion: new Map(), religion: new Map(), colour: new Map(), tribute: new Map(),
     };
     categoryItems.forEach((item) => {
       (Object.keys(groups) as (keyof PortfolioFilters)[]).forEach((group) => {
@@ -341,7 +340,7 @@ export default function PortfolioGrid({
   }
 
   const filterLabels: Record<keyof PortfolioFilters, string> = {
-    style: 'Style', audience: 'Audience', religion: 'Religion', colour: 'Colour', format: 'Format',
+    style: 'Style', passion: 'Passion', religion: 'Religion', colour: 'Colour', tribute: 'Tribute',
   };
 
   function handleLoadMore() {
@@ -423,9 +422,8 @@ export default function PortfolioGrid({
                   >
                     <span
                       aria-hidden="true"
-                      className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-200 ${
-                        (activeFilters[group]?.length ?? 0) > 0 ? 'bg-cat-accent' : 'bg-border'
-                      }`}
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-200 ${(activeFilters[group]?.length ?? 0) > 0 ? 'bg-cat-accent' : 'bg-border'
+                        }`}
                     />
                     <span>{filterLabels[group]}</span>
                     {(activeFilters[group]?.length ?? 0) > 0 && (

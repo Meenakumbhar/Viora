@@ -10,10 +10,10 @@ const CATEGORIES: ServiceCategory[] = ['wedding', 'funeral', 'sports', 'branding
 
 const FILTER_GROUPS: { key: keyof PortfolioFilters; label: string }[] = [
   { key: 'style', label: 'Style' },
-  { key: 'audience', label: 'Audience' },
+  { key: 'passion', label: 'Passion' },
   { key: 'religion', label: 'Religion' },
   { key: 'colour', label: 'Colour' },
-  { key: 'format', label: 'Format' },
+  { key: 'tribute', label: 'Tribute' },
 ];
 
 interface FormState {
@@ -36,12 +36,12 @@ function emptyForm(): FormState {
     location: '',
     image_url: '',
     published: true,
-    filterText: { style: '', audience: '', religion: '', colour: '', format: '' },
+    filterText: { style: '', passion: '', religion: '', colour: '', tribute: '' },
   };
 }
 
 function toFormState(item: PortfolioItem): FormState {
-  const filterText: Record<keyof PortfolioFilters, string> = { style: '', audience: '', religion: '', colour: '', format: '' };
+  const filterText: Record<keyof PortfolioFilters, string> = { style: '', passion: '', religion: '', colour: '', tribute: '' };
   (Object.keys(filterText) as (keyof PortfolioFilters)[]).forEach((key) => {
     filterText[key] = (item.filters?.[key] ?? []).join(', ');
   });
@@ -180,9 +180,8 @@ export default function PortfolioAdminManager({ initialItems }: { initialItems: 
           <button
             type="button"
             onClick={() => setCategoryFilter('all')}
-            className={`border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors ${
-              categoryFilter === 'all' ? 'border-[#C6A85C] text-[#C6A85C]' : 'border-white/15 text-white/40 hover:text-white/70'
-            }`}
+            className={`border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors ${categoryFilter === 'all' ? 'border-[#C6A85C] text-[#C6A85C]' : 'border-white/15 text-white/40 hover:text-white/70'
+              }`}
           >
             All ({items.length})
           </button>
@@ -191,9 +190,8 @@ export default function PortfolioAdminManager({ initialItems }: { initialItems: 
               key={cat}
               type="button"
               onClick={() => setCategoryFilter(cat)}
-              className={`border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest capitalize transition-colors ${
-                categoryFilter === cat ? 'border-[#C6A85C] text-[#C6A85C]' : 'border-white/15 text-white/40 hover:text-white/70'
-              }`}
+              className={`border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest capitalize transition-colors ${categoryFilter === cat ? 'border-[#C6A85C] text-[#C6A85C]' : 'border-white/15 text-white/40 hover:text-white/70'
+                }`}
             >
               {cat} ({items.filter((i) => i.category === cat).length})
             </button>
