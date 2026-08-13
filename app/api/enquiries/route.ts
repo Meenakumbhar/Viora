@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { insertEnquiry } from '@/lib/db';
+import { insertEnquiry, updateUserProfile } from '@/lib/db';
+import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
 import type { EnquiryPayload, ApiResponse, Enquiry, PortfolioItemRef } from '@/types/database';
 
 // Public endpoint — sanitize the client-supplied portfolio item list rather than trusting it verbatim.
@@ -41,6 +42,19 @@ export async function POST(request: NextRequest) {
       ...body,
       portfolio_items: sanitizePortfolioItems(body.portfolio_items),
     });
+
+    // If this came from a logged-in customer, capture their contact details
+    // onto their profile so their next quote can skip re-entering them.
+    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    if (session) {
+      await updateUserProfile(session.userId, {
+        name: body.name,
+        phone: body.phone ?? null,
+        country: body.country ?? null,
+      }).catch((err) => {
+        console.error('[enquiries] profile save failed:', err);
+      });
+    }
 
     return NextResponse.json<ApiResponse<Enquiry>>(
       {

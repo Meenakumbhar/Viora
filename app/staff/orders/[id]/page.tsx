@@ -76,6 +76,12 @@ export default async function StaffOrderDesignsPage({ params }: { params: Promis
           <p className="font-mono text-[10px] text-white/40">{order.customer_email}</p>
         </div>
         <div>
+          <p className="font-mono text-[9px] uppercase tracking-widest text-white/30">Order placed</p>
+          <p className="mt-1 font-body text-sm text-white/80">
+            {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <div>
           <p className="font-mono text-[9px] uppercase tracking-widest text-white/30">Event / delivery date</p>
           <p className="mt-1 font-body text-sm text-white/80">
             {order.event_date

@@ -15,10 +15,18 @@ CREATE TABLE IF NOT EXISTS users (
     verification_token TEXT,
     verification_token_expires TIMESTAMPTZ,
     role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'employee', 'designer', 'proofreader', 'admin')),
+    -- Captured from the customer's first quote submission so repeat orders
+    -- don't need to re-collect contact details.
+    phone TEXT,
+    country TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_verification_token ON users(verification_token);
+
+-- Add phone/country to an existing database without affecting current accounts.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT;
 
 -- 1. Create Enquiries Table
 CREATE TABLE IF NOT EXISTS enquiries (

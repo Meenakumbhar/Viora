@@ -39,7 +39,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
     }
 
-    const revision = await createDesignRevision({ orderId: id, imageUrls, notes });
+    let revision;
+    try {
+      revision = await createDesignRevision({ orderId: id, imageUrls, notes });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'A new upload is not allowed right now.';
+      return NextResponse.json<ApiResponse>({ success: false, error: message }, { status: 409 });
+    }
 
     await sendDesignReadyForProofreadingEmail(order, revision.version).catch((err) => {
       console.error('[admin/orders/:id/designs] proofreading-notice email failed:', err);

@@ -79,6 +79,8 @@ function normalizeUser(row: any): User {
     verification_token: row.verification_token != null ? String(row.verification_token) : null,
     verification_token_expires: row.verification_token_expires != null ? toIsoTimestampString(row.verification_token_expires) : null,
     role,
+    phone: row.phone != null ? String(row.phone) : null,
+    country: row.country != null ? String(row.country) : null,
     created_at: toIsoTimestampString(row.created_at),
   };
 }
@@ -90,6 +92,8 @@ export function toPublicUser(user: User): PublicUser {
     name: user.name,
     email_verified: user.email_verified,
     role: user.role,
+    phone: user.phone,
+    country: user.country,
     created_at: user.created_at,
   };
 }
@@ -518,7 +522,7 @@ export async function createUser(input: {
       ${input.verificationTokenExpires.toISOString()},
       'user'
     )
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
   `;
 
   return normalizeUser(rows[0]);
@@ -529,7 +533,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   if (!sql) return null;
 
   const rows = await sql`
-    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
+    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
     FROM users
     WHERE email = ${email.trim().toLowerCase()}
     LIMIT 1
@@ -543,7 +547,7 @@ export async function getUserById(id: string): Promise<User | null> {
   if (!sql) return null;
 
   const rows = await sql`
-    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
+    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
     FROM users
     WHERE id = ${id}
     LIMIT 1
@@ -562,7 +566,7 @@ export async function verifyUserByToken(token: string): Promise<User | null> {
     UPDATE users
     SET email_verified = true, verification_token = NULL, verification_token_expires = NULL
     WHERE verification_token = ${token} AND verification_token_expires > NOW()
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
   `;
 
   return rows.length > 0 ? normalizeUser(rows[0]) : null;
@@ -581,6 +585,30 @@ export async function setUserVerificationToken(userId: string, token: string, ex
   `;
 }
 
+// Captures contact details from a quote submission onto the user's own profile
+// so a returning customer's next order can skip re-entering them. Only fills
+// in fields that were actually submitted this time — an omitted phone/country
+// on a later order shouldn't wipe out a value saved on an earlier one.
+export async function updateUserProfile(
+  userId: string,
+  input: { name?: string | null; phone?: string | null; country?: string | null }
+): Promise<User | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  const rows = await sql`
+    UPDATE users
+    SET
+      name = COALESCE(${input.name?.trim() || null}, name),
+      phone = COALESCE(${input.phone?.trim() || null}, phone),
+      country = COALESCE(${input.country?.trim() || null}, country)
+    WHERE id = ${userId}
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
+  `;
+
+  return rows.length > 0 ? normalizeUser(rows[0]) : null;
+}
+
 // ─── Roles (admin-assigned only — never settable from public signup) ──────────
 
 export async function getAllUsers(): Promise<User[]> {
@@ -588,7 +616,7 @@ export async function getAllUsers(): Promise<User[]> {
   if (!sql) return [];
 
   const rows = await sql`
-    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
+    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
     FROM users
     ORDER BY created_at DESC
   `;
@@ -629,7 +657,7 @@ export async function updateUserRole(id: string, role: UserRole): Promise<User |
     UPDATE users
     SET role = ${role}
     WHERE id = ${id}
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, created_at
+    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
   `;
 
   return rows.length > 0 ? normalizeUser(rows[0]) : null;

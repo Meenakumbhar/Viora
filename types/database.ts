@@ -50,6 +50,29 @@ export interface ServiceData {
   relatedSlugs: string[];
 }
 
+// One orderable option within a product — usually just a size (A1/A2/A3),
+// but for products like Memorial Portraits where each option is a genuinely
+// different style, `description` carries the material/finish details.
+export interface ProductSize {
+  label: string;
+  dimensions: string;
+  description?: string;
+}
+
+// Standalone catalog items (memorial keepsakes, cards, prints) — distinct
+// from ServiceData, which describes a whole category of work rather than a
+// single product a customer picks off a shelf.
+export interface ProductData {
+  slug: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  category: ServiceCategory;
+  image: string | null;
+  sizes: ProductSize[];
+  relatedSlugs: string[];
+}
+
 // Denormalized snapshot of a portfolio item at the time a quote/order referenced it —
 // kept even if the portfolio item is later edited or deleted.
 export interface PortfolioItemRef {
@@ -186,6 +209,10 @@ export interface User {
   verification_token: string | null;
   verification_token_expires: string | null;
   role: UserRole;
+  // Captured from the customer's first quote submission — lets returning
+  // customers skip re-entering contact details on later orders.
+  phone: string | null;
+  country: string | null;
   created_at: string;
 }
 
@@ -196,6 +223,8 @@ export interface PublicUser {
   name: string | null;
   email_verified: boolean;
   role: UserRole;
+  phone: string | null;
+  country: string | null;
   created_at: string;
 }
 

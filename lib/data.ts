@@ -1,4 +1,4 @@
-import type { ServiceData, Testimonial, ProcessStep } from '@/types/database';
+import type { ServiceData, ProductData, Testimonial, ProcessStep } from '@/types/database';
 
 // ─── SERVICE DATA ────────────────────────────────────────────────────────────
 
@@ -236,6 +236,126 @@ export function getServiceBySlug(slug: string): ServiceData | undefined {
 
 export function getRelatedServices(slugs: string[]): ServiceData[] {
   return services.filter((s) => slugs.includes(s.slug));
+}
+
+// ─── PRODUCT DATA ────────────────────────────────────────────────────────────
+
+export const products: ProductData[] = [
+  {
+    slug: 'memory-cards',
+    title: 'Memory Cards',
+    subtitle: 'A Place to Share Precious Memories',
+    description: 'Our memorial cards offer guests an opportunity to leave personal messages, treasured memories, or words of comfort for the family. These keepsakes become a beautiful collection of stories to look back on in the days ahead. They can also be sent prior to the service to share news of a loved one’s passing and provide thoughtful details about the ceremony.',
+    category: 'funeral',
+    image: '/images/products/memory-cards.jpg',
+    sizes: [{ label: 'Standard', dimensions: 'A6 (148 mm × 105 mm)' }],
+    relatedSlugs: ['thank-you-card', 'attendance-cards'],
+  },
+  {
+    slug: 'thank-you-card',
+    title: 'Thank You Card',
+    subtitle: 'A Heartfelt Way to Say Thank You',
+    description: 'Our Thank You cards offer a meaningful way to express your gratitude to those who have supported you during a difficult time. These cards allow you to share your appreciation for the comfort, kindness, and presence of friends and family. They serve as a heartfelt reminder of the compassion shown and can be sent after the service to acknowledge and thank those who stood by you.',
+    category: 'funeral',
+    image: '/images/products/thank-you-card.jpg',
+    sizes: [{ label: 'Standard', dimensions: 'A6 (105 mm × 148 mm)' }],
+    relatedSlugs: ['memory-cards', 'bookmarks'],
+  },
+  {
+    slug: 'memorial-boards',
+    title: 'Memorial Boards',
+    subtitle: 'Celebrate a Life Through a Beautifully Crafted Memory Board',
+    description: 'A memory board is a heartfelt way to share the story of someone special. Whether displayed at a ceremony, wake, or celebration of life, it becomes a touching focal point — a place where memories come alive. Printed on premium rigid foam board, our memory boards are lightweight yet durable, perfect for displaying free-standing or on an elegant easel. Please allow an additional day for production and delivery to ensure every detail is perfect.',
+    category: 'funeral',
+    image: '/images/products/memorial-boards.jpg',
+    sizes: [
+      { label: 'A1', dimensions: '594 × 841 mm' },
+      { label: 'A2', dimensions: '420 × 594 mm' },
+      { label: 'A3', dimensions: '297 × 420 mm' },
+    ],
+    relatedSlugs: ['photo-prints', 'memorial-portraits', 'memory-boxes'],
+  },
+  {
+    slug: 'memory-boxes',
+    title: 'Memory Boxes',
+    subtitle: 'A Beautiful Place to Store Treasured Keepsakes',
+    description: 'Memory Boxes provide a beautiful and secure place to store treasured keepsakes, photographs, cards, and meaningful mementos in memory of a loved one. Crafted using premium-quality materials, each box features a magnetic closure for safe and elegant storage while creating a lasting tribute that can be cherished for years to come. Choose from a range of standard designs or create a completely personalised memory box with your own photographs, colours, and wording.',
+    category: 'funeral',
+    image: null,
+    sizes: [
+      { label: 'Large', dimensions: '300 × 310 × 70 mm' },
+      { label: 'Medium', dimensions: '245 × 300 × 70 mm' },
+      { label: 'Small', dimensions: '219 × 223 × 70 mm' },
+    ],
+    relatedSlugs: ['memorial-boards', 'photo-prints'],
+  },
+  {
+    slug: 'seed-cards',
+    title: 'Seed Cards',
+    subtitle: 'A Living Tribute',
+    description: 'Our Memorial Seed Cards offer a heartfelt way to honour a loved one, creating a tribute that grows and blossoms over time. Each card includes a seed packet attached to the reverse — easily removed without harming the beautifully laminated card. Choose from three meaningful flower varieties.',
+    category: 'funeral',
+    image: '/images/products/seed-cards.jpg',
+    sizes: [{ label: 'Standard', dimensions: '82 mm × 112 mm' }],
+    relatedSlugs: ['bookmarks', 'memory-cards'],
+  },
+  {
+    slug: 'attendance-cards',
+    title: 'Attendance Cards',
+    subtitle: 'A Record of Love and Support',
+    description: 'Our attendance cards provide a simple yet meaningful way for families to know who came to honour their loved one. Guests can sign their names or share a few heartfelt words, creating a lasting record of those who gathered in remembrance. These cards can also be sent in advance, notifying friends and family of the service and inviting them to attend.',
+    category: 'funeral',
+    image: '/images/products/attendance-cards.jpg',
+    sizes: [{ label: 'Standard', dimensions: '148 mm × 105 mm' }],
+    relatedSlugs: ['memory-cards', 'thank-you-card'],
+  },
+  {
+    slug: 'photo-prints',
+    title: 'Photo Prints',
+    subtitle: 'Print Your Cherished Photo in the Perfect Size',
+    description: 'If you already have a special frame you’d like to use at the funeral service or wake, we can provide beautifully printed photos to fit perfectly. To achieve the best results, we recommend providing a high-quality image — the larger the print, the clearer and more striking your photograph will appear.',
+    category: 'funeral',
+    image: '/images/products/photo-prints.jpg',
+    sizes: [
+      { label: 'A4', dimensions: '210 × 297 mm' },
+      { label: 'A5', dimensions: '148 × 210 mm' },
+      { label: '10 × 8"', dimensions: '254 × 203 mm' },
+    ],
+    relatedSlugs: ['memorial-portraits', 'memorial-boards', 'memory-boxes'],
+  },
+  {
+    slug: 'bookmarks',
+    title: 'Bookmarks',
+    subtitle: 'A Keepsake for Quiet Moments',
+    description: 'These elegant bookmarks are a timeless and thoughtful keepsake to honour and remember a loved one. Every time you open a book, their memory is there — gently accompanying you through stories, quiet moments, and reflections. More than just a marker between pages, it’s a symbol of enduring love, comfort, and connection. Small in size, yet big in meaning, this keepsake helps you feel close to those you hold dear, every day.',
+    category: 'funeral',
+    image: '/images/products/bookmarks.jpg',
+    sizes: [{ label: 'Standard', dimensions: '50 mm × 200 mm' }],
+    relatedSlugs: ['seed-cards', 'memory-cards'],
+  },
+  {
+    slug: 'memorial-portraits',
+    title: 'Memorial Portraits',
+    subtitle: 'Beautiful Memorial Portraits to Treasure Forever',
+    description: 'Honour the memory of your loved one with high-quality portraits designed to look beautiful during the ceremony — and continue to be cherished for years to come. Each style is carefully selected for exceptional quality at an affordable price.',
+    category: 'funeral',
+    image: null,
+    sizes: [
+      { label: 'The Classic', dimensions: '229 × 305 mm', description: 'A timeless A4 portrait mounted in durable, drop-resistant tempered glass with its own stand. Perfect for display on a shelf, desk, or wall.' },
+      { label: 'The Contemporary', dimensions: '305 × 305 × 38 mm or 305 × 406 × 38 mm', description: 'A lightweight, premium canvas print stretched over a sturdy frame and fitted with hanging eyes. Optional black wooden float frame available.' },
+      { label: 'The Reflection', dimensions: '279 × 103 × 19 mm or 152 × 203 × 19 mm', description: 'A sleek and versatile acrylic block that displays photos and messages with clarity. Easily reusable with simple photo transfer.' },
+      { label: 'The Traditional', dimensions: '458 × 599 mm', description: 'A large A3 print in a two-tone frame with a contrasting mount. Supplied with both a stand and hooks for portrait or landscape orientation.' },
+    ],
+    relatedSlugs: ['photo-prints', 'memorial-boards'],
+  },
+];
+
+export function getProductBySlug(slug: string): ProductData | undefined {
+  return products.find((p) => p.slug === slug);
+}
+
+export function getRelatedProducts(slugs: string[]): ProductData[] {
+  return products.filter((p) => slugs.includes(p.slug));
 }
 
 // ─── TESTIMONIALS ────────────────────────────────────────────────────────────

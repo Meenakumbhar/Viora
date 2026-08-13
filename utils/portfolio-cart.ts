@@ -3,7 +3,13 @@ export interface PortfolioCartItem {
   title: string;
   category: string;
   quantity: number;
-  unitPrice: number;
+  // Optional so older/simpler cart entries (or ones added before this field
+  // existed) still read back fine — the cart UI falls back to a placeholder.
+  image?: string;
+  size?: string;
+  // The quote-form service label this item implies (e.g. 'Funeral & Memorial')
+  // — lets a quote raised from this item skip asking for it again.
+  serviceType?: string;
 }
 
 const CART_KEY = 'viora-portfolio-cart';
@@ -41,4 +47,12 @@ export function updatePortfolioCartQuantity(id: string, quantity: number): Portf
 
 export function removeFromPortfolioCart(id: string): PortfolioCartItem[] {
   return updatePortfolioCartQuantity(id, 0);
+}
+
+// Called once a quote request has actually been submitted for these items —
+// leaving them in the cart afterward would let a customer re-submit the same
+// items as a second, duplicate quote request.
+export function clearPortfolioCart(): void {
+  window.localStorage.setItem(CART_KEY, JSON.stringify([]));
+  window.dispatchEvent(new Event('portfolio-cart-updated'));
 }

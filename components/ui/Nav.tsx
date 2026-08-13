@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { isServiceSlugActive, isCategoryActive } from '@/lib/active-services';
+import { products } from '@/lib/data';
+import { readPortfolioCart } from '@/utils/portfolio-cart';
 
 function isNavHrefActive(href: string): boolean {
   const serviceMatch = href.match(/^\/services\/([a-z-]+)$/);
@@ -39,6 +41,11 @@ const NAV_LINKS: NavLink[] = [
       { label: 'Graphic Design', href: '/services/graphic-design' },
       { label: 'Print & Production', href: '/services/print-production' },
     ],
+  },
+  {
+    label: 'Products',
+    href: '/products',
+    dropdown: products.map((product) => ({ label: product.title, href: `/products/${product.slug}` })),
   },
   {
     label: 'Portfolio',
@@ -82,6 +89,11 @@ const MOBILE_NAV: MobileNavSection[] = [
     ],
   },
   {
+    label: 'Products',
+    href: '/products',
+    children: products.map((product) => ({ label: product.title, href: `/products/${product.slug}` })),
+  },
+  {
     label: 'Portfolio',
     href: '/portfolio',
     children: [
@@ -119,7 +131,17 @@ export default function Nav() {
     setMobileOpen(false);
   }
   const [scrolled, setScrolled] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  useEffect(() => {
+    const syncCart = () => {
+      setCartCount(readPortfolioCart().reduce((sum, item) => sum + item.quantity, 0));
+    };
+    syncCart();
+    window.addEventListener('portfolio-cart-updated', syncCart);
+    return () => window.removeEventListener('portfolio-cart-updated', syncCart);
+  }, []);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
@@ -328,9 +350,11 @@ export default function Nav() {
                 <circle cx="19" cy="20" r="1" />
                 <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
               </svg>
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-gold px-1 text-[10px] font-semibold text-bg-primary">
-                2
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-gold px-1 text-[10px] font-semibold text-bg-primary">
+                  {cartCount}
+                </span>
+              )}
             </Link>
 
             {/* CTA */}
@@ -467,7 +491,7 @@ export default function Nav() {
                 <circle cx="19" cy="20" r="1" />
                 <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
               </svg>
-              Cart (2)
+              Cart ({cartCount})
             </Link>
             <Link
               href="/account"

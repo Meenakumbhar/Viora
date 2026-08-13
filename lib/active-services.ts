@@ -38,3 +38,18 @@ export function serviceSlugToCategory(slug: string): ServiceCategory | null {
       return null;
   }
 }
+
+// Reverse of the above, in QuoteForm's exact service-type label text — lets a
+// quote raised from a portfolio item or product pre-select its service
+// instead of asking the customer to pick it again.
+const CATEGORY_TO_SERVICE_LABEL: Record<ServiceCategory, string> = {
+  wedding: 'Wedding & Events',
+  funeral: 'Funeral & Memorial',
+  sports: 'Sports & Branding',
+  branding: 'Graphic Design',
+  events: 'Print & Production',
+};
+
+export function categoryToServiceLabel(category: string): string | null {
+  return CATEGORY_TO_SERVICE_LABEL[category as ServiceCategory] ?? null;
+}

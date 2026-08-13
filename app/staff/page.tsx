@@ -118,6 +118,7 @@ export default async function StaffDashboardPage() {
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white/40">Order</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white/40">Customer</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white/40">Service</th>
+                <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white/40 hidden lg:table-cell">Placed</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white/40">Design status</th>
                 <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white/40">Assigned to</th>
                 <th className="px-4 py-3 text-right font-mono text-[10px] uppercase tracking-widest text-white/40">Open</th>
@@ -129,6 +130,9 @@ export default async function StaffDashboardPage() {
                   <td className="px-4 py-3 font-mono text-[10px] text-white/40">#{order.id.slice(0, 8).toUpperCase()}</td>
                   <td className="px-4 py-3 font-body text-sm text-white/80">{order.customer_name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-white/50">{order.service_type}</td>
+                  <td className="px-4 py-3 hidden font-mono text-[10px] text-white/40 lg:table-cell">
+                    {new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
+                  </td>
                   <td className="px-4 py-3">
                     {latest ? (
                       <span className={`inline-flex items-center border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${DESIGN_STATUS_COLORS[latest.status]}`}>

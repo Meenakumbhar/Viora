@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,7 +13,12 @@ import {
   updatePortfolioCartQuantity,
   type PortfolioCartItem,
 } from '@/utils/portfolio-cart';
-import { isCategoryActive } from '@/lib/active-services';
+import {
+  readSavedItems,
+  toggleSavedItem,
+  type SavedPortfolioItem,
+} from '@/utils/portfolio-saved';
+import { isCategoryActive, categoryToServiceLabel } from '@/lib/active-services';
 
 interface PortfolioItemData {
   id: string;
@@ -52,6 +58,13 @@ const categoryGradients: Record<string, string> = {
 const aspectVariants = ['aspect-[3/4]', 'aspect-[4/3]', 'aspect-square'] as const;
 
 const IMAGE_SIZES = '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw';
+
+// Product cart entries use a composite `slug::size` id so each size of the
+// same product stays a distinct line — portfolio entries just use the real id.
+function getCartItemHref(id: string): string {
+  const productSlug = id.includes('::') ? id.split('::')[0] : null;
+  return productSlug ? `/products/${productSlug}` : `/portfolio/${id}`;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    VISUAL — gradient backdrop + optional real photo, graceful on-error fallback
@@ -114,14 +127,18 @@ const PortfolioCard = memo(function PortfolioCard({
   isAppearing,
   delayMs,
   priority,
+  isSaved,
   onBuy,
+  onToggleSave,
 }: {
   item: PortfolioItemData;
   aspect: string;
   isAppearing: boolean;
   delayMs: number;
   priority: boolean;
+  isSaved: boolean;
   onBuy: (item: PortfolioItemData) => void;
+  onToggleSave: (item: PortfolioItemData) => void;
 }) {
   return (
     <article
@@ -152,6 +169,28 @@ const PortfolioCard = memo(function PortfolioCard({
           <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-cat-accent" />
           {item.category}
         </span>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onToggleSave(item);
+          }}
+          aria-pressed={isSaved}
+          aria-label={isSaved ? `Remove ${item.title} from saved items` : `Save ${item.title}`}
+          className="glass absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center text-cat-heading transition-transform duration-200 hover:scale-110"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill={isSaved ? '#7A4A44' : 'none'}
+            stroke={isSaved ? '#7A4A44' : 'currentColor'}
+            strokeWidth="1.8"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.5s-7.5-4.6-10-9.3C.4 8 1.8 4.5 5 3.6c2-.5 3.9.3 5 2 1.1-1.7 3-2.5 5-2 3.2.9 4.6 4.4 3 7.6-2.5 4.7-10 9.3-10 9.3Z" />
+          </svg>
+        </button>
       </PortfolioVisual>
 
       {/* Caption */}
@@ -201,6 +240,9 @@ export default function PortfolioGrid({
   const [openFilter, setOpenFilter] = useState<keyof PortfolioFilters | null>(null);
   const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [expandedCartIds, setExpandedCartIds] = useState<Set<string>>(new Set());
+  const [savedItems, setSavedItems] = useState<SavedPortfolioItem[]>([]);
+  const [savedOpen, setSavedOpen] = useState(false);
   const [toast, setToast] = useState<{ key: number; title: string } | null>(null);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [appearing, setAppearing] = useState<Set<string>>(() => {
@@ -216,9 +258,14 @@ export default function PortfolioGrid({
   const gridRef = useRef<HTMLDivElement>(null);
   const filterPanelRef = useRef<HTMLDivElement>(null);
 
-  const cartSubtotal = cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const cartTax = cartSubtotal * 0.2;
-  const cartTotal = cartSubtotal + cartTax;
+  // Cart/saved drawers, triggers, and the toast are portaled to <body> below —
+  // this page nests PortfolioGrid inside a scroll-reveal wrapper that applies
+  // a transform, which silently traps any `position: fixed` descendant instead
+  // of pinning it to the viewport. document.body isn't available during SSR,
+  // hence the mount guard.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
@@ -226,6 +273,13 @@ export default function PortfolioGrid({
     syncCart();
     window.addEventListener('portfolio-cart-updated', syncCart);
     return () => window.removeEventListener('portfolio-cart-updated', syncCart);
+  }, []);
+
+  useEffect(() => {
+    const syncSaved = () => setSavedItems(readSavedItems());
+    syncSaved();
+    window.addEventListener('portfolio-saved-updated', syncSaved);
+    return () => window.removeEventListener('portfolio-saved-updated', syncSaved);
   }, []);
 
   // Auto-dismiss the "added to cart" toast; restarts the timer on every new add
@@ -357,11 +411,18 @@ export default function PortfolioGrid({
       id: item.id,
       title: item.title,
       category: item.category,
-      unitPrice: 95,
+      image: item.image_url ?? undefined,
+      serviceType: categoryToServiceLabel(item.category) ?? undefined,
     });
     setCartItems(readPortfolioCart());
     setToast({ key: Date.now(), title: item.title });
   }, []);
+
+  const handleToggleSave = useCallback((item: PortfolioItemData) => {
+    setSavedItems(toggleSavedItem({ id: item.id, title: item.title, category: item.category, image: item.image_url ?? undefined }));
+  }, []);
+
+  const savedIds = useMemo(() => new Set(savedItems.map((item) => item.id)), [savedItems]);
 
   return (
     <div data-category={activeFilter === 'All' ? 'all' : activeFilter.toLowerCase()}>
@@ -495,7 +556,9 @@ export default function PortfolioGrid({
             isAppearing={appearing.has(item.id)}
             delayMs={(i % ITEMS_PER_PAGE) * 80}
             priority={i < 3}
+            isSaved={savedIds.has(item.id)}
             onBuy={handleBuyItem}
+            onToggleSave={handleToggleSave}
           />
         ))}
       </div>
@@ -519,6 +582,8 @@ export default function PortfolioGrid({
         </div>
       )}
 
+      {mounted && createPortal(
+        <>
       {cartOpen && (
         <div
           className="fixed inset-0 z-[210] bg-black/35"
@@ -546,40 +611,161 @@ export default function PortfolioGrid({
                 <p className="font-body text-sm text-[#5B6470]">Your cart is empty.</p>
               ) : (
                 <div className="space-y-5">
-                  {cartItems.map((item) => (
+                  {cartItems.map((item) => {
+                    const isExpanded = expandedCartIds.has(item.id);
+                    return (
                     <div key={item.id} className="border-b border-[#D9D4CC] pb-5">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="font-display text-xl">{item.title}</h3>
-                          <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-[#5B6470]">{item.category}</p>
+                      <div className="flex gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedCartIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
+                            return next;
+                          })}
+                          aria-expanded={isExpanded}
+                          aria-label={isExpanded ? `Hide larger preview of ${item.title}` : `Show larger preview of ${item.title}`}
+                          className="relative h-16 w-16 shrink-0 overflow-hidden border border-[#D9D4CC] bg-[#F5F2EC] transition-opacity hover:opacity-80"
+                        >
+                          {item.image ? (
+                            <Image src={item.image} alt={item.title} fill sizes="64px" className="object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <span className="font-display text-xl font-bold text-[#1C2530] opacity-10">{item.title.charAt(0)}</span>
+                            </div>
+                          )}
+                          <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center bg-black/55 text-white">
+                            <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              {isExpanded ? <path d="M18 6 6 18M6 6l12 12" /> : <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />}
+                            </svg>
+                          </span>
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <h3 className="font-display text-xl">{item.title}</h3>
+                              <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-[#5B6470]">{item.category}</p>
+                            </div>
+                            <button type="button" onClick={() => setCartItems(removeFromPortfolioCart(item.id))} className="font-mono text-[10px] uppercase tracking-wider text-[#7A4A44] underline">Remove</button>
+                          </div>
+                          <div className="mt-4 flex items-center justify-between">
+                            <div className="flex items-center border border-[#D9D4CC]">
+                              <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity - 1))} className="h-9 w-9">−</button>
+                              <span className="w-9 text-center font-mono text-xs">{item.quantity}</span>
+                              <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity + 1))} className="h-9 w-9">+</button>
+                            </div>
+                          </div>
                         </div>
-                        <button type="button" onClick={() => setCartItems(removeFromPortfolioCart(item.id))} className="font-mono text-[10px] uppercase tracking-wider text-[#7A4A44] underline">Remove</button>
                       </div>
-                      <div className="mt-4 flex items-center justify-between">
-                        <div className="flex items-center border border-[#D9D4CC]">
-                          <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity - 1))} className="h-9 w-9">−</button>
-                          <span className="w-9 text-center font-mono text-xs">{item.quantity}</span>
-                          <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity + 1))} className="h-9 w-9">+</button>
-                        </div>
-                        <span className="font-mono text-xs">£{(item.unitPrice * item.quantity).toFixed(2)}</span>
-                      </div>
+
+                      {isExpanded && (
+                        <Link
+                          href={getCartItemHref(item.id)}
+                          onClick={() => setCartOpen(false)}
+                          className="group mt-4 flex items-center gap-4 border border-[#D9D4CC] bg-[#F5F2EC] p-3 transition-colors hover:border-[#1C2530] animate-fadeIn"
+                        >
+                          <div className="relative h-28 w-28 shrink-0 overflow-hidden border border-[#D9D4CC] bg-white">
+                            {item.image ? (
+                              <Image src={item.image} alt={item.title} fill sizes="112px" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <span className="font-display text-3xl font-bold text-[#1C2530] opacity-10">{item.title.charAt(0)}</span>
+                              </div>
+                            )}
+                          </div>
+                          <span className="font-mono text-[10px] uppercase tracking-widest text-[#6B5420] group-hover:text-[#1C2530]">
+                            View product &rarr;
+                          </span>
+                        </Link>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
 
             {cartItems.length > 0 && (
               <div className="border-t border-[#D9D4CC] px-6 py-5">
-                <div className="space-y-2 font-mono text-xs text-[#374151]">
-                  <div className="flex justify-between"><span>Subtotal</span><span>£{cartSubtotal.toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span>VAT (20%)</span><span>£{cartTax.toFixed(2)}</span></div>
-                  <div className="flex justify-between border-t border-[#D9D4CC] pt-3 text-base text-[#1C2530]"><span>Estimated total</span><span>£{cartTotal.toFixed(2)}</span></div>
-                </div>
+                <p className="font-mono text-[10px] text-[#5B6470]">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
                 <Link href="/pricing" onClick={() => setCartOpen(false)} className="mt-5 block bg-[#1C2530] px-5 py-3 text-center font-mono text-[10px] uppercase tracking-widest text-white hover:bg-[#374151]">Continue to checkout</Link>
                 <button type="button" onClick={() => setCartOpen(false)} className="mt-3 w-full py-2 font-mono text-[10px] uppercase tracking-widest text-[#5B6470] underline">Continue browsing</button>
               </div>
             )}
+          </aside>
+        </div>
+      )}
+
+      {savedOpen && (
+        <div
+          className="fixed inset-0 z-[210] bg-black/35"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSavedOpen(false);
+          }}
+        >
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="portfolio-saved-title"
+            className="animate-[cart-drawer-in_240ms_cubic-bezier(0.22,1,0.36,1)] absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-[#FDFCFA] text-[#1C2530] shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-[#D9D4CC] px-6 py-5">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-[#6B5420]">Saved items</p>
+                <h2 id="portfolio-saved-title" className="mt-1 font-display text-3xl">Your favourites</h2>
+              </div>
+              <button type="button" onClick={() => setSavedOpen(false)} className="flex h-11 w-11 items-center justify-center border border-[#D9D4CC] text-xl" aria-label="Close saved items">×</button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {savedItems.length === 0 ? (
+                <p className="font-body text-sm text-[#5B6470]">Nothing saved yet. Tap the heart on any piece to keep it here for quick access later.</p>
+              ) : (
+                <div className="space-y-5">
+                  {savedItems.map((item) => (
+                    <div key={item.id} className="border-b border-[#D9D4CC] pb-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="font-display text-xl">{item.title}</h3>
+                          <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-[#5B6470]">{item.category}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSavedItems((prev) => {
+                            toggleSavedItem(item);
+                            return prev.filter((entry) => entry.id !== item.id);
+                          })}
+                          className="font-mono text-[10px] uppercase tracking-wider text-[#7A4A44] underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Link
+                          href={`/portfolio/${item.id}`}
+                          onClick={() => setSavedOpen(false)}
+                          className="border border-[#D9D4CC] px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-[#5B6470] hover:border-[#1C2530] hover:text-[#1C2530]"
+                        >
+                          View
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addToPortfolioCart({ id: item.id, title: item.title, category: item.category, image: item.image, serviceType: categoryToServiceLabel(item.category) ?? undefined });
+                            setCartItems(readPortfolioCart());
+                            setToast({ key: Date.now(), title: item.title });
+                          }}
+                          className="border border-cat-accent bg-cat-accent px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-cat-bg hover:bg-cat-accent-dark"
+                        >
+                          Add to cart
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </aside>
         </div>
       )}
@@ -609,6 +795,29 @@ export default function PortfolioGrid({
         </motion.button>
       )}
 
+      {/* Persistent saved-items trigger — stacks above the cart trigger when both are visible */}
+      {!savedOpen && savedItems.length > 0 && (
+        <motion.button
+          type="button"
+          onClick={() => setSavedOpen(true)}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className={`fixed left-6 z-[190] flex items-center gap-3 border border-cat-heading bg-cat-heading px-5 py-3 text-cat-bg shadow-[0_20px_50px_rgba(24,31,39,0.25)] ${!cartOpen && cartCount > 0 ? 'bottom-24' : 'bottom-6'}`}
+          aria-label={`Open saved items, ${savedItems.length} item${savedItems.length === 1 ? '' : 's'}`}
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="#7A4A44" stroke="#7A4A44" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 20.5s-7.5-4.6-10-9.3C.4 8 1.8 4.5 5 3.6c2-.5 3.9.3 5 2 1.1-1.7 3-2.5 5-2 3.2.9 4.6 4.4 3 7.6-2.5 4.7-10 9.3-10 9.3Z" />
+          </svg>
+          <span className="font-mono text-[10px] font-medium uppercase tracking-widest">Saved</span>
+          <span className="flex h-5 min-w-5 items-center justify-center bg-cat-accent px-1 font-mono text-[10px] font-semibold text-cat-heading">
+            {savedItems.length}
+          </span>
+        </motion.button>
+      )}
+
       {/* "Added to cart" toast — confirms the add without blocking further browsing */}
       <AnimatePresence>
         {toast && (
@@ -616,18 +825,18 @@ export default function PortfolioGrid({
             key={toast.key}
             role="status"
             aria-live="polite"
-            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-            className="fixed bottom-6 right-6 z-[220] flex max-w-sm items-center gap-4 border border-border bg-[#FDFCFA] px-5 py-4 shadow-[0_20px_50px_rgba(24,31,39,0.18)]"
+            className="fixed bottom-6 right-6 z-[220] flex max-w-sm items-center gap-4 rounded-sm border border-[#C6A85C]/30 bg-[#0F1116] px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
           >
-            <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center border border-cat-accent text-cat-accent">
-              &check;
+            <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-[#C6A85C] text-[#C6A85C] text-base">
+              ✓
             </span>
-            <div className="min-w-0">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-cat-muted">Added to cart</p>
-              <p className="mt-0.5 truncate font-display text-base text-cat-heading">{toast.title}</p>
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-[#C6A85C]">Added to cart</p>
+              <p className="mt-0.5 truncate font-display text-sm text-white">{toast.title}</p>
             </div>
             <button
               type="button"
@@ -635,13 +844,16 @@ export default function PortfolioGrid({
                 setCartOpen(true);
                 setToast(null);
               }}
-              className="ml-1 shrink-0 font-mono text-[10px] font-medium uppercase tracking-wider text-cat-accent-dark transition-colors hover:text-cat-heading"
+              className="ml-1 shrink-0 font-mono text-[10px] font-medium uppercase tracking-wider text-[#C6A85C] transition-colors hover:text-white"
             >
-              View cart &rarr;
+              View cart →
             </button>
           </motion.div>
         )}
       </AnimatePresence>
+        </>,
+        document.body
+      )}
     </div>
   );
 }

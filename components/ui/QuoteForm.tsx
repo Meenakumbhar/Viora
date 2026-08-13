@@ -5,6 +5,7 @@ import {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
   type FormEvent,
   type ChangeEvent,
   type KeyboardEvent,
@@ -12,8 +13,9 @@ import {
 import Link from 'next/link';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/src/style.css';
-import { readPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
+import { readPortfolioCart, clearPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
 import { isServiceSlugActive } from '@/lib/active-services';
+import type { PublicUser } from '@/types/database';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -27,8 +29,8 @@ interface FormData {
   country: string;
   serviceType: string;
   eventDate: Date | undefined;
-  quantity: string;
-  customQuantity: string;
+  quantity: string | null;
+  quantityUndecided: boolean;
   description: string;
   source: string;
 }
@@ -42,8 +44,8 @@ const INITIAL_DATA: FormData = {
   country: '',
   serviceType: '',
   eventDate: undefined,
-  quantity: '',
-  customQuantity: '',
+  quantity: null,
+  quantityUndecided: false,
   description: '',
   source: '',
 };
@@ -69,14 +71,8 @@ const ALL_SERVICE_TYPES = [
 // "Not sure" always stays — it's a catch-all, not a specific paused service.
 const SERVICE_TYPES = ALL_SERVICE_TYPES.filter((s) => !s.slug || isServiceSlugActive(s.slug));
 
-const QUANTITIES = [
-  { label: '1–50', sub: 'Small run' },
-  { label: '51–200', sub: 'Medium' },
-  { label: '201–500', sub: 'Large' },
-  { label: '500+', sub: 'Bulk' },
-  { label: 'Not yet decided', sub: "I'll decide later" },
-  { label: 'Custom', sub: 'Type exact amount' },
-];
+// All integers 1‑1000 for the quantity combobox
+const ALL_QUANTITIES = Array.from({ length: 1000 }, (_, i) => i + 1);
 
 const SOURCES = [
   { label: 'Google', emoji: '🔍' },
@@ -348,6 +344,143 @@ function CountryCombobox({
               ].join(' ')}
             >
               {c}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ── Quantity combobox ─────────────────────────────────────────────────── */
+
+function QuantityCombobox({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string | null;
+  disabled: boolean;
+  onChange: (v: string | null) => void;
+}) {
+  const [inputVal, setInputVal] = useState(value ?? '');
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // Sync input when parent clears the value (e.g. "undecided" checked)
+  useEffect(() => {
+    setInputVal(value ?? '');
+  }, [value]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!inputVal.trim()) return ALL_QUANTITIES;
+    const n = parseInt(inputVal, 10);
+    if (isNaN(n)) return [];
+    // Show numbers that start with the typed digits
+    return ALL_QUANTITIES.filter((q) => String(q).startsWith(inputVal.trim()));
+  }, [inputVal]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (!listRef.current) return;
+    const item = listRef.current.children[highlighted] as HTMLElement | undefined;
+    item?.scrollIntoView({ block: 'nearest' });
+  }, [highlighted]);
+
+  function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4); // digits only, max 4 chars
+    setInputVal(val);
+    setOpen(true);
+    setHighlighted(0);
+    // Immediately reflect freetext as the value too
+    onChange(val || null);
+  }
+
+  function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!open) { if (e.key === 'ArrowDown') setOpen(true); return; }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlighted((h) => Math.min(h + 1, filtered.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlighted((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filtered[highlighted] !== undefined) select(String(filtered[highlighted]));
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  }
+
+  function select(v: string) {
+    setInputVal(v);
+    onChange(v);
+    setOpen(false);
+  }
+
+  return (
+    <div ref={containerRef} className={`relative inline-flex w-40 ${disabled ? 'pointer-events-none opacity-40' : ''}`}>
+      {/* Input */}
+      <input
+        id="quantity-input"
+        type="text"
+        inputMode="numeric"
+        placeholder="e.g. 150"
+        value={inputVal}
+        disabled={disabled}
+        autoComplete="off"
+        onChange={handleInput}
+        onFocus={() => { setOpen(true); setHighlighted(0); }}
+        onKeyDown={handleKey}
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        className="w-full rounded-full border border-border bg-surface py-2 pl-4 pr-8 font-body text-sm text-text-heading placeholder:text-text-muted focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold/40 disabled:cursor-not-allowed"
+      />
+      {/* Chevron */}
+      <span
+        className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-text-muted"
+        aria-hidden="true"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </span>
+
+      {/* Scrollable dropdown */}
+      {open && filtered.length > 0 && (
+        <ul
+          ref={listRef}
+          role="listbox"
+          className="absolute left-0 top-full z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-bg-primary shadow-lg"
+        >
+          {filtered.map((q, i) => (
+            <li
+              key={q}
+              role="option"
+              aria-selected={String(q) === (value ?? '')}
+              onMouseDown={() => select(String(q))}
+              className={[
+                'cursor-pointer px-4 py-1.5 font-body text-sm transition-colors',
+                i === highlighted
+                  ? 'bg-accent-gold/10 text-accent-gold'
+                  : 'text-text-heading hover:bg-bg-secondary',
+              ].join(' ')}
+            >
+              {q}
             </li>
           ))}
         </ul>
@@ -764,7 +897,6 @@ function AutoTextarea({
         id="quote-description"
         name="description"
         value={value}
-        required
         maxLength={DESC_MAX}
         onChange={onChange}
         onFocus={() => setFocused(true)}
@@ -781,7 +913,7 @@ function AutoTextarea({
           lifted ? 'top-2 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
-        Brief description<span className="text-accent-gold ml-0.5">*</span>
+        Brief description <span className="normal-case text-text-muted">(optional)</span>
       </label>
       {/* Character counter */}
       {(focused || value.length > 0) && (
@@ -805,14 +937,79 @@ export default function QuoteForm() {
   const [state, setState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // The Continue/Submit button occupies the same spot across a step change —
+  // a stray double-click (common on trackpads/touch) can land its second
+  // click on the button that just replaced it, submitting the form before
+  // the customer ever saw step 3. This briefly ignores clicks right after
+  // any step change so that can't happen.
+  const [navLocked, setNavLocked] = useState(false);
+  useEffect(() => {
+    setNavLocked(true);
+    const timer = setTimeout(() => setNavLocked(false), 400);
+    return () => clearTimeout(timer);
+  }, [step]);
+
   /* ── Portfolio cart context — so a quote raised from "Buy" on a portfolio
      item stays linked to that item, instead of arriving as a generic request ── */
   const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
   const [includeCartItems, setIncludeCartItems] = useState(true);
+  const [serviceOverride, setServiceOverride] = useState(false);
 
   useEffect(() => {
     setCartItems(readPortfolioCart());
   }, []);
+
+  // If every cart item implies the same service, there's nothing to ask —
+  // re-picking a service the customer already told us via the product/
+  // portfolio item they chose would just be repeating themselves.
+  const derivedServiceType = useMemo(() => {
+    if (!includeCartItems || cartItems.length === 0) return null;
+    const first = cartItems[0].serviceType;
+    if (!first) return null;
+    return cartItems.every((item) => item.serviceType === first) ? first : null;
+  }, [cartItems, includeCartItems]);
+
+  useEffect(() => {
+    if (derivedServiceType) {
+      setData((prev) => ({ ...prev, serviceType: derivedServiceType }));
+    }
+  }, [derivedServiceType]);
+
+  /* ── Returning-customer prefill — a logged-in user who already has saved
+     contact details shouldn't have to retype them on every order; only what
+     changes per order (service, quantity, description) still needs filling in. ── */
+  const [profile, setProfile] = useState<PublicUser | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/account/me')
+      .then((res) => (res.ok ? res.json() : { success: false }))
+      .then((json) => {
+        if (!cancelled && json.success) setProfile(json.data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setProfileLoaded(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!profileLoaded || !profile) return;
+    setData((prev) => ({
+      ...prev,
+      name: prev.name || profile.name || '',
+      email: prev.email || profile.email || '',
+      phone: prev.phone || profile.phone || '',
+      country: prev.country || profile.country || '',
+    }));
+    // A profile only counts as "complete" once we already have what step 1
+    // asks for — otherwise this is their first order and they still need it.
+    if (profile.name && profile.phone) {
+      setStep(2);
+    }
+  }, [profileLoaded, profile]);
 
   /* ── Field handlers ───────────────────────────────────────────────────── */
 
@@ -840,8 +1037,7 @@ export default function QuoteForm() {
 
   function validateStep2(): string | null {
     if (!data.serviceType) return 'Please select a service type.';
-    if (!data.quantity) return 'Please select an estimated quantity.';
-    if (data.quantity === 'Custom' && !data.customQuantity.trim()) return 'Please enter your custom quantity.';
+    if ((!data.quantity || !data.quantity.trim()) && !data.quantityUndecided) return 'Please select an estimated quantity.';
     return null;
   }
 
@@ -850,7 +1046,6 @@ export default function QuoteForm() {
     if (s1) return s1;
     const s2 = validateStep2();
     if (s2) return s2;
-    if (!data.description.trim()) return 'Please provide a brief description.';
     return null;
   }
 
@@ -885,7 +1080,9 @@ export default function QuoteForm() {
           country: data.country,
           service_type: data.serviceType,
           event_date: data.eventDate ? toDateInputValue(data.eventDate) : null,
-          quantity_estimate: data.quantity === 'Custom' ? data.customQuantity : data.quantity,
+          quantity_estimate: data.quantityUndecided
+            ? 'Not yet decided'
+            : data.quantity?.trim() || null,
           description: data.description,
           source: data.source || null,
           portfolio_items: includeCartItems && cartItems.length > 0
@@ -896,6 +1093,9 @@ export default function QuoteForm() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || 'Something went wrong. Please try again.');
+      }
+      if (includeCartItems && cartItems.length > 0) {
+        clearPortfolioCart();
       }
       setState('success');
     } catch (err) {
@@ -944,6 +1144,23 @@ export default function QuoteForm() {
       {/* Step dots */}
       <StepDots current={step} total={3} />
 
+      {/* ── Returning-customer summary — lets them skip straight past contact details ── */}
+      {step > 1 && profile && profile.name && profile.phone && (
+        <div className="mb-6 flex items-center justify-between gap-4 border border-border bg-cat-surface px-5 py-3 animate-fadeIn">
+          <p className="font-body text-sm text-text-muted">
+            Ordering as <span className="text-text-heading">{data.name || profile.name}</span>
+            <span className="text-text-muted"> &middot; {data.email || profile.email}</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+          >
+            Change details
+          </button>
+        </div>
+      )}
+
       {/* ── Portfolio cart context banner ───────────────────────────────── */}
       {cartItems.length > 0 && includeCartItems && (
         <div className="mb-8 flex items-start justify-between gap-4 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
@@ -957,7 +1174,12 @@ export default function QuoteForm() {
           </div>
           <button
             type="button"
-            onClick={() => setIncludeCartItems(false)}
+            onClick={() => {
+              setIncludeCartItems(false);
+              // Decoupling from the cart means the derived service no longer
+              // applies either — back to asking, like a guest enquiry.
+              if (derivedServiceType) setField('serviceType', '');
+            }}
             className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
           >
             Not about this
@@ -1011,23 +1233,41 @@ export default function QuoteForm() {
         <div className="space-y-8 animate-fadeIn">
           <h2 className="font-display text-xl text-text-heading mb-6">About your project</h2>
 
-          {/* Service type — pill chips */}
+          {/* Service type — derived from the cart when every item agrees, otherwise pill chips */}
           <div>
-            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
-              Service type<span className="text-accent-gold ml-0.5">*</span>
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {SERVICE_TYPES.map((s) => (
-                <PillChip
-                  key={s.label}
-                  selected={data.serviceType === s.label}
-                  onClick={() => setField('serviceType', s.label)}
+            {derivedServiceType && !serviceOverride ? (
+              <div className="flex items-center justify-between gap-4 border border-border bg-cat-surface px-4 py-3">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-text-muted">Service</p>
+                  <p className="mt-1 font-body text-cat-heading">{derivedServiceType}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setServiceOverride(true)}
+                  className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
                 >
-                  <span className="mr-1.5">{s.emoji}</span>
-                  {s.label}
-                </PillChip>
-              ))}
-            </div>
+                  Change
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+                  Service type<span className="text-accent-gold ml-0.5">*</span>
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {SERVICE_TYPES.map((s) => (
+                    <PillChip
+                      key={s.label}
+                      selected={data.serviceType === s.label}
+                      onClick={() => setField('serviceType', s.label)}
+                    >
+                      <span className="mr-1.5">{s.emoji}</span>
+                      {s.label}
+                    </PillChip>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Date */}
@@ -1038,44 +1278,25 @@ export default function QuoteForm() {
             <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
           </div>
 
-          {/* Quantity — pill chips + custom input */}
+          {/* Quantity — combobox: type a number, pick from scrollable dropdown */}
           <div>
-            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+            <p className="mb-1.5 font-body text-sm text-text-muted uppercase tracking-wider">
               Estimated quantity<span className="text-accent-gold ml-0.5">*</span>
             </p>
-            <div className="flex flex-wrap gap-2">
-              {QUANTITIES.map((q) => (
-                <PillChip
-                  key={q.label}
-                  selected={data.quantity === q.label}
-                  onClick={() => {
-                    setField('quantity', q.label);
-                    if (q.label !== 'Custom') setField('customQuantity', '');
-                  }}
-                >
-                  <span className="font-semibold">{q.label}</span>
-                  <span className="block text-[10px] text-text-muted mt-0.5">{q.sub}</span>
-                </PillChip>
-              ))}
-            </div>
-
-            {/* Custom quantity text input — slides in when 'Custom' selected */}
-            {data.quantity === 'Custom' && (
-              <div className="mt-3 animate-fadeIn">
-                <input
-                  id="quote-custom-qty"
-                  type="text"
-                  value={data.customQuantity}
-                  onChange={(e) => setField('customQuantity', e.target.value)}
-                  autoFocus
-                  placeholder="e.g. 350 booklets, 12 large banners…"
-                  className="w-full border border-accent-gold/50 bg-cat-surface px-4 py-3 text-cat-heading font-body text-body-base outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold transition-all duration-200 placeholder:text-text-muted/50"
-                />
-                <p className="mt-1 font-mono text-[10px] text-text-muted">
-                  Be as specific as you like — format, size, finish, all welcome.
-                </p>
-              </div>
-            )}
+            <QuantityCombobox
+              value={data.quantity}
+              disabled={data.quantityUndecided}
+              onChange={(v) => setField('quantity', v)}
+            />
+            <label className="mt-3 flex items-center gap-2 font-body text-xs text-text-muted">
+              <input
+                type="checkbox"
+                checked={data.quantityUndecided}
+                onChange={(e) => setField('quantityUndecided', e.target.checked)}
+                className="h-3.5 w-3.5 accent-accent-gold"
+              />
+              I haven&apos;t decided yet
+            </label>
           </div>
         </div>
       )}
@@ -1139,7 +1360,8 @@ export default function QuoteForm() {
           <button
             type="button"
             onClick={goNext}
-            className="bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider transition-all duration-300 hover:bg-accent-gold-dark focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary flex items-center gap-2"
+            disabled={navLocked}
+            className="bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider transition-all duration-300 hover:bg-accent-gold-dark focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary flex items-center gap-2 disabled:opacity-70"
           >
             Continue
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -1149,7 +1371,7 @@ export default function QuoteForm() {
         ) : (
           <button
             type="submit"
-            disabled={state === 'loading'}
+            disabled={state === 'loading' || navLocked}
             className={[
               'bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider',
               'transition-all duration-300 hover:bg-accent-gold-dark',
