@@ -74,7 +74,7 @@ export default function Home() {
     <main>
       {/* ──────────────────── SECTION 1 — HERO ──────────────────── */}
       <section id="hero" className="hero-section">
-        <HeroVideo src={process.env.NEXT_PUBLIC_HERO_VIDEO_URL}>
+        <HeroVideo src="https://pub-172d7d176e1b4109938fad7b98c20ca7.r2.dev/portfolio/branding/front.mp4">
           <div className="hero-content">
             <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
               Global Design &amp; Print Studio

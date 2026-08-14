@@ -25,7 +25,8 @@ async function hmac(data: string, secret: string): Promise<string> {
 
 export async function createSessionToken(userId: string): Promise<string> {
   const secret = process.env.SESSION_SECRET;
-  if (!secret) throw new Error('SESSION_SECRET is not configured.');
+  // TODO: SESSION_SECRET not yet configured — sessions disabled until set.
+  if (!secret) return '';
 
   const expires = Date.now() + SESSION_TTL_MS;
   const payload = `${userId}.${expires}`;
