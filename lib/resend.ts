@@ -1,7 +1,7 @@
 // Resend email client for Memories in Prints
 // Handles enquiry notifications, auto-reply emails, order status updates, and account verification
 
-import type { OrderStatus } from '@/types/database';
+import type { OrderStatus, Enquiry, OrderForm } from '@/types/database';
 import { SITE_URL } from '@/lib/site-url';
 
 interface SendEmailOptions {
@@ -386,15 +386,33 @@ export async function sendDesignApprovedEmail(order: {
   });
 }
 
-export async function sendEnquiryAutoReply(clientEmail: string, clientName: string) {
+// Sent the moment a quote is placed — the order form link is the main call
+// to action, since we need the deceased/service/print details before any
+// design work can start.
+export async function sendEnquiryAutoReply(enquiry: { id: string; name: string; email: string }) {
+  const name = escapeHtml(enquiry.name);
+  const orderFormUrl = `${SITE_URL}/order-form/${enquiry.id}`;
+
   return sendEmail({
-    to: clientEmail,
-    subject: `We've received your enquiry, ${clientName}`,
+    to: enquiry.email,
+    subject: `We've received your enquiry, ${enquiry.name}`,
     html: `
       <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
-        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 28px; font-weight: 300;">Thank you, ${clientName}.</h1>
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 28px; font-weight: 300;">Thank you, ${name}.</h1>
         <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
           We've received your enquiry and will be in touch within 24 hours.
+        </p>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          To help us get started, please fill in your order form with the service details and print specification — you can save it and come back any time.
+        </p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${orderFormUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            Fill in your order form
+          </a>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: #8A8F96;">
+          Or paste this link into your browser:<br />
+          <a href="${orderFormUrl}" style="color: #C6A85C; word-break: break-all;">${orderFormUrl}</a>
         </p>
         <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
           In the meantime, feel free to browse our <a href="${SITE_URL}/portfolio" style="color: #C6A85C;">portfolio</a>
@@ -405,6 +423,38 @@ export async function sendEnquiryAutoReply(clientEmail: string, clientName: stri
           Memories in Prints · Global Design & Print Studio<br />
           <a href="${SITE_URL}" style="color: #C6A85C;">${SITE_URL.replace(/^https?:\/\//, '')}</a>
         </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendOrderFormSubmittedEmail(enquiry: Enquiry, orderForm: OrderForm) {
+  const name = escapeHtml(enquiry.name);
+  const manageUrl = `${SITE_URL}/order-form/${enquiry.id}`;
+  const deceasedName = orderForm.deceased_name ? escapeHtml(orderForm.deceased_name) : '—';
+
+  return sendEmail({
+    to: STUDIO_EMAIL,
+    subject: `Order form submitted — ${name} (${deceasedName})`,
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 24px; font-weight: 300;">Order form submitted</h1>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          ${name} has filled in their order form.
+        </p>
+        <div style="margin: 24px 0; padding: 16px 20px; background: #151C24; border: 1px solid #2A3340;">
+          <p style="margin: 0; font-size: 13px; color: #8A8F96;">Deceased</p>
+          <p style="margin: 4px 0 0; font-size: 16px;">${deceasedName}</p>
+          ${orderForm.funeral_date ? `
+          <p style="margin: 12px 0 0; font-size: 13px; color: #8A8F96;">Funeral date</p>
+          <p style="margin: 4px 0 0; font-size: 16px;">${escapeHtml(new Date(orderForm.funeral_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }))}</p>` : ''}
+          ${orderForm.bespoke_design ? `<p style="margin: 12px 0 0; font-size: 13px; color: #C6A85C;">Bespoke design requested</p>` : ''}
+        </div>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${manageUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            View order form
+          </a>
+        </div>
       </div>
     `,
   });

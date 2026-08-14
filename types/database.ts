@@ -97,6 +97,53 @@ export interface Enquiry {
   status: EnquiryStatus;
 }
 
+// ─── Order Form ────────────────────────────────────────────────────────────────
+// The detailed print-spec form a customer fills in once a quote is placed —
+// deceased/service details, page count, and (only for a bespoke design) the
+// add-on products they'd like alongside it.
+
+export type OrderFormStatus = 'draft' | 'submitted';
+export type PhotoOption = 'none' | 'colour' | 'bw';
+export type InsidePagesStyle = 'bw' | 'match_cover';
+export type PhotoSuppliedVia = 'email' | 'post';
+
+export interface OrderFormProduct {
+  slug: string;
+  title: string;
+  size: string;
+  quantity: number;
+}
+
+export interface OrderForm {
+  id: string;
+  enquiry_id: string;
+  deceased_name: string | null;
+  funeral_date: string | null;
+  funeral_time: string | null;
+  venue_name: string | null;
+  date_of_birth: string | null;
+  date_of_death: string | null;
+  age_of_deceased: string | null;
+  photo_option: PhotoOption | null;
+  bespoke_design: boolean;
+  bespoke_details: string | null;
+  number_of_pages: string | null;
+  inside_pages_style: InsidePagesStyle | null;
+  quantity: string | null;
+  photo_qty: number | null;
+  photo_supplied_via: PhotoSuppliedVia | null;
+  photo_instructions: string | null;
+  additional_products: OrderFormProduct[] | null;
+  callback_requested: boolean;
+  callback_phone: string | null;
+  additional_notes: string | null;
+  status: OrderFormStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export type OrderFormInput = Partial<Omit<OrderForm, 'id' | 'enquiry_id' | 'status' | 'created_at' | 'updated_at'>>;
+
 export type OrderStatus = 'pending' | 'in_progress' | 'completed';
 export type PaymentStatus = 'unpaid' | 'paid' | 'failed';
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { isServiceSlugActive, isCategoryActive } from '@/lib/active-services';
 import { products } from '@/lib/data';
+import Logo from '@/components/ui/Logo';
 import { readPortfolioCart } from '@/utils/portfolio-cart';
 
 function isNavHrefActive(href: string): boolean {
@@ -264,11 +265,13 @@ export default function Nav() {
       >
         <div className="container-wide h-full flex items-center justify-between">
           {/* ── Logo ─────────────────────────────────────────────────── */}
-          <Link
-            href="/"
-            className="font-display font-light text-xl tracking-wide text-text-heading"
-          >
-            Memories in Prints
+          <Link href="/" className="flex items-center">
+            <Logo
+              wordmark="Memories in Prints"
+              containerWidth={72}
+              containerHeight={72}
+              textClassName="font-display font-light text-xl tracking-wide text-text-heading"
+            />
           </Link>
 
           {/* ── Desktop links ────────────────────────────────────────── */}

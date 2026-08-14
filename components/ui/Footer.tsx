@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Logo from '@/components/ui/Logo';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    FOOTER DATA
@@ -10,14 +11,14 @@ interface FooterLink {
 }
 
 const STUDIO_LINKS: FooterLink[] = [
-  { label: 'Services', href: '/services' },
+  // { label: 'Services', href: '/services' },
   { label: 'Portfolio', href: '/portfolio' },
   { label: 'Process', href: '/process' },
-  { label: 'About', href: '/about' },
+  { label: 'About Us', href: '/about' },
 ];
 
 const SUPPORT_LINKS: FooterLink[] = [
-  { label: 'Contact', href: '/contact' },
+  { label: 'Contact Us', href: '/contact' },
   { label: 'Turnaround Times', href: '/process' },
 ];
 
@@ -133,11 +134,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Column 1 — Brand */}
           <div>
-            <Link
-              href="/"
-              className="font-display font-light text-xl text-dark-text-primary"
-            >
-              Memories in Prints
+            <Link href="/" className="flex items-center">
+              <Logo
+                wordmark="Memories in Prints"
+                containerWidth={80}
+                containerHeight={80}
+                textClassName="font-display font-light text-xl text-dark-text-primary"
+              />
             </Link>
             <p className="font-body text-body-base text-dark-text-muted mt-4">
               A full-service design and print studio.

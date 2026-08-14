@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { getUserById, getOrdersByEmail, getOrderHistory, getDesignRevisionsForCustomer } from '@/lib/db';
+import { getUserById, getOrdersByEmail, getOrderHistory, getDesignRevisionsForCustomer, getEnquiriesByEmail } from '@/lib/db';
 import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
 import DashboardShell, { type DashboardNavItem } from '@/components/dashboard/DashboardShell';
 import StatCard from '@/components/dashboard/StatCard';
 import UserLogoutButton from '@/components/ui/UserLogoutButton';
-import CustomerOrderList from '@/components/dashboard/CustomerOrderList';
+import CustomerOrderList, { type AccountRow } from '@/components/dashboard/CustomerOrderList';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,18 +37,37 @@ export default async function AccountPage({
     redirect('/login');
   }
 
-  const orders = await getOrdersByEmail(user.email);
+  const [orders, enquiries] = await Promise.all([
+    getOrdersByEmail(user.email),
+    getEnquiriesByEmail(user.email),
+  ]);
   const orderHistories = await Promise.all(orders.map((order) => getOrderHistory(order.id)));
   const orderRevisions = await Promise.all(orders.map((order) => getDesignRevisionsForCustomer(order.id)));
 
-  const rows = orders.map((order, i) => ({
+  const orderRows: AccountRow[] = orders.map((order, i) => ({
+    kind: 'order',
+    id: order.id,
     order,
     history: orderHistories[i],
     latestRevision: [...orderRevisions[i]].sort((a, b) => b.version - a.version)[0],
   }));
 
+  // A quote only shows as its own "Placed" row until an admin turns it into
+  // an order — once that happens it's represented by the order row above,
+  // not duplicated here.
+  const convertedEnquiryIds = new Set(orders.filter((o) => o.enquiry_id).map((o) => o.enquiry_id as string));
+  const placedRows: AccountRow[] = enquiries
+    .filter((enquiry) => !convertedEnquiryIds.has(enquiry.id))
+    .map((enquiry) => ({ kind: 'placed', id: enquiry.id, enquiry }));
+
+  const rows: AccountRow[] = [...orderRows, ...placedRows].sort((a, b) => {
+    const aDate = a.kind === 'order' ? a.order.created_at : a.enquiry.created_at;
+    const bDate = b.kind === 'order' ? b.order.created_at : b.enquiry.created_at;
+    return new Date(bDate).getTime() - new Date(aDate).getTime();
+  });
+
   const inProgress = orders.filter((o) => o.status === 'in_progress').length;
-  const awaitingReview = rows.filter((r) => r.latestRevision?.status === 'pending_review').length;
+  const awaitingReview = orderRows.filter((r) => r.kind === 'order' && r.latestRevision?.status === 'pending_review').length;
 
   return (
     <DashboardShell
@@ -93,8 +112,11 @@ export default async function AccountPage({
       {/* ── Order history ─────────────────────────────────────────── */}
       <div className="border-t border-border pt-10">
         <h2 className="font-display text-2xl font-light text-text-heading">Your orders</h2>
+        <p className="mt-1 font-body text-sm text-text-muted">
+          Every quote you&apos;ve placed, from first request through to completion.
+        </p>
 
-        {orders.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="mt-4 font-body text-body-base text-text-muted">
             No orders yet.{' '}
             <Link href="/portfolio" className="text-accent-gold link-underline">

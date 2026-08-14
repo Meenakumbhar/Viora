@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { insertEnquiry, updateUserProfile } from '@/lib/db';
 import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { sendEnquiryAutoReply } from '@/lib/resend';
 import type { EnquiryPayload, ApiResponse, Enquiry, PortfolioItemRef } from '@/types/database';
 
 // Public endpoint — sanitize the client-supplied portfolio item list rather than trusting it verbatim.
@@ -41,6 +42,12 @@ export async function POST(request: NextRequest) {
     const enquiry = await insertEnquiry({
       ...body,
       portfolio_items: sanitizePortfolioItems(body.portfolio_items),
+    });
+
+    // The order-form link is the main thing this email needs to deliver —
+    // failing to send it shouldn't fail the enquiry submission itself.
+    await sendEnquiryAutoReply({ id: enquiry.id, name: enquiry.name, email: enquiry.email }).catch((err) => {
+      console.error('[enquiries] confirmation email failed:', err);
     });
 
     // If this came from a logged-in customer, capture their contact details

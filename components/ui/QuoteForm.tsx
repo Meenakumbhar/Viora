@@ -1006,8 +1006,10 @@ export default function QuoteForm() {
     }));
     // A profile only counts as "complete" once we already have what step 1
     // asks for — otherwise this is their first order and they still need it.
+    // Only advance from step 1 — never jump the user *back* if they are
+    // already on step 2 or 3 (avoids resetting progress on re-renders).
     if (profile.name && profile.phone) {
-      setStep(2);
+      setStep((current) => current === 1 ? 2 : current);
     }
   }, [profileLoaded, profile]);
 

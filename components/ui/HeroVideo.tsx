@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 interface HeroVideoProps {
   src?: string;
@@ -9,11 +9,48 @@ interface HeroVideoProps {
 }
 
 export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(query.matches);
+    const handleChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    query.addEventListener('change', handleChange);
+    return () => query.removeEventListener('change', handleChange);
+  }, []);
+
+  // A fast failure (e.g. a 404 on the video file) can fire the native error
+  // event before React finishes attaching the onError handler below, so it
+  // gets missed — same class of bug as a cached-image load firing early.
+  // Checking .error directly once mounted, plus a native listener as backup,
+  // catches it either way.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.error) {
+      setVideoFailed(true);
+      return;
+    }
+    const handleNativeError = () => setVideoFailed(true);
+    el.addEventListener('error', handleNativeError);
+    return () => el.removeEventListener('error', handleNativeError);
+  }, [src]);
+
+  // Someone who's asked their OS not to autoplay motion gets the poster (if
+  // any) instead — same visual moment, no movement. A video that fails to
+  // load (wrong path, file not added yet) falls back to the gradient rather
+  // than showing a broken/black rectangle.
+  const showVideo = Boolean(src) && !videoFailed && !reducedMotion;
+  const showPosterOnly = Boolean(src) && !videoFailed && reducedMotion && Boolean(poster);
+
   return (
     <section className="relative min-h-svh overflow-hidden">
-      {/* Background — video or animated warm light gradient */}
-      {src ? (
+      {/* Background — video, poster (reduced motion), or animated warm light gradient */}
+      {showVideo ? (
         <video
+          ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"
           src={src}
           poster={poster}
@@ -21,7 +58,11 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
           muted
           loop
           playsInline
+          onError={() => setVideoFailed(true)}
         />
+      ) : showPosterOnly ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <div className="absolute inset-0 h-full w-full overflow-hidden">
           <div

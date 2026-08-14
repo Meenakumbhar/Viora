@@ -2,9 +2,15 @@
 
 import type { OrderStatus } from '@/types/database';
 
-const STAGES: OrderStatus[] = ['pending', 'in_progress', 'completed'];
+// 'placed' represents the quote-received stage, before any admin has
+// converted it into a real order — no production work happens until then,
+// so it's always the first stage, never skippable, never revisited.
+export type DisplayStage = 'placed' | OrderStatus;
 
-const STAGE_LABELS: Record<OrderStatus, string> = {
+const STAGES: DisplayStage[] = ['placed', 'pending', 'in_progress', 'completed'];
+
+const STAGE_LABELS: Record<DisplayStage, string> = {
+  placed: 'Placed',
   pending: 'Pending',
   in_progress: 'In Progress',
   completed: 'Completed',
@@ -14,7 +20,7 @@ export default function OrderStepper({
   status,
   theme = 'dark',
 }: {
-  status: OrderStatus;
+  status: DisplayStage;
   /** 'dark' matches the admin dashboard; 'light' matches the public site. */
   theme?: 'dark' | 'light';
 }) {

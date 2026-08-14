@@ -48,6 +48,40 @@ CREATE TABLE IF NOT EXISTS enquiries (
 -- Add portfolio_items to an existing database without affecting current enquiries.
 ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS portfolio_items JSONB;
 
+-- 1a. Order Forms — the detailed print-spec form a customer fills in once a
+-- quote is placed (deceased/service details, page count, bespoke design,
+-- add-on products). One per enquiry, reachable via an emailed link or from
+-- the customer's account without requiring login (the enquiry's own UUID is
+-- the access key).
+CREATE TABLE IF NOT EXISTS order_forms (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    enquiry_id UUID NOT NULL REFERENCES enquiries(id) ON DELETE CASCADE UNIQUE,
+    deceased_name TEXT,
+    funeral_date DATE,
+    funeral_time TEXT,
+    venue_name TEXT,
+    date_of_birth DATE,
+    date_of_death DATE,
+    age_of_deceased TEXT,
+    photo_option TEXT CHECK (photo_option IN ('none', 'colour', 'bw')),
+    bespoke_design BOOLEAN NOT NULL DEFAULT FALSE,
+    bespoke_details TEXT,
+    number_of_pages TEXT,
+    inside_pages_style TEXT CHECK (inside_pages_style IN ('bw', 'match_cover')),
+    quantity TEXT,
+    photo_qty INTEGER,
+    photo_supplied_via TEXT CHECK (photo_supplied_via IN ('email', 'post')),
+    photo_instructions TEXT,
+    additional_products JSONB,
+    callback_requested BOOLEAN NOT NULL DEFAULT FALSE,
+    callback_phone TEXT,
+    additional_notes TEXT,
+    status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'submitted')),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_order_forms_enquiry_id ON order_forms(enquiry_id);
+
 -- 2. Create Subscribers Table (Newsletter)
 CREATE TABLE IF NOT EXISTS subscribers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

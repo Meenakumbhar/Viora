@@ -22,6 +22,9 @@ import type {
   DesignRevisionStatus,
   DesignCommentInput,
   CommentResolutionField,
+  OrderForm,
+  OrderFormInput,
+  OrderFormProduct,
 } from '@/types/database';
 
 /**
@@ -173,6 +176,48 @@ function normalizeOrder(row: any): Order {
     payment_amount: row.payment_amount != null ? Number(row.payment_amount) : null,
     paypal_order_id: row.paypal_order_id != null ? String(row.paypal_order_id) : null,
     assigned_designer_id: row.assigned_designer_id != null ? String(row.assigned_designer_id) : null,
+    created_at: toIsoTimestampString(row.created_at),
+    updated_at: toIsoTimestampString(row.updated_at),
+  };
+}
+
+function normalizeOrderFormProducts(value: unknown): OrderFormProduct[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  return value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((item) => ({
+      slug: String(item.slug ?? ''),
+      title: String(item.title ?? ''),
+      size: String(item.size ?? ''),
+      quantity: Number(item.quantity ?? 0),
+    }));
+}
+
+function normalizeOrderForm(row: any): OrderForm {
+  return {
+    id: String(row.id),
+    enquiry_id: String(row.enquiry_id),
+    deceased_name: row.deceased_name != null ? String(row.deceased_name) : null,
+    funeral_date: row.funeral_date != null ? toIsoDateString(row.funeral_date) : null,
+    funeral_time: row.funeral_time != null ? String(row.funeral_time) : null,
+    venue_name: row.venue_name != null ? String(row.venue_name) : null,
+    date_of_birth: row.date_of_birth != null ? toIsoDateString(row.date_of_birth) : null,
+    date_of_death: row.date_of_death != null ? toIsoDateString(row.date_of_death) : null,
+    age_of_deceased: row.age_of_deceased != null ? String(row.age_of_deceased) : null,
+    photo_option: row.photo_option ?? null,
+    bespoke_design: Boolean(row.bespoke_design),
+    bespoke_details: row.bespoke_details != null ? String(row.bespoke_details) : null,
+    number_of_pages: row.number_of_pages != null ? String(row.number_of_pages) : null,
+    inside_pages_style: row.inside_pages_style ?? null,
+    quantity: row.quantity != null ? String(row.quantity) : null,
+    photo_qty: row.photo_qty != null ? Number(row.photo_qty) : null,
+    photo_supplied_via: row.photo_supplied_via ?? null,
+    photo_instructions: row.photo_instructions != null ? String(row.photo_instructions) : null,
+    additional_products: normalizeOrderFormProducts(row.additional_products),
+    callback_requested: Boolean(row.callback_requested),
+    callback_phone: row.callback_phone != null ? String(row.callback_phone) : null,
+    additional_notes: row.additional_notes != null ? String(row.additional_notes) : null,
+    status: row.status === 'submitted' ? 'submitted' : 'draft',
     created_at: toIsoTimestampString(row.created_at),
     updated_at: toIsoTimestampString(row.updated_at),
   };
@@ -495,6 +540,109 @@ export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
   `;
 
   return normalizeEnquiry(rows[0]);
+}
+
+// The enquiry's own UUID doubles as the access key for its order form —
+// unguessable, no login required, matches how portfolio/product pages work.
+export async function getEnquiryById(id: string): Promise<Enquiry | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  const rows = await sql`
+    SELECT id, name, email, phone, country, service_type, event_date, quantity_estimate, description, source, portfolio_items, created_at, status
+    FROM enquiries
+    WHERE id = ${id}
+    LIMIT 1
+  `;
+
+  return rows.length > 0 ? normalizeEnquiry(rows[0]) : null;
+}
+
+export async function getEnquiriesByEmail(email: string): Promise<Enquiry[]> {
+  const sql = getDb();
+  if (!sql) return [];
+
+  const rows = await sql`
+    SELECT id, name, email, phone, country, service_type, event_date, quantity_estimate, description, source, portfolio_items, created_at, status
+    FROM enquiries
+    WHERE email = ${email.trim().toLowerCase()}
+    ORDER BY created_at DESC
+  `;
+
+  return rows.map(normalizeEnquiry);
+}
+
+// ─── Order Forms ────────────────────────────────────────────────────────────────
+
+export async function getOrderFormByEnquiryId(enquiryId: string): Promise<OrderForm | null> {
+  const sql = getDb();
+  if (!sql) return null;
+
+  const rows = await sql`
+    SELECT * FROM order_forms WHERE enquiry_id = ${enquiryId} LIMIT 1
+  `;
+
+  return rows.length > 0 ? normalizeOrderForm(rows[0]) : null;
+}
+
+// The customer can save a draft and come back — every save writes the full
+// current form state, so this always upserts rather than patching fields.
+export async function upsertOrderForm(
+  enquiryId: string,
+  input: OrderFormInput,
+  submit: boolean
+): Promise<OrderForm> {
+  const sql = getDb();
+  if (!sql) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const productsJson = input.additional_products && input.additional_products.length > 0
+    ? JSON.stringify(input.additional_products)
+    : null;
+
+  const rows = await sql`
+    INSERT INTO order_forms (
+      enquiry_id, deceased_name, funeral_date, funeral_time, venue_name,
+      date_of_birth, date_of_death, age_of_deceased, photo_option,
+      bespoke_design, bespoke_details, number_of_pages, inside_pages_style,
+      quantity, photo_qty, photo_supplied_via, photo_instructions,
+      additional_products, callback_requested, callback_phone, additional_notes, status
+    ) VALUES (
+      ${enquiryId}, ${input.deceased_name?.trim() || null}, ${input.funeral_date || null}, ${input.funeral_time?.trim() || null}, ${input.venue_name?.trim() || null},
+      ${input.date_of_birth || null}, ${input.date_of_death || null}, ${input.age_of_deceased?.trim() || null}, ${input.photo_option || null},
+      ${input.bespoke_design ?? false}, ${input.bespoke_details?.trim() || null}, ${input.number_of_pages || null}, ${input.inside_pages_style || null},
+      ${input.quantity?.trim() || null}, ${input.photo_qty ?? null}, ${input.photo_supplied_via || null}, ${input.photo_instructions?.trim() || null},
+      ${productsJson}::jsonb, ${input.callback_requested ?? false}, ${input.callback_phone?.trim() || null}, ${input.additional_notes?.trim() || null},
+      ${submit ? 'submitted' : 'draft'}
+    )
+    ON CONFLICT (enquiry_id) DO UPDATE SET
+      deceased_name = EXCLUDED.deceased_name,
+      funeral_date = EXCLUDED.funeral_date,
+      funeral_time = EXCLUDED.funeral_time,
+      venue_name = EXCLUDED.venue_name,
+      date_of_birth = EXCLUDED.date_of_birth,
+      date_of_death = EXCLUDED.date_of_death,
+      age_of_deceased = EXCLUDED.age_of_deceased,
+      photo_option = EXCLUDED.photo_option,
+      bespoke_design = EXCLUDED.bespoke_design,
+      bespoke_details = EXCLUDED.bespoke_details,
+      number_of_pages = EXCLUDED.number_of_pages,
+      inside_pages_style = EXCLUDED.inside_pages_style,
+      quantity = EXCLUDED.quantity,
+      photo_qty = EXCLUDED.photo_qty,
+      photo_supplied_via = EXCLUDED.photo_supplied_via,
+      photo_instructions = EXCLUDED.photo_instructions,
+      additional_products = EXCLUDED.additional_products,
+      callback_requested = EXCLUDED.callback_requested,
+      callback_phone = EXCLUDED.callback_phone,
+      additional_notes = EXCLUDED.additional_notes,
+      status = EXCLUDED.status,
+      updated_at = NOW()
+    RETURNING *
+  `;
+
+  return normalizeOrderForm(rows[0]);
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
