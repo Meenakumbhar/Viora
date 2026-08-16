@@ -174,9 +174,9 @@ Tailwind uses mobile-first responsive design. Base styles apply to all screen si
       <!-- Desktop navigation -->
       <div class="hidden md:flex gap-6">
         <a href="#">Home</a>
-        <a href="#">About</a>
-        <a href="#">Services</a>
-        <a href="#">Contact</a>
+        <a href="#">About Us</a>
+        <!-- <a href="#">Services</a> -->
+        <a href="#">Contact Us</a>
       </div>
 
       <!-- Mobile menu button -->

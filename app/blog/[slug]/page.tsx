@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-import { getBlogPosts, getBlogPostBySlug } from '@/lib/supabase';
+import { getBlogPosts, getBlogPostBySlug } from '@/lib/db';
+import { SITE_URL } from '@/lib/site-url';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = post.title;
   const description = post.excerpt ?? `Read "${post.title}" on the Memories in Prints journal.`;
-  const url = `https://memoriesinprints.com/blog/${post.slug}`;
+  const url = `${SITE_URL}/blog/${post.slug}`;
   const image = post.image_url ?? '/og-image.jpg';
 
   return {
@@ -206,8 +207,15 @@ export default async function BlogPostPage({ params }: PageProps) {
             </h1>
             <div className="mt-6 flex items-center gap-4 text-sm text-text-muted font-mono">
               <span>By Memories in Prints</span>
-              <span>•</span>
-              <time dateTime={post.published_at || undefined}>{post.published_at}</time>
+              <time dateTime={post.published_at || undefined}>
+                {post.published_at
+                  ? new Date(post.published_at).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })
+                  : ''}
+              </time>
             </div>
           </header>
 

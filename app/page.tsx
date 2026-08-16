@@ -1,19 +1,45 @@
-'use client';
-
-import { useEffect } from 'react';
 import Link from 'next/link';
-import HeroVideo from '@/components/ui/HeroVideo';
+import HeroPrintStack from '@/components/ui/HeroPrintStack';
+import HeroScrollEffect from '@/components/ui/HeroScrollEffect';
 import Button from '@/components/ui/Button';
 import SectionReveal from '@/components/ui/SectionReveal';
-import ServiceCard from '@/components/ui/ServiceCard';
 import TestimonialSlider from '@/components/ui/TestimonialSlider';
-import NewsletterForm from '@/components/ui/NewsletterForm';
 import AnimatedHeadline from '@/components/ui/AnimatedHeadline';
-import CurtainReveal from '@/components/ui/CurtainReveal';
+import ImageRevealCard from '@/components/ui/ImageRevealCard';
 import CountUp from '@/components/ui/CountUp';
-import { services, portfolioItems, processSteps, blogPosts } from '@/lib/data';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { processSteps, blogPosts } from '@/lib/data';
+import { ACTIVE_CATEGORIES } from '@/lib/active-services';
+import { getPortfolioItems } from '@/lib/db';
+import type { PortfolioItem } from '@/types/database';
+
+// Real studio work, shared across the hero print stack, the About grid, and
+// the Featured Work strip — pulled live from the portfolio so the homepage
+// always reflects what's actually been made, never seed/placeholder data.
+// Interleaved across active categories (rather than one big recency-sorted
+// pull) so the mix doesn't get swamped by whichever category has more items.
+async function getHomepagePortfolioData() {
+  const perCategory = await Promise.all(
+    ACTIVE_CATEGORIES.map((category) => getPortfolioItems(category))
+  );
+  const maxLen = Math.max(0, ...perCategory.map((items) => items.length));
+
+  const heroImages: string[] = [];
+  const featured: PortfolioItem[] = [];
+  for (let i = 0; i < maxLen && (heroImages.length < 10 || featured.length < 8); i++) {
+    for (const items of perCategory) {
+      const item = items[i];
+      if (!item) continue;
+      if (heroImages.length < 10 && item.image_url) heroImages.push(item.image_url);
+      if (featured.length < 8) featured.push(item);
+    }
+  }
+
+  const aboutItems = perCategory
+    .map((items) => items[0])
+    .filter((item): item is PortfolioItem => Boolean(item));
+
+  return { heroImages, featured, aboutItems };
+}
 
 
 /* ───────────────────────────────────────────────────────────────────────────
@@ -51,77 +77,72 @@ const blogGradients: Record<string, string> = {
 /* ═══════════════════════════════════════════════════════════════════════════
    HOME PAGE — Server Component
    ═══════════════════════════════════════════════════════════════════════════ */
-export default function Home() {
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      gsap.to('.hero-content', {
-        y: -60,
-        opacity: 0,
-        scrollTrigger: {
-          trigger: '.hero-section',
-          start: 'top top',
-          end: '40% top',
-          scrub: true,
-        },
-      });
-    });
-    return () => ctx.revert();
-  }, []);
+export default async function Home() {
+  const { heroImages, featured, aboutItems } = await getHomepagePortfolioData();
 
   return (
     <main>
+      <HeroScrollEffect />
       {/* ──────────────────── SECTION 1 — HERO ──────────────────── */}
-      <section id="hero" className="hero-section">
-        <HeroVideo>
-          <div className="hero-content">
-            <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-              Global Design &amp; Print Studio
-            </span>
+      <section
+        id="hero"
+        className="hero-section relative min-h-svh overflow-hidden bg-bg-primary flex items-center py-32 lg:py-24"
+      >
+        <div className="container-wide relative z-10 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-16 lg:gap-8 items-center">
+            <div className="hero-content">
+              <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
+                Global Design &amp; Print Studio
+              </span>
 
-            <AnimatedHeadline
-              text="Made for every moment"
-              accentWord="moment"
-              className="font-display text-display-xl text-text-heading max-w-4xl mt-4"
-            />
+              <AnimatedHeadline
+                text="Made for every moment"
+                accentWord="moment"
+                className="font-display text-display-xl text-text-heading max-w-xl mt-4"
+              />
 
-            <p className="font-body text-body-lg text-text-muted max-w-2xl mt-6">
-              Weddings. Funerals. Events. Sport. Brand.
-              <br />
-              Design and print that honours what matters.
-            </p>
+              <p className="font-body text-body-lg text-text-muted max-w-lg mt-6">
+                Weddings. Funerals. Events. Sport. Brand.
+                <br />
+                Design and print that honours what matters.
+              </p>
 
-            <div className="flex gap-4 mt-8">
-              <Button variant="primary" size="lg" href="/portfolio">
-                View Our Work
-              </Button>
-              <Button variant="ghost" size="lg" href="/contact">
-                Get a Quote →
-              </Button>
+              <div className="flex gap-4 mt-8">
+                <Button variant="primary" size="lg" href="/portfolio">
+                  View Our Work
+                </Button>
+                <Button variant="ghost" size="lg" href="/contact">
+                  Start a Project →
+                </Button>
+              </div>
+            </div>
+
+            <div className="hero-visual">
+              <HeroPrintStack images={heroImages} />
             </div>
           </div>
+        </div>
 
-          {/* Scroll indicator */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="animate-bounce-slow text-text-muted"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 5L12 19M12 19L5 12M12 19L19 12"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-        </HeroVideo>
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="animate-bounce-slow text-text-muted"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 5L12 19M12 19L5 12M12 19L19 12"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
       </section>
 
       {/* ──────────────────── SECTION 2 — STUDIO INTRODUCTION ──────────────────── */}
@@ -171,102 +192,22 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Right column — 2x2 image grid with pastel gradients */}
+              {/* Right column — real studio work, one per active category */}
               <div className="grid grid-cols-2 gap-4" data-delay="3">
-                {/* Wedding */}
-                <CurtainReveal delay={0.1} style={{ display: 'block', width: '100%', height: '100%' }}>
-                  <div
-                    className="relative rounded-none overflow-hidden aspect-square border border-border"
-                    style={{ background: 'linear-gradient(160deg, #FDF7F5 0%, #F5E6DF 40%, #E8D5C4 80%, #C4958F 100%)' }}
-                  >
-                    <span className="font-mono text-label text-text-muted/60 absolute bottom-3 left-3">
-                      Wedding
-                    </span>
-                  </div>
-                </CurtainReveal>
-
-                {/* Funeral */}
-                <CurtainReveal delay={0.2} style={{ display: 'block', width: '100%', height: '100%' }}>
-                  <div
-                    className="relative rounded-none overflow-hidden aspect-square border border-border"
-                    style={{ background: 'linear-gradient(160deg, #F8F7FD 0%, #EDEAF8 40%, #D6D3EE 80%, #8B82C4 100%)' }}
-                  >
-                    <span className="font-mono text-label text-text-muted/60 absolute bottom-3 left-3">
-                      Funeral
-                    </span>
-                  </div>
-                </CurtainReveal>
-
-                {/* Sports */}
-                <CurtainReveal delay={0.3} style={{ display: 'block', width: '100%', height: '100%' }}>
-                  <div
-                    className="relative rounded-none overflow-hidden aspect-square border border-border"
-                    style={{ background: 'linear-gradient(160deg, #F4FAF0 0%, #E2F0DB 40%, #C2DCBB 80%, #7D9B76 100%)' }}
-                  >
-                    <span className="font-mono text-label text-text-muted/60 absolute bottom-3 left-3">
-                      Sports
-                    </span>
-                  </div>
-                </CurtainReveal>
-
-                {/* Design */}
-                <CurtainReveal delay={0.4} style={{ display: 'block', width: '100%', height: '100%' }}>
-                  <div
-                    className="relative rounded-none overflow-hidden aspect-square border border-border"
-                    style={{ background: 'linear-gradient(160deg, #F4F7FD 0%, #E0E8F8 40%, #C2D4EE 80%, #2D5FA8 100%)' }}
-                  >
-                    <span className="font-mono text-label text-text-muted/60 absolute bottom-3 left-3">
-                      Design
-                    </span>
-                  </div>
-                </CurtainReveal>
-              </div>
-            </div>
-          </div>
-        </SectionReveal>
-      </section>
-
-      {/* ──────────────────── SECTION 3 — SERVICES GRID ──────────────────── */}
-      <section id="services" className="bg-bg-alternate py-24 md:py-36 lg:py-48">
-        <SectionReveal>
-          <div className="container-wide">
-            <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-              What We Do
-            </span>
-
-            <AnimatedHeadline
-              text="Every brief. Every occasion."
-              accentWord="occasion."
-              className="font-display text-display-lg text-text-heading mt-4"
-            />
-
-            {/* Desktop grid */}
-            <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-6 mt-16">
-              {services.slice(0, 5).map((s, i) => (
-                <ServiceCard
-                  key={s.slug}
-                  title={`${s.title} ${s.titleAccent}`}
-                  description={s.description}
-                  category={s.slug.replace('-', ' & ')}
-                  href={`/services/${s.slug}`}
-                  index={i}
-                />
-              ))}
-            </div>
-
-            {/* Mobile horizontal scroll */}
-            <div className="md:hidden overflow-x-auto flex gap-6 mt-16 snap-x snap-mandatory pb-4 -mx-6 px-6">
-              {services.slice(0, 5).map((s, i) => (
-                <div key={s.slug} className="min-w-[280px] flex-shrink-0 snap-start">
-                  <ServiceCard
-                    title={`${s.title} ${s.titleAccent}`}
-                    description={s.description}
-                    category={s.slug.replace('-', ' & ')}
-                    href={`/services/${s.slug}`}
-                    index={i}
+                {aboutItems.map((item, i) => (
+                  <ImageRevealCard
+                    key={item.id}
+                    src={item.image_url}
+                    alt={item.title}
+                    label={item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                    delay={0.1 + i * 0.1}
+                    className="aspect-square"
+                    fallbackGradient={portfolioGradients[item.category]}
+                    sizes="(min-width: 1024px) 22vw, 45vw"
+                    priority={i === 0}
                   />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </SectionReveal>
@@ -298,23 +239,20 @@ export default function Home() {
             {/* Right — horizontal scroll strip */}
             <div className="lg:w-2/3 overflow-x-auto drag-scroll">
               <div className="flex gap-6 pb-4 px-6 lg:px-0 lg:pr-12">
-                {portfolioItems.slice(0, 8).map((item) => (
+                {featured.map((item) => (
                   <div
                     key={item.id}
                     data-category={item.category}
-                    className="group border border-border bg-cat-surface p-6 flex flex-col justify-between h-[450px] w-[320px] flex-shrink-0 transition-all duration-300 hover:border-cat-accent hover:-translate-y-1"
+                    className="group border border-border bg-cat-surface p-6 flex flex-col justify-between h-[450px] w-[320px] flex-shrink-0 transition-[transform,border-color] duration-300 hover:border-cat-accent hover:-translate-y-1"
                   >
-                    {/* Visual Header - Gradient block */}
-                    <CurtainReveal delay={0.1} style={{ display: 'block', width: '100%', marginBottom: '1.5rem' }}>
-                      <div
-                        className="aspect-[4/3] w-full border border-border/20"
-                        style={{
-                          background:
-                            portfolioGradients[item.category] ||
-                            'linear-gradient(160deg, #FAF8F5, #F7F4EF)',
-                        }}
-                      />
-                    </CurtainReveal>
+                    <ImageRevealCard
+                      src={item.image_url}
+                      alt={item.title}
+                      delay={0.1}
+                      className="aspect-[4/3] w-full mb-6"
+                      fallbackGradient={portfolioGradients[item.category] || 'linear-gradient(160deg, #FAF8F5, #F7F4EF)'}
+                      sizes="320px"
+                    />
 
                     {/* Text Details Area */}
                     <div>
@@ -335,9 +273,12 @@ export default function Home() {
                       <span className="font-mono text-[10px] text-cat-muted uppercase tracking-wider">
                         {item.location || 'Worldwide'}
                       </span>
-                      <span className="inline-flex items-center gap-1 font-body text-xs font-semibold uppercase tracking-wider text-cat-accent-dark">
+                      <Link
+                        href={`/portfolio/${item.id}`}
+                        className="inline-flex items-center gap-1 font-body text-xs font-semibold uppercase tracking-wider text-cat-accent-dark"
+                      >
                         View Project <span aria-hidden="true">&rarr;</span>
-                      </span>
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -544,78 +485,21 @@ export default function Home() {
         <SectionReveal>
           <div className="container-wide">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              {/* Left — decorative world map */}
+              {/* Left — modern delivery map */}
               <div className="flex items-center justify-center" data-delay="1">
-                <svg
-                  viewBox="0 0 600 360"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-full max-w-lg"
-                  aria-hidden="true"
-                >
-                  {/* Grid dots for visual texture */}
-                  {Array.from({ length: 20 }, (_, row) =>
-                    Array.from({ length: 30 }, (_, col) => (
-                      <circle
-                        key={`dot-${row}-${col}`}
-                        cx={col * 20 + 10}
-                        cy={row * 18 + 9}
-                        r="1"
-                        fill="#E8E4DE"
-                        opacity="0.6"
-                      />
-                    ))
-                  )}
-
-                  {/* UK */}
-                  <circle cx="280" cy="100" r="10" fill="#C6A85C" opacity="0.9" />
-                  <circle cx="280" cy="100" r="16" stroke="#C6A85C" strokeWidth="1" opacity="0.3" />
-
-                  {/* Ireland */}
-                  <circle cx="265" cy="105" r="5" fill="#C6A85C" opacity="0.6" />
-
-                  {/* France */}
-                  <circle cx="290" cy="130" r="6" fill="#C6A85C" opacity="0.5" />
-
-                  {/* Germany */}
-                  <circle cx="310" cy="115" r="6" fill="#C6A85C" opacity="0.5" />
-
-                  {/* US East */}
-                  <circle cx="140" cy="140" r="9" fill="#C6A85C" opacity="0.7" />
-                  <circle cx="140" cy="140" r="15" stroke="#C6A85C" strokeWidth="1" opacity="0.3" />
-
-                  {/* US West */}
-                  <circle cx="80" cy="135" r="6" fill="#C6A85C" opacity="0.5" />
-
-                  {/* Canada */}
-                  <circle cx="130" cy="100" r="5" fill="#C6A85C" opacity="0.4" />
-
-                  {/* UAE */}
-                  <circle cx="380" cy="175" r="6" fill="#C6A85C" opacity="0.5" />
-
-                  {/* India */}
-                  <circle cx="420" cy="180" r="8" fill="#C6A85C" opacity="0.7" />
-                  <circle cx="420" cy="180" r="14" stroke="#C6A85C" strokeWidth="1" opacity="0.3" />
-
-                  {/* Australia */}
-                  <circle cx="500" cy="280" r="9" fill="#C6A85C" opacity="0.7" />
-                  <circle cx="500" cy="280" r="15" stroke="#C6A85C" strokeWidth="1" opacity="0.3" />
-
-                  {/* New Zealand */}
-                  <circle cx="540" cy="300" r="5" fill="#C6A85C" opacity="0.4" />
-
-                  {/* Singapore */}
-                  <circle cx="460" cy="220" r="5" fill="#C6A85C" opacity="0.4" />
-
-                  {/* South Africa */}
-                  <circle cx="340" cy="290" r="6" fill="#C6A85C" opacity="0.5" />
-                </svg>
+                <div className="w-full max-w-lg rounded-[2rem] border border-border/70 bg-[#f7efe6] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.08)] md:p-6">
+                  <img
+                    src="/world_map.png"
+                    alt="World map showing delivery coverage"
+                    className="w-full h-auto rounded-[1.25rem] object-contain"
+                  />
+                </div>
               </div>
 
               {/* Right — copy */}
               <div data-delay="2">
                 <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-                  Worldwide
+                  Delivery network
                 </span>
 
                 <h2 className="font-display text-display-lg text-text-heading mt-4">
@@ -624,29 +508,20 @@ export default function Home() {
                 </h2>
 
                 <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
-                  We work with families, planners, brands, and clubs across the US, UK,
-                  Europe, Australia, India, and beyond. Every order ships tracked. Digital
-                  delivery available for clients who print locally.
+                  We create custom print for families, planners, brands, and clubs across North
+                  America, United Kingdom, Europe. Each order
+                  ships tracked, with digital delivery available for clients who print locally.
                 </p>
 
-                <div className="flex flex-wrap gap-3 mt-8">
+                <div className="mt-8 flex flex-wrap gap-3">
                   {[
                     'United Kingdom',
                     'United States',
-                    'Australia',
-                    'India',
-                    'Germany',
-                    'France',
-                    'Ireland',
-                    'Canada',
-                    'UAE',
-                    'South Africa',
-                    'New Zealand',
-                    'Singapore',
+                    'Europe',
                   ].map((region) => (
                     <span
                       key={region}
-                      className="font-mono text-label text-text-muted border border-border px-3 py-1"
+                      className="border border-border bg-bg-primary/70 px-3 py-1 font-mono text-label uppercase tracking-wider text-text-muted"
                     >
                       {region}
                     </span>
@@ -656,24 +531,6 @@ export default function Home() {
             </div>
           </div>
         </SectionReveal>
-      </section>
-
-      {/* ──────────────────── SECTION 9 — NEWSLETTER ──────────────────── */}
-      <section id="newsletter" className="bg-accent-gold py-16 md:py-20">
-        <div className="container-wide text-center">
-          <h2 className="font-display text-display-md text-bg-primary">
-            Stay in the{' '}
-            <em className="italic text-bg-secondary">loop</em>
-          </h2>
-
-          <p className="font-body text-body-base text-bg-primary/80 mt-4">
-            New collections, print guides, and studio updates.
-          </p>
-
-          <div className="mt-8">
-            <NewsletterForm />
-          </div>
-        </div>
       </section>
 
       {/* ──────────────────── SECTION 10 — BLOG PREVIEW ──────────────────── */}

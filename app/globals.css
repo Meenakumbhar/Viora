@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+@keyframes filter-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cart-drawer-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MEMORIES IN PRINTS — Design System
    Inspired by warwickacoustics.com
@@ -44,27 +60,47 @@
   --font-mono: var(--font-dm-mono), "Courier New", monospace;
 
   /* ─── FONT SIZES ─────────────────────────────────────────────────────── */
-  --text-display-xl: clamp(3rem, 8vw, 7rem);
+  /* Site-wide type scale, ~12.5% larger across the board. Line-heights below
+     are unitless ratios, so they scale proportionally with the new sizes
+     automatically — no separate adjustment needed. */
+  --text-display-xl: clamp(3.375rem, 9vw, 7.875rem);
   --text-display-xl--line-height: 0.95;
   --text-display-xl--letter-spacing: -0.03em;
 
-  --text-display-lg: clamp(2.2rem, 5vw, 4.5rem);
+  --text-display-lg: clamp(2.5rem, 5.6vw, 5rem);
   --text-display-lg--line-height: 1.0;
   --text-display-lg--letter-spacing: -0.02em;
 
-  --text-display-md: clamp(1.6rem, 3vw, 2.8rem);
+  --text-display-md: clamp(1.8rem, 3.4vw, 3.15rem);
   --text-display-md--line-height: 1.1;
   --text-display-md--letter-spacing: -0.015em;
 
-  --text-body-lg: 1.125rem;
+  --text-body-lg: 1.25rem;
   --text-body-lg--line-height: 1.7;
 
-  --text-body-base: 1rem;
+  --text-body-base: 1.125rem;
   --text-body-base--line-height: 1.65;
 
-  --text-label: 0.8rem;
+  --text-label: 0.9rem;
   --text-label--line-height: 1.4;
   --text-label--letter-spacing: 0.12em;
+
+  /* Tailwind's own default scale, bumped the same ~12.5% so every text-*
+     utility used throughout the site (not just the tokens above) grows
+     together, keeping every size relative to the others as before. */
+  --text-xs: 0.8125rem;
+  --text-sm: 1rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.6875rem;
+  --text-3xl: 2.125rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3.375rem;
+  --text-6xl: 4.25rem;
+  --text-7xl: 5rem;
+  --text-8xl: 6.75rem;
+  --text-9xl: 9rem;
 
   /* ─── ANIMATIONS ─────────────────────────────────────────────────────── */
   --animate-fade-in: fade-in 0.7s ease forwards;
@@ -416,3 +452,80 @@ body {
   opacity: 1;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUOTE FORM — animations & react-day-picker overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease both;
+}
+
+@keyframes successPop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  70%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* react-day-picker custom theme (v10) — custom header version */
+.rdp-custom {
+  --rdp-accent-color: #C6A85C;
+  --rdp-accent-color-dark: #A88A40;
+  --rdp-background-color: #FAF8F5;
+  --rdp-selected-font: 600;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 0.875rem;
+  /* Remove default root margin so it sits flush inside our popover */
+  margin: 0 !important;
+}
+
+/* Hide the built-in caption entirely — we render our own header */
+.rdp-custom .rdp-month_caption {
+  display: none !important;
+}
+
+/* Remove built-in nav buttons (we use hideNavigation prop, belt + braces) */
+.rdp-custom .rdp-nav {
+  display: none !important;
+}
+
+.rdp-custom .rdp-day_button {
+  border-radius: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.8125rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.rdp-custom .rdp-day_button:hover:not(:disabled) {
+  background: #C6A85C22;
+  color: #C6A85C;
+}
+
+.rdp-custom .rdp-selected .rdp-day_button {
+  background: #C6A85C !important;
+  color: #1C2530 !important;
+}
+
+.rdp-custom .rdp-today:not(.rdp-outside) .rdp-day_button {
+  font-weight: 700;
+  color: #C6A85C;
+}
+
+.rdp-custom .rdp-weekday {
+  font-family: var(--font-dm-mono), monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8A8F96;
+  padding-bottom: 0.25rem;
+}
+
+/* Wrapper div so DayPicker grid has consistent padding */
+.rdp-custom-wrapper {
+  padding: 0.5rem 0.75rem 0.75rem;
+}

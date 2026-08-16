@@ -51,7 +51,7 @@ export default function ServiceCard({
   return (
     <Link
       href={href}
-      className="group relative block aspect-[3/4] overflow-hidden border border-border transition-all duration-[400ms] ease-in-out hover:-translate-y-1 hover:border-cat-accent md:aspect-[4/5] bg-cat-bg"
+      className="group relative block aspect-[3/4] overflow-hidden border border-border transition-[transform,border-color] duration-[400ms] ease-in-out hover:-translate-y-1 hover:border-cat-accent md:aspect-[4/5] bg-cat-bg"
       data-category={normalizedCategory}
       data-delay={index}
     >

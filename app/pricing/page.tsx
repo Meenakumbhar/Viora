@@ -1,202 +1,261 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-import { services, pricingFaqs } from '@/lib/data';
+import {
+  readPortfolioCart,
+  removeFromPortfolioCart,
+  updatePortfolioCartQuantity,
+  type PortfolioCartItem,
+} from '@/utils/portfolio-cart';
+import type { EffectivePrice } from '@/types/database';
+import { formatPrice } from '@/lib/format';
 
 export default function PricingPage() {
-  const [activeTab, setActiveTab] = useState(services[0].slug);
+  const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // A logged-in customer already has their contact details on file, so their
+  // cart should funnel into the lightweight /account/quote form rather than
+  // the full guest enquiry form.
+  const [loggedIn, setLoggedIn] = useState(false);
+  // A logged-in customer sees a price here once one exists — their own
+  // negotiated price, or the price set on the exact piece in their cart.
+  // Logged-out visitors see neither; this is unchanged for them.
+  const [effectivePrice, setEffectivePrice] = useState<EffectivePrice | null>(null);
+  const [priceLoaded, setPriceLoaded] = useState(false);
 
-  const activeService = services.find((s) => s.slug === activeTab) || services[0];
+  useEffect(() => {
+    const updateCart = () => setCartItems(readPortfolioCart());
+    updateCart();
+    window.addEventListener('portfolio-cart-updated', updateCart);
+    return () => window.removeEventListener('portfolio-cart-updated', updateCart);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/account/me')
+      .then((res) => { if (!cancelled) setLoggedIn(res.ok); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // A specific per-piece price only makes sense to look up when the cart is
+  // exactly one real portfolio item — product cart entries use a composite
+  // `slug::size` id, not a portfolio_items id, and with several different
+  // pieces in the cart there's no single "the" item to price.
+  const singlePortfolioItemId = useMemo(() => {
+    if (cartItems.length !== 1) return null;
+    const only = cartItems[0];
+    return only.id.includes('::') ? null : only.id;
+  }, [cartItems]);
+
+  useEffect(() => {
+    if (!loggedIn) { setEffectivePrice(null); setPriceLoaded(false); return; }
+    let cancelled = false;
+    const qs = singlePortfolioItemId ? `?portfolioItemId=${encodeURIComponent(singlePortfolioItemId)}` : '';
+    fetch(`/api/account/pricing${qs}`)
+      .then((res) => (res.ok ? res.json() : { success: false }))
+      .then((json) => { if (!cancelled && json.success) setEffectivePrice(json.data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setPriceLoaded(true); });
+    return () => { cancelled = true; };
+  }, [loggedIn, singlePortfolioItemId]);
 
   return (
     <div>
-      {/* Hero Section */}
       <HeroVideo>
         <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
-          Investment
+          Quote cart
         </span>
         <h1 className="mt-4 font-display text-display-xl text-text-primary max-w-4xl">
-          Transparent, flat <em className="italic text-accent-gold">pricing</em>
+          Review your <em className="italic text-accent-gold">ordered items</em>
         </h1>
         <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
-          Select a category below to see our standard packages, features, and rates. Contact us directly for bespoke project estimates.
+          This lightweight cart keeps your chosen pieces together so you can review them before requesting a final quote.
         </p>
       </HeroVideo>
 
-      {/* Dynamic Content Area */}
-      {(() => {
-        let category = 'all';
-        if (activeTab === 'wedding-events') category = 'wedding';
-        else if (activeTab === 'funeral-memorial') category = 'funeral';
-        else if (activeTab === 'sports-branding') category = 'sports';
-        else if (activeTab === 'graphic-design') category = 'branding';
-        else if (activeTab === 'print-production') category = 'events';
-
-        return (
-          <div data-category={category}>
-            {/* Pricing Tiers Section */}
-            <section className="bg-cat-bg py-24 md:py-36 border-t border-border transition-colors duration-500">
-              <div className="container-wide">
-                <SectionReveal>
-                  {/* Tabs selector */}
-                  <div className="mb-16 border-b border-border overflow-x-auto">
-                    <div className="flex gap-8 min-w-max pb-4" role="tablist" aria-label="Pricing categories">
-                      {services.map((service) => {
-                        const isActive = service.slug === activeTab;
-                        // Determine category of tab for highlight styling
-                        let tabCategory = 'all';
-                        if (service.slug === 'wedding-events') tabCategory = 'wedding';
-                        else if (service.slug === 'funeral-memorial') tabCategory = 'funeral';
-                        else if (service.slug === 'sports-branding') tabCategory = 'sports';
-                        else if (service.slug === 'graphic-design') tabCategory = 'branding';
-                        else if (service.slug === 'print-production') tabCategory = 'events';
-
-                        return (
-                          <button
-                            key={service.slug}
-                            role="tab"
-                            aria-selected={isActive}
-                            onClick={() => setActiveTab(service.slug)}
-                            data-category={tabCategory}
-                            className={[
-                              'pb-2 font-body text-body-base uppercase tracking-wider transition-all duration-300 font-medium',
-                              isActive
-                                ? 'border-b-2 border-cat-accent text-cat-accent'
-                                : 'border-b-2 border-transparent text-cat-muted hover:text-cat-heading',
-                            ].join(' ')}
-                          >
-                            {service.title.replace(' &', '')} {service.titleAccent}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Active service package tiers */}
+      <section className="border-t border-border bg-cat-bg py-24 md:py-36 transition-colors duration-500">
+        <div className="container-wide">
+          <SectionReveal>
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.5fr_0.8fr]">
+              <div className="rounded-[2rem] border border-border bg-cat-surface p-8 md:p-10">
+                <div className="flex items-center justify-between">
                   <div>
-                    <div className="mb-12">
-                      <span className="font-mono text-xs text-cat-accent-dark uppercase tracking-widest">
-                        Selected Category
-                      </span>
-                      <h2 className="font-display text-3xl text-cat-heading mt-1">
-                        {activeService.title} {activeService.titleAccent}
-                      </h2>
-                      <p className="font-body text-body-lg text-cat-body mt-2 max-w-2xl">
-                        {activeService.description}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-                      {activeService.tiers.map((tier) => (
-                        <div
-                          key={tier.name}
-                          className={`flex flex-col justify-between p-8 bg-cat-surface border transition-colors duration-300 relative ${
-                            tier.highlighted
-                              ? 'border-cat-accent'
-                              : 'border-border hover:border-cat-accent/50'
-                          }`}
-                        >
-                          {tier.highlighted && (
-                            <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-cat-pill-bg text-cat-pill-text font-mono text-[10px] uppercase tracking-widest px-3 py-1 font-semibold">
-                              Recommended
-                            </span>
-                          )}
-                          <div>
-                            <h3 className="font-mono text-label uppercase tracking-wider text-cat-heading">
-                              {tier.name}
-                            </h3>
-                            <div className="mt-4 flex items-baseline">
-                              <span className="font-display text-display-md text-cat-accent font-light">
-                                {tier.price}
-                              </span>
-                            </div>
-
-                            <ul className="mt-8 space-y-4 border-t border-border pt-8">
-                              {tier.features.map((feature) => (
-                                <li key={feature} className="flex items-center gap-3">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-cat-accent flex-shrink-0" />
-                                  <span className="font-body text-body-base text-cat-body">
-                                    {feature}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          <div className="mt-8 border-t border-border pt-6">
-                            <Button
-                              variant={tier.highlighted ? 'primary' : 'ghost'}
-                              size="md"
-                              className="w-full"
-                              href={`/contact?service=${activeService.slug}&tier=${tier.name.toLowerCase()}`}
-                            >
-                              {tier.cta}
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </SectionReveal>
-              </div>
-            </section>
-
-            {/* FAQ Accordion */}
-            <section id="faq" className="bg-cat-surface py-24 md:py-36 border-t border-border transition-colors duration-500">
-              <div className="container-wide max-w-4xl">
-                <SectionReveal>
-                  <div className="text-center mb-16">
-                    <span className="font-mono text-label uppercase text-cat-accent-dark tracking-wider">
-                      Support
-                    </span>
-                    <h2 className="mt-4 font-display text-display-lg text-cat-heading">
-                      Pricing & logistics <em className="italic text-accent-gold">FAQs</em>
+                    <p className="font-mono text-label uppercase tracking-wider text-cat-accent-dark">
+                      Selected items
+                    </p>
+                    <h2 className="mt-2 font-display text-3xl text-cat-heading">
+                      Your quote request
                     </h2>
                   </div>
+                  <span className="rounded-full border border-border px-3 py-1 font-mono text-label uppercase tracking-wider text-text-muted">
+                    {cartItems.length} items
+                  </span>
+                </div>
 
-                  <div className="space-y-2">
-                    {pricingFaqs.map((faq) => (
-                      <details key={faq.question} className="group border-b border-border py-6">
-                        <summary className="flex justify-between items-center cursor-pointer list-none font-display text-xl text-cat-heading group-open:text-cat-accent transition-colors duration-200">
-                          {faq.question}
-                          <span className="text-cat-accent font-mono transition-transform duration-300 group-open:rotate-180">
-                            &darr;
+                <div className="mt-8 space-y-4">
+                  {cartItems.length === 0 ? (
+                    <p className="font-body text-body-base text-cat-muted">Your cart is empty. Add a portfolio asset to begin.</p>
+                  ) : cartItems.map((item) => {
+                    // Product cart entries use a composite `slug::size` id so
+                    // each size of the same product stays a distinct line —
+                    // portfolio entries just use the item's own real id.
+                    const productSlug = item.id.includes('::') ? item.id.split('::')[0] : null;
+                    const reviewHref = productSlug ? `/products/${productSlug}` : `/portfolio/${item.id}`;
+                    const isExpanded = expandedIds.has(item.id);
+                    return (
+                    <div key={item.id} className="border-b border-border pb-4 last:border-b-0 last:pb-0">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div className="flex items-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
+                              return next;
+                            })}
+                            aria-expanded={isExpanded}
+                            aria-label={isExpanded ? `Hide larger preview of ${item.title}` : `Show larger preview of ${item.title}`}
+                            className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-cat-bg transition-opacity hover:opacity-80"
+                          >
+                            {item.image ? (
+                              <Image src={item.image} alt={item.title} fill sizes="56px" className="object-cover" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <span className="font-display text-lg font-bold text-cat-heading opacity-10">{item.title.charAt(0)}</span>
+                              </div>
+                            )}
+                            <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-tl bg-black/55 text-white">
+                              <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                {isExpanded ? <path d="M18 6 6 18M6 6l12 12" /> : <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />}
+                              </svg>
+                            </span>
+                          </button>
+                          <div>
+                            <h3 className="font-display text-xl text-cat-heading">{item.title}</h3>
+                            <p className="mt-1 font-body text-body-base text-cat-body">{item.category}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex items-center rounded-full border border-border">
+                            <button
+                              type="button"
+                              onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity - 1))}
+                              aria-label={`Decrease quantity of ${item.title}`}
+                              className="flex h-9 w-9 items-center justify-center text-cat-heading transition-colors hover:text-accent-gold"
+                            >
+                              &minus;
+                            </button>
+                            <span className="w-8 text-center font-mono text-sm text-cat-heading">{item.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity + 1))}
+                              aria-label={`Increase quantity of ${item.title}`}
+                              className="flex h-9 w-9 items-center justify-center text-cat-heading transition-colors hover:text-accent-gold"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <Link
+                            href={reviewHref}
+                            className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
+                          >
+                            Review
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setCartItems(removeFromPortfolioCart(item.id))}
+                            aria-label={`Remove ${item.title} from cart`}
+                            className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:border-[#7A4A44] hover:text-[#7A4A44]"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <Link
+                          href={reviewHref}
+                          className="group mt-4 flex items-center gap-4 rounded-2xl border border-border bg-cat-bg p-3 transition-colors hover:border-accent-gold animate-fadeIn"
+                        >
+                          <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl border border-border bg-cat-surface">
+                            {item.image ? (
+                              <Image src={item.image} alt={item.title} fill sizes="112px" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <span className="font-display text-3xl font-bold text-cat-heading opacity-10">{item.title.charAt(0)}</span>
+                              </div>
+                            )}
+                          </div>
+                          <span className="font-mono text-[10px] uppercase tracking-widest text-cat-accent-dark group-hover:text-accent-gold">
+                            View product &rarr;
                           </span>
-                        </summary>
-                        <p className="mt-4 font-body text-body-base text-cat-body leading-relaxed max-w-3xl">
-                          {faq.answer}
-                        </p>
-                      </details>
-                    ))}
-                  </div>
-                </SectionReveal>
+                        </Link>
+                      )}
+                    </div>
+                    );
+                  })}
+                </div>
               </div>
-            </section>
 
-            {/* CTA Section */}
-            <section className="bg-cat-bg border-t border-border py-24 md:py-36 text-center transition-colors duration-500">
-              <SectionReveal>
-                <div className="container-wide max-w-3xl">
-                  <h2 className="font-display text-display-lg text-cat-heading">
-                    Need a custom <em className="italic text-accent-gold">brief?</em>
-                  </h2>
-                  <p className="mt-6 font-body text-body-lg text-cat-body leading-relaxed">
-                    If your requirements don&apos;t fit our standard packages, our designers can prepare a bespoke estimate based on your specific print size, stock, and volume.
+              <div className="rounded-[2rem] border border-border bg-cat-surface p-8 md:p-10">
+                <p className="font-mono text-label uppercase tracking-wider text-cat-accent-dark">
+                  Summary
+                </p>
+                <h3 className="mt-3 font-display text-2xl text-cat-heading">Ready to request pricing?</h3>
+                <div className="mt-8 border-t border-border pt-6">
+                  <p className="font-body text-body-base text-cat-body leading-relaxed">
+                    Every project is priced individually once we&apos;ve reviewed your details — send us your selected items and we&apos;ll come back with a real quote, not an estimate.
                   </p>
-                  <div className="mt-10">
-                    <Button variant="primary" size="lg" href="/contact">
-                      Get a Custom Quote
+
+                  {/* Logged-in customers always see this block — their own
+                      negotiated price once one's been set, otherwise the
+                      price set on the exact piece in their cart, otherwise
+                      a plain "being prepared" message — never a blank or
+                      £0 price. Logged-out visitors see none of this. */}
+                  {loggedIn && priceLoaded && (
+                    <div className="mt-6 rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-5">
+                      {effectivePrice ? (
+                        <>
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">
+                            {effectivePrice.negotiated ? 'Your price' : 'Starting from'}
+                          </p>
+                          <p className="mt-1.5 font-display text-3xl text-cat-heading">
+                            {formatPrice(effectivePrice.price, effectivePrice.currency)}
+                          </p>
+                          <p className="mt-2 font-body text-sm text-cat-muted">
+                            {effectivePrice.negotiated
+                              ? 'This is the price we agreed for your project.'
+                              : 'A general starting estimate — your final price is confirmed once we’ve reviewed your specific request.'}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">Pricing</p>
+                          <p className="mt-1.5 font-body text-body-base text-cat-heading">
+                            Your custom pricing is being prepared — we&apos;ll let you know as soon as it&apos;s ready.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-8">
+                    <Button variant="primary" size="lg" href={loggedIn ? '/account/quote?cart=1' : '/contact?cart=1'}>
+                      Request a final quote
                     </Button>
                   </div>
                 </div>
-              </SectionReveal>
-            </section>
-          </div>
-        );
-      })()}
+              </div>
+            </div>
+          </SectionReveal>
+        </div>
+      </section>
     </div>
   );
 }

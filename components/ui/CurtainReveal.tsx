@@ -36,7 +36,7 @@ export function CurtainReveal({
         initial={{ scaleX: 1 }}
         whileInView={{ scaleX: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.7, delay, ease: [0.77, 0, 0.18, 1] as any }}
+        transition={{ duration: 0.7, delay, ease: [0.77, 0, 0.18, 1] as [number, number, number, number] }}
       />
     </div>
   );

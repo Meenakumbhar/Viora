@@ -1,145 +1,589 @@
 'use client';
 
-import { useState, type FormEvent, type ChangeEvent } from 'react';
+import {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  type FormEvent,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from 'react';
 import Link from 'next/link';
+import { readPortfolioCart, clearPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
+import type { PublicUser } from '@/types/database';
+import {
+  SERVICE_TYPES,
+  SERVICE_PROMPTS,
+  PillChip,
+  DateField,
+  QuantityCombobox,
+  AutoTextarea,
+  toDateInputValue,
+} from '@/components/ui/quote-form-shared';
+
+/* ── Types ─────────────────────────────────────────────────────────────── */
 
 type FormState = 'idle' | 'loading' | 'success' | 'error';
+type Step = 1 | 2 | 3;
 
 interface FormData {
   name: string;
   email: string;
+  phone: string;
   country: string;
   serviceType: string;
-  eventDate: string;
-  quantity: string;
+  eventDate: Date | undefined;
+  quantity: string | null;
+  quantityUndecided: boolean;
   description: string;
   source: string;
 }
 
+/* ── Constants ─────────────────────────────────────────────────────────── */
+
 const INITIAL_DATA: FormData = {
   name: '',
   email: '',
+  phone: '',
   country: '',
   serviceType: '',
-  eventDate: '',
-  quantity: '',
+  eventDate: undefined,
+  quantity: null,
+  quantityUndecided: false,
   description: '',
   source: '',
 };
 
 const COUNTRIES = [
-  'United Kingdom',
-  'United States',
-  'Canada',
-  'Australia',
-  'New Zealand',
-  'Ireland',
-  'Germany',
-  'France',
-  'Spain',
-  'Italy',
-  'Netherlands',
-  'Belgium',
-  'Switzerland',
-  'Austria',
-  'Portugal',
-  'Sweden',
-  'Norway',
-  'Denmark',
-  'Finland',
-  'South Africa',
-  'Nigeria',
-  'Kenya',
-  'India',
-  'Pakistan',
-  'Japan',
-  'Singapore',
-  'Hong Kong',
-  'United Arab Emirates',
-  'Saudi Arabia',
-  'Brazil',
-  'Mexico',
-  'Argentina',
-  'Colombia',
-  'Philippines',
-  'Malaysia',
-];
-
-const SERVICE_TYPES = [
-  'Wedding & Events',
-  'Funeral & Memorial',
-  'Sports & Branding',
-  'Graphic Design',
-  'Print & Production',
-  'Not sure',
-];
-
-const QUANTITIES = [
-  '1–50',
-  '51–200',
-  '201–500',
-  '500+',
-  'Not yet decided',
+  'United Kingdom','United States','Canada','Australia','New Zealand',
+  'Ireland','Germany','France','Spain','Italy','Netherlands','Belgium',
+  'Switzerland','Austria','Portugal','Sweden','Norway','Denmark','Finland',
+  'South Africa','Nigeria','Kenya','India','Pakistan','Japan','Singapore',
+  'Hong Kong','United Arab Emirates','Saudi Arabia','Brazil','Mexico',
+  'Argentina','Colombia','Philippines','Malaysia',
 ];
 
 const SOURCES = [
-  'Google',
-  'Instagram',
-  'Referral',
-  'Funeral Director',
-  'Wedding Planner',
-  'Other',
+  { label: 'Google', emoji: '🔍' },
+  { label: 'Instagram', emoji: '📸' },
+  { label: 'Referral', emoji: '👥' },
+  { label: 'Funeral Director', emoji: '🕊️' },
+  { label: 'Wedding Planner', emoji: '💐' },
+  { label: 'Other', emoji: '✨' },
 ];
+
+const EMAIL_DOMAINS = ['gmail.com','outlook.com','yahoo.com','icloud.com','hotmail.com','me.com','live.com'];
+
+/* ── Helpers ───────────────────────────────────────────────────────────── */
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-const inputClasses =
-  'w-full border border-border bg-cat-surface px-4 py-3 text-cat-heading transition-colors duration-300 focus:border-cat-accent focus:ring-1 focus:ring-cat-accent focus:outline-none placeholder:text-cat-muted';
+/* ── Step indicator ────────────────────────────────────────────────────── */
 
-const labelClasses = 'mb-2 block font-body text-body-base text-cat-heading';
+function StepDots({ current, total }: { current: Step; total: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-8" aria-label={`Step ${current} of ${total}`}>
+      {Array.from({ length: total }, (_, i) => {
+        const step = (i + 1) as Step;
+        const active = step === current;
+        const done = step < current;
+        return (
+          <div key={step} className="flex items-center gap-2">
+            <div
+              className={[
+                'flex items-center justify-center rounded-full text-[10px] font-mono font-semibold transition-all duration-300',
+                active
+                  ? 'w-7 h-7 bg-accent-gold text-bg-primary scale-110'
+                  : done
+                  ? 'w-6 h-6 bg-accent-gold/30 text-accent-gold border border-accent-gold/50'
+                  : 'w-6 h-6 border border-border text-text-muted',
+              ].join(' ')}
+            >
+              {done ? '✓' : step}
+            </div>
+            {i < total - 1 && (
+              <div
+                className={`h-[1px] w-8 transition-all duration-500 ${done || active ? 'bg-accent-gold/40' : 'bg-border'}`}
+              />
+            )}
+          </div>
+        );
+      })}
+      <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-text-muted">
+        {current === 1 ? 'Who you are' : current === 2 ? 'Your project' : 'Extra details'}
+      </span>
+    </div>
+  );
+}
 
-export default function QuoteForm() {
-  const [data, setData] = useState<FormData>(INITIAL_DATA);
+/* ── Floating label input ──────────────────────────────────────────────── */
+
+function FloatingInput({
+  id,
+  label,
+  required,
+  type = 'text',
+  value,
+  onChange,
+  onBlur,
+  autoComplete,
+  children,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  type?: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  autoComplete?: string;
+  children?: React.ReactNode;
+}) {
+  const [focused, setFocused] = useState(false);
+  const lifted = focused || value.length > 0;
+
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        name={id.replace('quote-', '')}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        autoComplete={autoComplete}
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => { setFocused(false); onBlur?.(e); }}
+        className={[
+          'w-full border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none',
+          'focus:border-accent-gold focus:ring-1 focus:ring-accent-gold',
+          lifted ? 'border-border' : 'border-border',
+        ].join(' ')}
+      />
+      <label
+        htmlFor={id}
+        className={[
+          'absolute left-4 pointer-events-none transition-all duration-200 font-body',
+          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+        ].join(' ')}
+      >
+        {label}
+        {required && <span className="text-accent-gold ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+/* ── Country combobox ─────────────────────────────────────────────────── */
+
+function CountryCombobox({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const filtered = query.length === 0
+    ? COUNTRIES
+    : COUNTRIES.filter((c) => c.toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        // If user typed but didn't select, revert to last valid value
+        if (!COUNTRIES.includes(query)) setQuery(value);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [query, value]);
+
+  function handleKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlighted((h) => Math.min(h + 1, filtered.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlighted((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filtered[highlighted]) select(filtered[highlighted]);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  }
+
+  function select(country: string) {
+    onChange(country);
+    setQuery(country);
+    setOpen(false);
+  }
+
+  const [focused, setFocused] = useState(false);
+  const lifted = focused || query.length > 0;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        id="quote-country"
+        type="text"
+        value={query}
+        autoComplete="off"
+        onFocus={() => { setOpen(true); setFocused(true); setHighlighted(0); }}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setHighlighted(0); }}
+        onKeyDown={handleKey}
+        className="w-full border border-border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      />
+      <label
+        htmlFor="quote-country"
+        className={[
+          'absolute left-4 pointer-events-none transition-all duration-200 font-body',
+          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+        ].join(' ')}
+      >
+        Country (optional)
+      </label>
+      {/* Dropdown arrow */}
+      <svg
+        className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted pointer-events-none"
+        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+      </svg>
+
+      {open && filtered.length > 0 && (
+        <ul
+          role="listbox"
+          className="absolute z-50 left-0 right-0 top-full mt-1 max-h-52 overflow-y-auto border border-border bg-bg-primary shadow-lg"
+        >
+          {filtered.map((c, i) => (
+            <li
+              key={c}
+              role="option"
+              aria-selected={value === c}
+              onMouseDown={() => select(c)}
+              className={[
+                'px-4 py-2.5 font-body text-body-base cursor-pointer transition-colors',
+                i === highlighted ? 'bg-accent-gold/10 text-accent-gold' : 'text-cat-heading hover:bg-bg-secondary',
+              ].join(' ')}
+            >
+              {c}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ── Email input with domain autocomplete ─────────────────────────────── */
+
+function EmailInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = useState(false);
+  const lifted = focused || value.length > 0;
+
+  useEffect(() => {
+    const atIdx = value.indexOf('@');
+    if (atIdx !== -1) {
+      const afterAt = value.slice(atIdx + 1);
+      const matches = afterAt.length === 0
+        ? EMAIL_DOMAINS
+        : EMAIL_DOMAINS.filter((d) => d.startsWith(afterAt));
+      setSuggestions(matches);
+      setOpen(matches.length > 0);
+    } else {
+      setOpen(false);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  function selectDomain(domain: string) {
+    const atIdx = value.indexOf('@');
+    const base = atIdx !== -1 ? value.slice(0, atIdx + 1) : value + '@';
+    onChange(base + domain);
+    setOpen(false);
+  }
+
+  function handleKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (!open) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlighted((h) => Math.min(h + 1, suggestions.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlighted((h) => Math.max(h - 1, 0)); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { if (suggestions[highlighted]) { e.preventDefault(); selectDomain(suggestions[highlighted]); } }
+    else if (e.key === 'Escape') setOpen(false);
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        id="quote-email"
+        name="email"
+        type="email"
+        value={value}
+        required
+        autoComplete="email"
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKey}
+        className="w-full border border-border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+      />
+      <label
+        htmlFor="quote-email"
+        className={[
+          'absolute left-4 pointer-events-none transition-all duration-200 font-body',
+          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+        ].join(' ')}
+      >
+        Email<span className="text-accent-gold ml-0.5">*</span>
+      </label>
+
+      {open && (
+        <ul className="absolute z-50 left-0 right-0 top-full mt-1 border border-border bg-bg-primary shadow-lg">
+          {suggestions.map((d, i) => {
+            const atIdx = value.indexOf('@');
+            const base = atIdx !== -1 ? value.slice(0, atIdx + 1) : value + '@';
+            return (
+              <li
+                key={d}
+                onMouseDown={() => selectDomain(d)}
+                className={[
+                  'px-4 py-2.5 font-mono text-sm cursor-pointer flex items-center gap-1 transition-colors',
+                  i === highlighted ? 'bg-accent-gold/10 text-accent-gold' : 'text-cat-heading hover:bg-bg-secondary',
+                ].join(' ')}
+              >
+                <span className="text-text-muted">{base}</span>
+                <span className="font-semibold">{d}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface QuoteFormProps {
+  /** Prefills the service-type step — only applied if it exactly matches a known service label. */
+  initialService?: string;
+  /** Prefills the brief-description field, e.g. from a "Request similar" reorder link. */
+  initialDetails?: string;
+  /** Only true when arriving via the "Request a final quote" button on /pricing — otherwise any leftover cart items are ignored so a plain quote request doesn't get treated as cart-linked by default. */
+  fromCart?: boolean;
+}
+
+export default function QuoteForm({ initialService, initialDetails, fromCart }: QuoteFormProps = {}) {
+  const [data, setData] = useState<FormData>(() => {
+    const matchedService = initialService
+      ? SERVICE_TYPES.find((s) => s.label.toLowerCase() === initialService.toLowerCase())?.label
+      : undefined;
+    return {
+      ...INITIAL_DATA,
+      serviceType: matchedService ?? INITIAL_DATA.serviceType,
+      description: initialDetails ?? INITIAL_DATA.description,
+    };
+  });
+  const [step, setStep] = useState<Step>(1);
   const [state, setState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // The Continue/Submit button occupies the same spot across a step change —
+  // a stray double-click (common on trackpads/touch) can land its second
+  // click on the button that just replaced it, submitting the form before
+  // the customer ever saw step 3. Locking here, synchronously inside the
+  // same handler that changes the step, means the replacement button is
+  // already disabled on its very first paint. A `useEffect` keyed on
+  // `step` instead only disables it a tick *after* that first paint —
+  // React runs passive effects after the browser paints, not before —
+  // leaving a real window where the new button is live and un-disabled.
+  const [navLocked, setNavLocked] = useState(false);
+  const navLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function lockNav() {
+    setNavLocked(true);
+    if (navLockTimerRef.current) clearTimeout(navLockTimerRef.current);
+    navLockTimerRef.current = setTimeout(() => setNavLocked(false), 400);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (navLockTimerRef.current) clearTimeout(navLockTimerRef.current);
+    };
+  }, []);
+
+  /* ── Portfolio cart context — so a quote raised from "Buy" on a portfolio
+     item stays linked to that item, instead of arriving as a generic request.
+     Only loaded when the customer actually arrived via the cart checkout
+     flow — otherwise a stale cart shouldn't hijack an unrelated quote. ──── */
+  const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
+  const [includeCartItems, setIncludeCartItems] = useState(true);
+  const [serviceOverride, setServiceOverride] = useState(false);
+
+  useEffect(() => {
+    if (fromCart) setCartItems(readPortfolioCart());
+  }, [fromCart]);
+
+  // If every cart item implies the same service, there's nothing to ask —
+  // re-picking a service the customer already told us via the product/
+  // portfolio item they chose would just be repeating themselves.
+  const derivedServiceType = useMemo(() => {
+    if (!includeCartItems || cartItems.length === 0) return null;
+    const first = cartItems[0].serviceType;
+    if (!first) return null;
+    return cartItems.every((item) => item.serviceType === first) ? first : null;
+  }, [cartItems, includeCartItems]);
+
+  useEffect(() => {
+    if (derivedServiceType) {
+      setData((prev) => ({ ...prev, serviceType: derivedServiceType }));
+    }
+  }, [derivedServiceType]);
+
+  /* ── Returning-customer prefill — a logged-in user who already has saved
+     contact details shouldn't have to retype them on every order; only what
+     changes per order (service, quantity, description) still needs filling in. ── */
+  const [profile, setProfile] = useState<PublicUser | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/account/me')
+      .then((res) => (res.ok ? res.json() : { success: false }))
+      .then((json) => {
+        if (!cancelled && json.success) setProfile(json.data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setProfileLoaded(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!profileLoaded || !profile) return;
+    setData((prev) => ({
+      ...prev,
+      name: prev.name || profile.name || '',
+      email: prev.email || profile.email || '',
+      phone: prev.phone || profile.phone || '',
+      country: prev.country || profile.country || '',
+    }));
+    // A profile only counts as "complete" once we already have what step 1
+    // asks for — otherwise this is their first order and they still need it.
+    // Only advance from step 1 — never jump the user *back* if they are
+    // already on step 2 or 3 (avoids resetting progress on re-renders).
+    if (profile.name && profile.phone) {
+      setStep((current) => current === 1 ? 2 : current);
+    }
+  }, [profileLoaded, profile]);
+
+  /* ── Field handlers ───────────────────────────────────────────────────── */
 
   function handleChange(
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
-    if (state === 'error') {
-      setState('idle');
-      setErrorMessage('');
-    }
+    if (state === 'error') { setState('idle'); setErrorMessage(''); }
   }
 
-  function validate(): string | null {
+  function setField<K extends keyof FormData>(key: K, value: FormData[K]) {
+    setData((prev) => ({ ...prev, [key]: value }));
+    if (state === 'error') { setState('idle'); setErrorMessage(''); }
+  }
+
+  /* ── Step validation ─────────────────────────────────────────────────── */
+
+  function validateStep1(): string | null {
     if (!data.name.trim()) return 'Please enter your name.';
     if (!data.email.trim()) return 'Please enter your email address.';
     if (!isValidEmail(data.email)) return 'Please enter a valid email address.';
-    if (!data.country) return 'Please select your country.';
-    if (!data.serviceType) return 'Please select a service type.';
-    if (!data.quantity) return 'Please select an estimated quantity.';
-    if (!data.description.trim()) return 'Please provide a brief description.';
     return null;
   }
 
+  function validateStep2(): string | null {
+    if (!data.serviceType) return 'Please select a service type.';
+    if ((!data.quantity || !data.quantity.trim()) && !data.quantityUndecided) return 'Please select an estimated quantity.';
+    return null;
+  }
+
+  function validateAll(): string | null {
+    const s1 = validateStep1();
+    if (s1) return s1;
+    const s2 = validateStep2();
+    if (s2) return s2;
+    return null;
+  }
+
+  function goNext() {
+    const err = step === 1 ? validateStep1() : step === 2 ? validateStep2() : null;
+    if (err) { setErrorMessage(err); setState('error'); return; }
+    setState('idle'); setErrorMessage('');
+    lockNav();
+    setStep((s) => Math.min(s + 1, 3) as Step);
+  }
+
+  function goBack() {
+    setState('idle'); setErrorMessage('');
+    lockNav();
+    setStep((s) => Math.max(s - 1, 1) as Step);
+  }
+
+  /* ── Submit ──────────────────────────────────────────────────────────── */
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setErrorMessage('');
-
-    const validationError = validate();
-    if (validationError) {
-      setErrorMessage(validationError);
-      setState('error');
-      return;
-    }
+    // A stray Enter keypress in an earlier step's field can trigger the
+    // browser's native implicit form submission even though the visible
+    // "Continue" button there is type="button" — validateAll() alone can't
+    // catch this since steps 1+2 may already be individually valid before
+    // the customer has ever seen step 3. Guard on the step itself so an
+    // early submit is a no-op instead of silently sending the request.
+    if (step !== 3) return;
+    const validationError = validateAll();
+    if (validationError) { setErrorMessage(validationError); setState('error'); return; }
 
     setState('loading');
-
     try {
       const res = await fetch('/api/quote', {
         method: 'POST',
@@ -147,59 +591,52 @@ export default function QuoteForm() {
         body: JSON.stringify({
           name: data.name,
           email: data.email,
+          phone: data.phone || null,
           country: data.country,
           service_type: data.serviceType,
-          event_date: data.eventDate || null,
-          quantity_estimate: data.quantity,
+          event_date: data.eventDate ? toDateInputValue(data.eventDate) : null,
+          quantity_estimate: data.quantityUndecided
+            ? 'Not yet decided'
+            : data.quantity?.trim() || null,
           description: data.description,
           source: data.source || null,
+          portfolio_items: includeCartItems && cartItems.length > 0
+            ? cartItems.map((item) => ({ id: item.id, title: item.title, category: item.category }))
+            : null,
         }),
       });
-
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || 'Something went wrong. Please try again.');
       }
-
+      if (includeCartItems && cartItems.length > 0) {
+        clearPortfolioCart();
+      }
       setState('success');
     } catch (err) {
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Something went wrong. Please try again.'
-      );
+      setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setState('error');
     }
   }
 
-  // ─── SUCCESS STATE ───────────────────────────────────────────────────────
+  /* ── Success state ───────────────────────────────────────────────────── */
+
   if (state === 'success') {
     return (
       <div className="flex flex-col items-center py-16 text-center">
-        {/* Checkmark icon */}
-        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent-gold">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M5 13L9 17L19 7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-accent-gold"
-            />
+        <div
+          className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent-gold"
+          style={{ animation: 'successPop 0.4s ease' }}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-gold" />
           </svg>
         </div>
-
         <h3 className="font-display text-display-md text-text-primary">
           Thank you, {data.name.split(' ')[0]}
         </h3>
         <p className="mt-4 max-w-md font-body text-body-base text-text-muted">
-          We will be in touch within 24 hours.
+          Your request is with us. We&apos;ll be in touch within 24 hours.
         </p>
         <Link
           href="/portfolio"
@@ -211,188 +648,288 @@ export default function QuoteForm() {
     );
   }
 
-  // ─── FORM ────────────────────────────────────────────────────────────────
+  /* ── Description placeholder based on service ───────────────────────── */
+
+  const descPlaceholder = SERVICE_PROMPTS[data.serviceType] ?? SERVICE_PROMPTS['default'];
+
+  /* ── Form ────────────────────────────────────────────────────────────── */
+
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {/* Row 1: Name / Email */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label htmlFor="quote-name" className={labelClasses}>
-            Name <span className="text-accent-gold">*</span>
-          </label>
-          <input
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      onKeyDown={(e) => {
+        // Stop Enter from implicitly submitting the form while on an earlier
+        // step — only the step-3 submit button should be able to do that.
+        if (e.key === 'Enter' && step < 3 && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+          e.preventDefault();
+        }
+      }}
+    >
+      {/* Step dots */}
+      <StepDots current={step} total={3} />
+
+      {/* ── Returning-customer summary — lets them skip straight past contact details ── */}
+      {step > 1 && profile && profile.name && profile.phone && (
+        <div className="mb-6 flex items-center justify-between gap-4 border border-border bg-cat-surface px-5 py-3 animate-fadeIn">
+          <p className="font-body text-sm text-text-muted">
+            Ordering as <span className="text-text-heading">{data.name || profile.name}</span>
+            <span className="text-text-muted"> &middot; {data.email || profile.email}</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+          >
+            Change details
+          </button>
+        </div>
+      )}
+
+      {/* ── Portfolio cart context banner ───────────────────────────────── */}
+      {cartItems.length > 0 && includeCartItems && (
+        <div className="mb-8 flex items-start justify-between gap-4 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">
+              Requesting a quote for {cartItems.length} item{cartItems.length === 1 ? '' : 's'} from your cart
+            </p>
+            <p className="mt-1.5 font-body text-sm text-text-muted">
+              {cartItems.map((item) => item.title).join(', ')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIncludeCartItems(false);
+              // Decoupling from the cart means the derived service no longer
+              // applies either — back to asking, like a guest enquiry.
+              if (derivedServiceType) setField('serviceType', '');
+            }}
+            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
+          >
+            Not about this
+          </button>
+        </div>
+      )}
+
+      {/* ── STEP 1: Who you are ───────────────────────────────────────── */}
+      {step === 1 && (
+        <div className="space-y-5 animate-fadeIn">
+          <h2 className="font-display text-xl text-text-heading mb-6">Tell us who you are</h2>
+
+          {/* Name */}
+          <FloatingInput
             id="quote-name"
-            name="name"
-            type="text"
+            label="Your full name"
+            required
             value={data.name}
-            onChange={handleChange}
-            required
-            className={inputClasses}
-            placeholder="Your full name"
+            onChange={(e) => {
+              setField('name', e.target.value);
+            }}
+            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+              setField(
+                'name',
+                e.target.value.replace(/\b\w/g, (c) => c.toUpperCase())
+              );
+            }}
+            autoComplete="name"
           />
-        </div>
-        <div>
-          <label htmlFor="quote-email" className={labelClasses}>
-            Email <span className="text-accent-gold">*</span>
-          </label>
-          <input
-            id="quote-email"
-            name="email"
-            type="email"
-            value={data.email}
+
+          {/* Email */}
+          <EmailInput value={data.email} onChange={(v) => setField('email', v)} />
+
+          {/* Phone — optional */}
+          <FloatingInput
+            id="quote-phone"
+            label="Phone number (optional)"
+            type="tel"
+            value={data.phone}
             onChange={handleChange}
-            required
-            className={inputClasses}
-            placeholder="you@example.com"
+            autoComplete="tel"
           />
-        </div>
-      </div>
 
-      {/* Row 2: Country / Service type */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label htmlFor="quote-country" className={labelClasses}>
-            Country <span className="text-accent-gold">*</span>
-          </label>
-          <select
-            id="quote-country"
-            name="country"
-            value={data.country}
-            onChange={handleChange}
-            required
-            className={inputClasses}
-          >
-            <option value="">Select country</option>
-            {COUNTRIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          {/* Country */}
+          <CountryCombobox value={data.country} onChange={(v) => setField('country', v)} />
         </div>
-        <div>
-          <label htmlFor="quote-service" className={labelClasses}>
-            Service type <span className="text-accent-gold">*</span>
-          </label>
-          <select
-            id="quote-service"
-            name="serviceType"
-            value={data.serviceType}
-            onChange={handleChange}
-            required
-            className={inputClasses}
-          >
-            <option value="">Select service</option>
-            {SERVICE_TYPES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      )}
 
-      {/* Row 3: Event date / Quantity */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label htmlFor="quote-date" className={labelClasses}>
-            Event or delivery date
-          </label>
-          <input
-            id="quote-date"
-            name="eventDate"
-            type="date"
-            value={data.eventDate}
+      {/* ── STEP 2: Your project ─────────────────────────────────────── */}
+      {step === 2 && (
+        <div className="space-y-8 animate-fadeIn">
+          <h2 className="font-display text-xl text-text-heading mb-6">About your project</h2>
+
+          {/* Service type — derived from the cart when every item agrees, otherwise pill chips */}
+          <div>
+            {derivedServiceType && !serviceOverride ? (
+              <div className="flex items-center justify-between gap-4 border border-border bg-cat-surface px-4 py-3">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-text-muted">Service</p>
+                  <p className="mt-1 font-body text-cat-heading">{derivedServiceType}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setServiceOverride(true)}
+                  className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+                  Service type<span className="text-accent-gold ml-0.5">*</span>
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {SERVICE_TYPES.map((s) => (
+                    <PillChip
+                      key={s.label}
+                      selected={data.serviceType === s.label}
+                      onClick={() => setField('serviceType', s.label)}
+                    >
+                      <span className="mr-1.5">{s.emoji}</span>
+                      {s.label}
+                    </PillChip>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Date */}
+          <div>
+            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+              Event or delivery date
+            </p>
+            <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
+          </div>
+
+          {/* Quantity — combobox: type a number, pick from scrollable dropdown */}
+          <div>
+            <p className="mb-1.5 font-body text-sm text-text-muted uppercase tracking-wider">
+              Estimated quantity<span className="text-accent-gold ml-0.5">*</span>
+            </p>
+            <QuantityCombobox
+              value={data.quantity}
+              disabled={data.quantityUndecided}
+              onChange={(v) => setField('quantity', v)}
+            />
+            <label className="mt-3 flex items-center gap-2 font-body text-xs text-text-muted">
+              <input
+                type="checkbox"
+                checked={data.quantityUndecided}
+                onChange={(e) => setField('quantityUndecided', e.target.checked)}
+                className="h-3.5 w-3.5 accent-accent-gold"
+              />
+              I haven&apos;t decided yet
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* ── STEP 3: Details ──────────────────────────────────────────── */}
+      {step === 3 && (
+        <div className="space-y-8 animate-fadeIn">
+          <h2 className="font-display text-xl text-text-heading mb-6">Final details</h2>
+
+          {/* Description */}
+          <AutoTextarea
+            id="quote-description"
+            name="description"
+            label="Brief description"
+            value={data.description}
             onChange={handleChange}
-            className={inputClasses}
+            placeholder={descPlaceholder}
           />
+
+          {/* How did you hear — pill chips */}
+          <div>
+            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+              How did you hear about us?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SOURCES.map((s) => (
+                <PillChip
+                  key={s.label}
+                  selected={data.source === s.label}
+                  onClick={() => setField('source', s.label)}
+                >
+                  <span className="mr-1.5">{s.emoji}</span>
+                  {s.label}
+                </PillChip>
+              ))}
+            </div>
+          </div>
         </div>
-        <div>
-          <label htmlFor="quote-quantity" className={labelClasses}>
-            Estimated quantity <span className="text-accent-gold">*</span>
-          </label>
-          <select
-            id="quote-quantity"
-            name="quantity"
-            value={data.quantity}
-            onChange={handleChange}
-            required
-            className={inputClasses}
-          >
-            <option value="">Select quantity</option>
-            {QUANTITIES.map((q) => (
-              <option key={q} value={q}>
-                {q}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      )}
 
-      {/* Row 4: Description */}
-      <div>
-        <label htmlFor="quote-description" className={labelClasses}>
-          Brief description <span className="text-accent-gold">*</span>
-        </label>
-        <textarea
-          id="quote-description"
-          name="description"
-          value={data.description}
-          onChange={handleChange}
-          required
-          rows={4}
-          className={inputClasses}
-          placeholder="Tell us about your project, style preferences, and any key details."
-        />
-      </div>
-
-      {/* Row 5: How did you hear */}
-      <div>
-        <label htmlFor="quote-source" className={labelClasses}>
-          How did you hear about us?
-        </label>
-        <select
-          id="quote-source"
-          name="source"
-          value={data.source}
-          onChange={handleChange}
-          className={inputClasses}
-        >
-          <option value="">Select an option</option>
-          {SOURCES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Error message */}
+      {/* ── Error message ─────────────────────────────────────────────── */}
       {state === 'error' && errorMessage && (
-        <p className="text-sm text-accent-blush" role="alert">
+        <p className="mt-4 text-sm text-accent-blush" role="alert">
           {errorMessage}
         </p>
       )}
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={state === 'loading'}
-        className={[
-          'w-full bg-accent-gold py-4 font-body font-medium uppercase tracking-wider text-bg-primary',
-          'transition-all duration-300 hover:bg-accent-gold-dark',
-          'focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
-          'disabled:opacity-50',
-          state === 'loading' ? 'animate-pulse' : '',
-        ].join(' ')}
-      >
-        {state === 'loading' ? 'Sending...' : 'Get a Quote'}
-      </button>
+      {/* ── Navigation buttons ────────────────────────────────────────── */}
+      <div className={`mt-8 flex ${step > 1 ? 'justify-between' : 'justify-end'} items-center gap-4`}>
+        {step > 1 && (
+          <button
+            type="button"
+            onClick={goBack}
+            className="font-body text-label uppercase tracking-wider text-text-muted hover:text-text-heading transition-colors flex items-center gap-2"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Back
+          </button>
+        )}
 
-      {/* Privacy note */}
-      <p className="text-center text-sm text-text-muted">
-        Your details are safe. We never share your information with third parties.
-      </p>
+        {/* Distinct `key`s below are load-bearing, not cosmetic: without them
+            React reuses the same <button> DOM node across this ternary. On
+            the 2→3 transition, clicking Continue calls goNext() -> setStep(3)
+            synchronously inside the click handler, which flips this same
+            element from type="button" to type="submit" mid-event — and the
+            browser's native click default-action, evaluated after listeners
+            run, then sees a submit button and immediately submits the form,
+            skipping step 3 entirely. Keying them forces React to mount a
+            fresh node instead of mutating the one still mid-click. */}
+        {step < 3 ? (
+          <button
+            key="continue-button"
+            type="button"
+            onClick={goNext}
+            disabled={navLocked}
+            className="bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider transition-all duration-300 hover:bg-accent-gold-dark focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary flex items-center gap-2 disabled:opacity-70"
+          >
+            Continue
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            key="submit-button"
+            type="submit"
+            disabled={state === 'loading' || navLocked}
+            className={[
+              'bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider',
+              'transition-all duration-300 hover:bg-accent-gold-dark',
+              'focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
+              'disabled:opacity-50',
+              state === 'loading' ? 'animate-pulse' : '',
+            ].join(' ')}
+          >
+            {state === 'loading' ? 'Sending…' : 'Send My Request →'}
+          </button>
+        )}
+      </div>
+
+      {/* Privacy note — only on last step */}
+      {step === 3 && (
+        <p className="mt-4 text-center text-sm text-text-muted">
+          Your details are safe. We never share your information with third parties.
+        </p>
+      )}
     </form>
   );
 }

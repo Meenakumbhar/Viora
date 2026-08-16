@@ -1,6 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+// Only the funeral portfolio gets a background video — every other category
+// keeps its animated gradient. Swap or add a category key here to extend it.
+// NOTE: .MOV files don't play in Chrome/Firefox/Edge on Windows — convert to
+// .mp4 first, then update NEXT_PUBLIC_FUNERAL_HERO_VIDEO_URL in .env.local.
+const CATEGORY_VIDEOS: Partial<Record<string, string>> = {
+  funeral: process.env.NEXT_PUBLIC_FUNERAL_HERO_VIDEO_URL,
+};
 
 interface CategoryContent {
   eyebrow: string;
@@ -85,25 +93,75 @@ interface PortfolioHeroProps {
 }
 
 export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
+  const key = activeCategory.toLowerCase();
   const content = useMemo(() => {
-    const key = activeCategory.toLowerCase();
     return categoryContentMap[key] || categoryContentMap.all;
-  }, [activeCategory]);
+  }, [key]);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(query.matches);
+    const handleChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    query.addEventListener('change', handleChange);
+    return () => query.removeEventListener('change', handleChange);
+  }, []);
+
+  // Reset the failure flag when switching categories, so leaving and coming
+  // back to funeral gets a fresh attempt rather than being stuck on the
+  // gradient from an earlier error.
+  useEffect(() => {
+    setVideoFailed(false);
+  }, [key]);
+
+  const videoSrc = CATEGORY_VIDEOS[key];
+  const showVideo = Boolean(videoSrc) && !videoFailed && !reducedMotion;
+
+  // Same missed-event race as HeroVideo: a fast 404 can fire the native
+  // error event before React attaches onError, so check directly too.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.error) {
+      setVideoFailed(true);
+      return;
+    }
+    const handleNativeError = () => setVideoFailed(true);
+    el.addEventListener('error', handleNativeError);
+    return () => el.removeEventListener('error', handleNativeError);
+  }, [videoSrc]);
 
   return (
     <section
       data-category={activeCategory.toLowerCase()}
       className="relative min-h-[70vh] overflow-hidden transition-colors duration-700"
     >
-      {/* Background — animated light gradient per category */}
-      <div
-        className="absolute inset-0 h-full w-full transition-all duration-700 ease-in-out"
-        style={{
-          backgroundImage: content.bgGradient,
-          backgroundSize: '400% 400%',
-          animation: 'hero-gradient-shift 12s ease infinite',
-        }}
-      />
+      {/* Background — video for funeral (once added), animated gradient everywhere else */}
+      {showVideo ? (
+        <video
+          ref={videoRef}
+          key={videoSrc}
+          className="absolute inset-0 h-full w-full object-cover"
+          src={videoSrc}
+          autoPlay
+          muted
+          loop
+          playsInline
+          onError={() => setVideoFailed(true)}
+        />
+      ) : (
+        <div
+          className="absolute inset-0 h-full w-full transition-all duration-700 ease-in-out"
+          style={{
+            backgroundImage: content.bgGradient,
+            backgroundSize: '400% 400%',
+            animation: 'hero-gradient-shift 12s ease infinite',
+          }}
+        />
+      )}
 
       {/* Gradient overlay — smooth bottom transition */}
       <div

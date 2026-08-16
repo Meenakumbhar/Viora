@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next';
-import { getBlogPosts, getPortfolioItems } from '@/lib/supabase';
+import { getBlogPosts, getPortfolioItems } from '@/lib/db';
 import { services } from '@/lib/data';
-
-const BASE_URL = 'https://memoriesinprints.com';
+import { isServiceSlugActive, isCategoryActive } from '@/lib/active-services';
+import { SITE_URL as BASE_URL } from '@/lib/site-url';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Static routes ──────────────────────────────────────────────────────────
@@ -58,14 +58,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // ── Service pages ──────────────────────────────────────────────────────────
-  const serviceRoutes: MetadataRoute.Sitemap = services.map((s) => ({
-    url: `${BASE_URL}/services/${s.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.85,
-  }));
+  const serviceRoutes: MetadataRoute.Sitemap = services
+    .filter((s) => isServiceSlugActive(s.slug))
+    .map((s) => ({
+      url: `${BASE_URL}/services/${s.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.85,
+    }));
 
-  // ── Blog post pages (fetched from Supabase) ────────────────────────────────
+  // ── Blog post pages ─────────────────────────────────────────────────────────
   let blogRoutes: MetadataRoute.Sitemap = [];
   try {
     const posts = await getBlogPosts(100);
@@ -80,7 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   // ── Portfolio category filters ─────────────────────────────────────────────
-  const categories = ['wedding', 'funeral', 'sports', 'branding', 'events'];
+  const categories = ['wedding', 'funeral', 'sports', 'branding', 'events'].filter(isCategoryActive);
   const portfolioRoutes: MetadataRoute.Sitemap = categories.map((cat) => ({
     url: `${BASE_URL}/portfolio?category=${cat}`,
     lastModified: new Date(),

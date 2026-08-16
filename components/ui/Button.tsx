@@ -99,7 +99,7 @@ export default function Button({
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-      {...(rest as any)}
+      {...(rest as Record<string, unknown>)}
     >
       {children}
     </motion.button>

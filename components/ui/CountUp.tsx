@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -11,14 +11,8 @@ if (typeof window !== 'undefined') {
 
 export function CountUp({ end, suffix = '' }: { end: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
     const el = ref.current;
     if (!el) return;
 
@@ -46,9 +40,10 @@ export function CountUp({ end, suffix = '' }: { end: number; suffix?: string }) 
     }, ref);
 
     return () => ctx.revert();
-  }, [mounted, end, suffix]);
+  }, [end, suffix]);
 
   return <span ref={ref}>{end}{suffix}</span>;
 }
 
 export default CountUp;
+

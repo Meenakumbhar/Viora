@@ -3,6 +3,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { isServiceSlugActive, isCategoryActive } from '@/lib/active-services';
+import { products } from '@/lib/data';
+import Logo from '@/components/ui/Logo';
+import { readPortfolioCart } from '@/utils/portfolio-cart';
+
+function isNavHrefActive(href: string): boolean {
+  const serviceMatch = href.match(/^\/services\/([a-z-]+)$/);
+  if (serviceMatch) return isServiceSlugActive(serviceMatch[1]);
+  const categoryMatch = href.match(/category=([a-z]+)/);
+  if (categoryMatch) return isCategoryActive(categoryMatch[1]);
+  return true;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DROPDOWN DATA
@@ -20,22 +32,28 @@ interface NavLink {
 }
 
 const NAV_LINKS: NavLink[] = [
+  // Services is paused for now — see lib/active-services.ts.
+  // {
+  //   label: 'Services',
+  //   href: '/services',
+  //   dropdown: [
+  //     { label: 'Wedding & Events', href: '/services/wedding-events' },
+  //     { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
+  //     { label: 'Sports & Branding', href: '/services/sports-branding' },
+  //     { label: 'Graphic Design', href: '/services/graphic-design' },
+  //     { label: 'Print & Production', href: '/services/print-production' },
+  //   ],
+  // },
   {
-    label: 'Services',
-    href: '/services',
-    dropdown: [
-      { label: 'Wedding & Events', href: '/services/wedding-events' },
-      { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
-      { label: 'Sports & Branding', href: '/services/sports-branding' },
-      { label: 'Graphic Design', href: '/services/graphic-design' },
-      { label: 'Print & Production', href: '/services/print-production' },
-    ],
+    label: 'Products',
+    href: '/products',
+    dropdown: products.map((product) => ({ label: product.title, href: `/products/${product.slug}` })),
   },
   {
     label: 'Portfolio',
     href: '/portfolio',
     dropdown: [
-      { label: 'All Work', href: '/portfolio' },
+      // "All Work" temporarily hidden — see SHOW_ALL_FILTER in PortfolioGrid.tsx.
       { label: 'Wedding', href: '/portfolio?category=wedding' },
       { label: 'Funeral', href: '/portfolio?category=funeral' },
       { label: 'Sports', href: '/portfolio?category=sports' },
@@ -47,7 +65,6 @@ const NAV_LINKS: NavLink[] = [
     href: '/about',
   },
   { label: 'Process', href: '/process' },
-  { label: 'Pricing', href: '/pricing' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -62,16 +79,22 @@ interface MobileNavSection {
 }
 
 const MOBILE_NAV: MobileNavSection[] = [
+  // Services is paused for now — see lib/active-services.ts.
+  // {
+  //   label: 'Services',
+  //   href: '/services',
+  //   children: [
+  //     { label: 'Wedding & Events', href: '/services/wedding-events' },
+  //     { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
+  //     { label: 'Sports & Branding', href: '/services/sports-branding' },
+  //     { label: 'Graphic Design', href: '/services/graphic-design' },
+  //     { label: 'Print & Production', href: '/services/print-production' },
+  //   ],
+  // },
   {
-    label: 'Services',
-    href: '/services',
-    children: [
-      { label: 'Wedding & Events', href: '/services/wedding-events' },
-      { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
-      { label: 'Sports & Branding', href: '/services/sports-branding' },
-      { label: 'Graphic Design', href: '/services/graphic-design' },
-      { label: 'Print & Production', href: '/services/print-production' },
-    ],
+    label: 'Products',
+    href: '/products',
+    children: products.map((product) => ({ label: product.title, href: `/products/${product.slug}` })),
   },
   {
     label: 'Portfolio',
@@ -84,7 +107,6 @@ const MOBILE_NAV: MobileNavSection[] = [
     ],
   },
   { label: 'Process', href: '/process' },
-  { label: 'Pricing', href: '/pricing' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ];
@@ -105,9 +127,24 @@ function getHoverColorClass(href: string): string {
 
 export default function Nav() {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setMobileOpen(false);
+  }
+  const [scrolled, setScrolled] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  useEffect(() => {
+    const syncCart = () => {
+      setCartCount(readPortfolioCart().reduce((sum, item) => sum + item.quantity, 0));
+    };
+    syncCart();
+    window.addEventListener('portfolio-cart-updated', syncCart);
+    return () => window.removeEventListener('portfolio-cart-updated', syncCart);
+  }, []);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
@@ -185,11 +222,7 @@ export default function Nav() {
     return () => document.removeEventListener('keydown', handleTab);
   }, [mobileOpen]);
 
-  /* ── Close mobile menu on route change ───────────────────────────────── */
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+  /* ── Close mobile menu on route change handled during render ── */
 
   /* ── Dropdown handlers ───────────────────────────────────────────────── */
 
@@ -234,11 +267,13 @@ export default function Nav() {
       >
         <div className="container-wide h-full flex items-center justify-between">
           {/* ── Logo ─────────────────────────────────────────────────── */}
-          <Link
-            href="/"
-            className="font-display font-light text-xl tracking-wide text-text-heading"
-          >
-            Memories in Prints
+          <Link href="/" className="flex items-center">
+            <Logo
+              wordmark="Memories in Prints"
+              containerWidth={72}
+              containerHeight={72}
+              textClassName="font-display font-light text-xl tracking-wide text-text-heading"
+            />
           </Link>
 
           {/* ── Desktop links ────────────────────────────────────────── */}
@@ -280,7 +315,7 @@ export default function Nav() {
                       }`}
                       role="menu"
                     >
-                      {link.dropdown.map((item) => {
+                      {link.dropdown.filter((item) => isNavHrefActive(item.href)).map((item) => {
                         const hoverColor = getHoverColorClass(item.href);
                         return (
                           <Link
@@ -298,6 +333,34 @@ export default function Nav() {
                 </div>
               ))}
             </div>
+
+            <Link
+              href="/account"
+              aria-label="Account — log in or view your account"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
+              </svg>
+            </Link>
+
+            <Link
+              href="/pricing"
+              aria-label="View quote cart"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="20" r="1" />
+                <circle cx="19" cy="20" r="1" />
+                <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-gold px-1 text-[10px] font-semibold text-bg-primary">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
 
             {/* CTA */}
             <Link
@@ -399,7 +462,7 @@ export default function Nav() {
 
               {section.children && (
                 <div className="mt-2 flex flex-col items-center gap-1">
-                  {section.children.map((child) => (
+                  {section.children.filter((child) => isNavHrefActive(child.href)).map((child) => (
                     <Link
                       key={child.href}
                       href={child.href}
@@ -416,7 +479,7 @@ export default function Nav() {
 
           {/* CTA */}
           <div
-            className="mt-4"
+            className="mt-4 flex flex-col items-center gap-3"
             style={{
               opacity: mobileOpen ? 1 : 0,
               transform: mobileOpen ? 'translateY(0)' : 'translateY(16px)',
@@ -424,11 +487,27 @@ export default function Nav() {
             }}
           >
             <Link
-              href="/contact"
+              href="/pricing"
               onClick={() => setMobileOpen(false)}
-              className="border border-accent-gold text-accent-gold bg-transparent px-8 py-3 font-body text-label uppercase tracking-wider hover:bg-accent-gold hover:text-bg-primary transition-all duration-300 inline-block"
+              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
             >
-              Get a Quote
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="20" r="1" />
+                <circle cx="19" cy="20" r="1" />
+                <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
+              </svg>
+              Cart ({cartCount})
+            </Link>
+            <Link
+              href="/account"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
+              </svg>
+              Account
             </Link>
           </div>
         </div>

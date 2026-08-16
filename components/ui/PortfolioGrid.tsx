@@ -1,13 +1,34 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
+import { createPortal } from 'react-dom';
+import Link from 'next/link';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { PortfolioFilters } from '@/types/database';
+import {
+  addToPortfolioCart,
+  readPortfolioCart,
+  removeFromPortfolioCart,
+  updatePortfolioCartQuantity,
+  type PortfolioCartItem,
+} from '@/utils/portfolio-cart';
+import {
+  readSavedItems,
+  toggleSavedItem,
+  type SavedPortfolioItem,
+} from '@/utils/portfolio-saved';
+import { isCategoryActive, categoryToServiceLabel } from '@/lib/active-services';
 
 interface PortfolioItemData {
   id: string;
   title: string;
   category: 'wedding' | 'funeral' | 'sports' | 'branding' | 'events';
+  filters?: PortfolioFilters;
+  template_number?: string | null;
   description?: string | null;
   location?: string | null;
+  image_url?: string | null;
 }
 
 interface PortfolioGridProps {
@@ -19,7 +40,12 @@ interface PortfolioGridProps {
 
 const ITEMS_PER_PAGE = 12;
 
-const FILTERS = ['All', 'Wedding', 'Funeral', 'Events', 'Sports', 'Branding'] as const;
+const ALL_FILTERS = ['All', 'Wedding', 'Funeral', 'Events', 'Sports', 'Branding'] as const;
+// Temporarily hidden — flip back to true to restore the "All" tab. Landing on
+// /portfolio with no category still shows every item; this only removes the
+// tab itself, so there's nowhere to click back to an unfiltered view.
+const SHOW_ALL_FILTER = false;
+const FILTERS = ALL_FILTERS.filter((f) => (f === 'All' ? SHOW_ALL_FILTER : isCategoryActive(f.toLowerCase())));
 
 const categoryGradients: Record<string, string> = {
   wedding:
@@ -34,7 +60,176 @@ const categoryGradients: Record<string, string> = {
     'linear-gradient(145deg, #F8EDDA 0%, #F5DFB8 50%, #D4883A 100%)',
 };
 
-const aspectVariants = ['aspect-[3/4]', 'aspect-[4/3]', 'aspect-square'] as const;
+// Real portfolio photos are print pieces on ~A-series paper (ratio ~0.7),
+// so every card uses the same portrait aspect — mixing in landscape/square
+// variants here used to force tall crops that clipped the top and bottom of
+// the artwork, making pieces look cut short.
+const CARD_ASPECT = 'aspect-[3/4]';
+
+const IMAGE_SIZES = '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw';
+
+// Product cart entries use a composite `slug::size` id so each size of the
+// same product stays a distinct line — portfolio entries just use the real id.
+function getCartItemHref(id: string): string {
+  const productSlug = id.includes('::') ? id.split('::')[0] : null;
+  return productSlug ? `/products/${productSlug}` : `/portfolio/${id}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VISUAL — gradient backdrop + optional real photo, graceful on-error fallback
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PortfolioVisual = memo(function PortfolioVisual({
+  title,
+  category,
+  imageUrl,
+  className = '',
+  priority = false,
+  watermark = true,
+  children,
+}: {
+  title: string;
+  category: string;
+  imageUrl?: string | null;
+  className?: string;
+  priority?: boolean;
+  watermark?: boolean;
+  children?: React.ReactNode;
+}) {
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>(imageUrl ? 'loading' : 'error');
+  const gradient = categoryGradients[category] || categoryGradients.branding;
+  const showImage = Boolean(imageUrl) && status !== 'error';
+
+  return (
+    <div className={`relative overflow-hidden ${className}`} style={{ background: gradient }}>
+      {watermark && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 flex select-none items-center justify-center font-display text-[6rem] font-bold text-cat-heading opacity-[0.06]"
+        >
+          {title.charAt(0).toUpperCase()}
+        </span>
+      )}
+      {showImage && (
+        <Image
+          src={imageUrl as string}
+          alt={title}
+          fill
+          priority={priority}
+          sizes={IMAGE_SIZES}
+          className={`object-cover transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.05] ${status === 'loaded' ? 'opacity-100' : 'opacity-0'
+            }`}
+          onLoad={() => setStatus('loaded')}
+          onError={() => setStatus('error')}
+        />
+      )}
+      {children}
+    </div>
+  );
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD — memoized so opening the modal/cart never re-renders the whole grid
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PortfolioCard = memo(function PortfolioCard({
+  item,
+  aspect,
+  isAppearing,
+  delayMs,
+  priority,
+  isSaved,
+  onBuy,
+  onToggleSave,
+}: {
+  item: PortfolioItemData;
+  aspect: string;
+  isAppearing: boolean;
+  delayMs: number;
+  priority: boolean;
+  isSaved: boolean;
+  onBuy: (item: PortfolioItemData) => void;
+  onToggleSave: (item: PortfolioItemData) => void;
+}) {
+  return (
+    <article
+      data-category={item.category}
+      className={[
+        'group relative mb-4 break-inside-avoid overflow-hidden border border-border bg-cat-surface',
+        'transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-cat-accent hover:shadow-[0_20px_44px_rgba(24,31,39,0.12)]',
+        isAppearing ? 'animate-slide-up' : '',
+      ].join(' ')}
+      style={isAppearing ? { animationDelay: `${delayMs}ms` } : undefined}
+    >
+      {/* Whole-card link to the project page — sits above everything except Buy */}
+      <Link
+        href={`/portfolio/${item.id}`}
+        className="absolute inset-0 z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent"
+        aria-label={`View ${item.title}`}
+      />
+
+      {/* Visual — full-bleed photo/gradient */}
+      <PortfolioVisual
+        title={item.title}
+        category={item.category}
+        imageUrl={item.image_url}
+        className={`${aspect} w-full`}
+        priority={priority}
+      >
+        <span className="glass absolute left-3 top-3 inline-flex items-center gap-1.5 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-cat-heading">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-cat-accent" />
+          {item.category}
+        </span>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onToggleSave(item);
+          }}
+          aria-pressed={isSaved}
+          aria-label={isSaved ? `Remove ${item.title} from saved items` : `Save ${item.title}`}
+          className="glass absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center text-cat-heading transition-transform duration-200 hover:scale-110"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill={isSaved ? '#7A4A44' : 'none'}
+            stroke={isSaved ? '#7A4A44' : 'currentColor'}
+            strokeWidth="1.8"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.5s-7.5-4.6-10-9.3C.4 8 1.8 4.5 5 3.6c2-.5 3.9.3 5 2 1.1-1.7 3-2.5 5-2 3.2.9 4.6 4.4 3 7.6-2.5 4.7-10 9.3-10 9.3Z" />
+          </svg>
+        </button>
+      </PortfolioVisual>
+
+      {/* Caption */}
+      <div className="px-5 py-4">
+        <h3 className="font-display text-xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
+          {item.title}
+        </h3>
+        {item.description && (
+          <p className="mt-2 font-body text-sm text-cat-body line-clamp-2 leading-relaxed">
+            {item.description}
+          </p>
+        )}
+
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+          <span className="font-mono text-[10px] text-cat-muted uppercase tracking-wider">
+            {item.location || 'Worldwide'}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => onBuy(item)}
+            className="relative z-20 w-1/4 shrink-0 rounded-full border border-cat-accent bg-cat-accent px-3 py-2 text-center font-mono text-[10px] font-semibold uppercase tracking-widest text-cat-bg transition-all duration-200 hover:-translate-y-0.5 hover:bg-cat-accent-dark hover:shadow-[0_14px_30px_rgba(198,168,92,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2"
+          >
+            Buy
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+});
 
 export default function PortfolioGrid({
   items,
@@ -50,36 +245,154 @@ export default function PortfolioGrid({
   }, [initialCategory]);
 
   const [activeFilter, setActiveFilter] = useState<string>(initialFilter);
+  const [activeFilters, setActiveFilters] = useState<PortfolioFilters>({});
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
+  const [openFilter, setOpenFilter] = useState<keyof PortfolioFilters | 'template' | null>(null);
+  const [filterSearch, setFilterSearch] = useState('');
+  const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [expandedCartIds, setExpandedCartIds] = useState<Set<string>>(new Set());
+  const [savedItems, setSavedItems] = useState<SavedPortfolioItem[]>([]);
+  const [savedOpen, setSavedOpen] = useState(false);
+  const [toast, setToast] = useState<{ key: number; title: string } | null>(null);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-  const [appearing, setAppearing] = useState<Set<string>>(new Set());
+  const [appearing, setAppearing] = useState<Set<string>>(() => {
+    const matched = FILTERS.find(
+      (f) => f.toLowerCase() === initialCategory.toLowerCase()
+    );
+    const filter = matched || 'All';
+    const initialFiltered = filter === 'All'
+      ? items
+      : items.filter((item) => item.category.toLowerCase() === filter.toLowerCase());
+    return new Set(initialFiltered.slice(0, ITEMS_PER_PAGE).map((item) => item.id));
+  });
   const gridRef = useRef<HTMLDivElement>(null);
+  const filterPanelRef = useRef<HTMLDivElement>(null);
 
-  const filtered = useMemo(() => {
+  // Cart/saved drawers, triggers, and the toast are portaled to <body> below —
+  // this page nests PortfolioGrid inside a scroll-reveal wrapper that applies
+  // a transform, which silently traps any `position: fixed` descendant instead
+  // of pinning it to the viewport. document.body isn't available during SSR,
+  // hence the mount guard.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    const syncCart = () => setCartItems(readPortfolioCart());
+    syncCart();
+    window.addEventListener('portfolio-cart-updated', syncCart);
+    return () => window.removeEventListener('portfolio-cart-updated', syncCart);
+  }, []);
+
+  useEffect(() => {
+    const syncSaved = () => setSavedItems(readSavedItems());
+    syncSaved();
+    window.addEventListener('portfolio-saved-updated', syncSaved);
+    return () => window.removeEventListener('portfolio-saved-updated', syncSaved);
+  }, []);
+
+  // Auto-dismiss the "added to cart" toast; restarts the timer on every new add
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const categoryItems = useMemo(() => {
     if (activeFilter === 'All') return items;
     return items.filter(
       (item) => item.category.toLowerCase() === activeFilter.toLowerCase()
     );
   }, [items, activeFilter]);
 
+  const filterOptions = useMemo(() => {
+    const groups: Record<keyof PortfolioFilters, Map<string, number>> = {
+      style: new Map(), passion: new Map(), religion: new Map(), colour: new Map(), tribute: new Map(),
+    };
+    categoryItems.forEach((item) => {
+      (Object.keys(groups) as (keyof PortfolioFilters)[]).forEach((group) => {
+        (item.filters?.[group] ?? []).forEach((value) => {
+          groups[group].set(value, (groups[group].get(value) ?? 0) + 1);
+        });
+      });
+    });
+    return groups;
+  }, [categoryItems]);
+
+  // Template number lives on its own column (not the filters JSONB bag), so
+  // it gets its own options map and filter state alongside the rest.
+  const templateOptions = useMemo(() => {
+    const map = new Map<string, number>();
+    categoryItems.forEach((item) => {
+      if (item.template_number) map.set(item.template_number, (map.get(item.template_number) ?? 0) + 1);
+    });
+    return map;
+  }, [categoryItems]);
+
+  const filtered = useMemo(() => {
+    return categoryItems.filter((item) => {
+      const matchesFilters = (Object.keys(activeFilters) as (keyof PortfolioFilters)[]).every((group) => {
+        const selected = activeFilters[group] ?? [];
+        return selected.length === 0 || selected.some((value) => (item.filters?.[group] ?? []).includes(value));
+      });
+      const matchesTemplate =
+        selectedTemplates.length === 0 || (item.template_number != null && selectedTemplates.includes(item.template_number));
+      return matchesFilters && matchesTemplate;
+    });
+  }, [categoryItems, activeFilters, selectedTemplates]);
+
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
-  // Stagger-animate newly appearing items
+  // Clean up appearing animation class after delay
   useEffect(() => {
-    const newIds = new Set(visible.map((item) => item.id));
-    setAppearing(newIds);
-
+    if (appearing.size === 0) return;
     const timer = setTimeout(() => {
       setAppearing(new Set());
     }, 600);
-
     return () => clearTimeout(timer);
-  }, [activeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [appearing]);
+
+  useEffect(() => {
+    if (!openFilter) return;
+
+    function handleOutsideClick(event: MouseEvent) {
+      if (filterPanelRef.current && !filterPanelRef.current.contains(event.target as Node)) {
+        setOpenFilter(null);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpenFilter(null);
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [openFilter]);
+
+  // Fresh search box every time a different dropdown is opened.
+  useEffect(() => {
+    setFilterSearch('');
+  }, [openFilter]);
 
   function handleFilterChange(filter: string) {
     setActiveFilter(filter);
+    setActiveFilters({});
+    setSelectedTemplates([]);
     setVisibleCount(ITEMS_PER_PAGE);
-    
+
+    const nextFiltered = filter === 'All'
+      ? items
+      : items.filter((item) => item.category.toLowerCase() === filter.toLowerCase());
+    const nextVisible = nextFiltered.slice(0, ITEMS_PER_PAGE);
+    setAppearing(new Set(nextVisible.map((item) => item.id)));
+
     const categoryKey = filter === 'All' ? 'all' : filter.toLowerCase();
 
     // Update URL query parameters without triggering full page reload
@@ -99,6 +412,58 @@ export default function PortfolioGrid({
     }
   }
 
+  function handleFilterValueChange(group: keyof PortfolioFilters, value: string) {
+    setActiveFilters((current) => {
+      const values = current[group] ?? [];
+      const nextValues = values.includes(value)
+        ? values.filter((item) => item !== value)
+        : [...values, value];
+      return { ...current, [group]: nextValues };
+    });
+    setVisibleCount(ITEMS_PER_PAGE);
+  }
+
+  function handleTemplateValueChange(value: string) {
+    setSelectedTemplates((current) =>
+      current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
+    );
+    setVisibleCount(ITEMS_PER_PAGE);
+  }
+
+  function handleResetFilters() {
+    setActiveFilters({});
+    setSelectedTemplates([]);
+    setVisibleCount(ITEMS_PER_PAGE);
+    setOpenFilter(null);
+  }
+
+  const hasActiveFilters =
+    Object.values(activeFilters).some((values) => (values?.length ?? 0) > 0) || selectedTemplates.length > 0;
+
+  const filterLabels: Record<keyof PortfolioFilters, string> = {
+    style: 'Style', passion: 'Passion', religion: 'Religion', colour: 'Colour', tribute: 'Tribute',
+  };
+
+  // Template numbers are numeric strings ("9", "10", "100") — a plain string
+  // sort would put "10" before "2", so compare numerically when both sides
+  // parse as numbers and fall back to alphabetical for everything else.
+  function sortFilterValues(values: string[]): string[] {
+    return [...values].sort((a, b) => {
+      const na = Number(a);
+      const nb = Number(b);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+  }
+
+  // Long lists (template numbers especially can run to 100+) are easier to
+  // narrow by typing than by scrolling a few pixels at a time.
+  function searchFilterValues(values: string[], query: string): string[] {
+    if (!query.trim()) return values;
+    const q = query.trim().toLowerCase();
+    return values.filter((value) => value.toLowerCase().includes(q));
+  }
+
   function handleLoadMore() {
     const prevCount = visibleCount;
     setVisibleCount((c) => c + ITEMS_PER_PAGE);
@@ -106,11 +471,25 @@ export default function PortfolioGrid({
     // Mark new items as appearing
     const newItems = filtered.slice(prevCount, prevCount + ITEMS_PER_PAGE);
     setAppearing(new Set(newItems.map((item) => item.id)));
-
-    setTimeout(() => {
-      setAppearing(new Set());
-    }, 600);
   }
+
+  const handleBuyItem = useCallback((item: PortfolioItemData) => {
+    addToPortfolioCart({
+      id: item.id,
+      title: item.title,
+      category: item.category,
+      image: item.image_url ?? undefined,
+      serviceType: categoryToServiceLabel(item.category) ?? undefined,
+    });
+    setCartItems(readPortfolioCart());
+    setToast({ key: Date.now(), title: item.title });
+  }, []);
+
+  const handleToggleSave = useCallback((item: PortfolioItemData) => {
+    setSavedItems(toggleSavedItem({ id: item.id, title: item.title, category: item.category, image: item.image_url ?? undefined }));
+  }, []);
+
+  const savedIds = useMemo(() => new Set(savedItems.map((item) => item.id)), [savedItems]);
 
   return (
     <div data-category={activeFilter === 'All' ? 'all' : activeFilter.toLowerCase()}>
@@ -124,15 +503,226 @@ export default function PortfolioGrid({
               aria-selected={activeFilter === filter}
               onClick={() => handleFilterChange(filter)}
               className={[
-                'pb-2 font-body text-body-base uppercase tracking-wider transition-all duration-300 cursor-pointer',
+                'relative pb-2 font-body text-body-base uppercase tracking-wider transition-colors duration-200 cursor-pointer',
                 activeFilter === filter
-                  ? 'border-b-2 border-cat-accent text-cat-accent font-medium'
-                  : 'border-b-2 border-transparent text-cat-muted hover:text-cat-heading',
+                  ? 'text-cat-accent font-medium'
+                  : 'text-cat-muted hover:text-cat-heading',
               ].join(' ')}
             >
               {filter}
+              {activeFilter === filter && (
+                <motion.span
+                  layoutId="portfolio-filter-underline"
+                  className="absolute inset-x-0 -bottom-[1px] h-[2px] bg-cat-accent"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                />
+              )}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Independent filter groups; values within a group are OR-matched. */}
+      {(Object.keys(filterOptions).some((group) => filterOptions[group as keyof PortfolioFilters].size > 0) || templateOptions.size > 0) && (
+        <div className="relative z-[100] isolate mb-12 border-y border-border/60 py-8">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-cat-heading">Refine this collection</p>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                disabled={!hasActiveFilters}
+                className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-cat-muted underline decoration-cat-muted/50 underline-offset-2 transition-colors hover:text-cat-accent hover:decoration-cat-accent disabled:pointer-events-none disabled:opacity-40"
+              >
+                <svg viewBox="0 0 20 20" fill="none" className="h-3 w-3" aria-hidden="true">
+                  <path d="M15 5 5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+                Reset filters
+              </button>
+              <span className="font-mono text-[10px] text-cat-muted">{filtered.length} projects</span>
+            </div>
+          </div>
+          <div ref={filterPanelRef} className="flex flex-wrap gap-6">
+            {(Object.keys(filterOptions) as (keyof PortfolioFilters)[]).map((group) => (
+              filterOptions[group].size > 0 && (
+                <div key={group} className="relative">
+                  <motion.button
+                    type="button"
+                    aria-expanded={openFilter === group}
+                    aria-controls={`portfolio-filter-${group}`}
+                    onClick={() => setOpenFilter(openFilter === group ? null : group)}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    className={[
+                      'group/filter flex min-h-11 items-center gap-3 border px-6 py-3 font-mono text-[10px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
+                      openFilter === group
+                        ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
+                        : 'border-border text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.08)]',
+                    ].join(' ')}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-200 ${(activeFilters[group]?.length ?? 0) > 0 ? 'bg-cat-accent' : 'bg-border'
+                        }`}
+                    />
+                    <span>{filterLabels[group]}</span>
+                    {(activeFilters[group]?.length ?? 0) > 0 && (
+                      <span className="opacity-70">({activeFilters[group]?.length})</span>
+                    )}
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      className={[
+                        'h-4 w-4 transition-transform duration-200',
+                        openFilter === group ? 'rotate-180' : '',
+                      ].join(' ')}
+                    >
+                      <path
+                        d="m5 7.5 5 5 5-5"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </motion.button>
+
+                  {openFilter === group && (
+                    <div
+                      id={`portfolio-filter-${group}`}
+                      data-lenis-prevent
+                      className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
+                      style={{ backgroundColor: 'var(--cat-bg)', opacity: 1 }}
+                      role="region"
+                      aria-label={`${filterLabels[group]} filter options`}
+                    >
+                      {filterOptions[group].size > 6 && (
+                        <div className="border-b border-border/60 p-2">
+                          <input
+                            type="text"
+                            value={filterSearch}
+                            onChange={(e) => setFilterSearch(e.target.value)}
+                            placeholder={`Search ${filterLabels[group].toLowerCase()}…`}
+                            autoFocus
+                            className="w-full border border-border bg-transparent px-3 py-2 font-mono text-[11px] text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
+                          />
+                        </div>
+                      )}
+                      <div className="max-h-80 overflow-y-auto p-2">
+                        {(() => {
+                          const values = searchFilterValues(sortFilterValues([...filterOptions[group].keys()]), filterSearch);
+                          if (values.length === 0) {
+                            return (
+                              <p className="px-3 py-4 font-mono text-[11px] text-cat-muted">No matches.</p>
+                            );
+                          }
+                          return values.map((value) => (
+                            <label
+                              key={value}
+                              className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-[11px] uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={activeFilters[group]?.includes(value) ?? false}
+                                onChange={() => handleFilterValueChange(group, value)}
+                                className="h-4 w-4 shrink-0 accent-[var(--cat-accent)]"
+                              />
+                              <span>{value}</span>
+                              <span className="ml-auto text-cat-muted">{filterOptions[group].get(value)}</span>
+                            </label>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            ))}
+
+            {templateOptions.size > 0 && (
+              <div className="relative">
+                <motion.button
+                  type="button"
+                  aria-expanded={openFilter === 'template'}
+                  aria-controls="portfolio-filter-template"
+                  onClick={() => setOpenFilter(openFilter === 'template' ? null : 'template')}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  className={[
+                    'group/filter flex min-h-11 items-center gap-3 border px-6 py-3 font-mono text-[10px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
+                    openFilter === 'template'
+                      ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
+                      : 'border-border text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.08)]',
+                  ].join(' ')}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-200 ${selectedTemplates.length > 0 ? 'bg-cat-accent' : 'bg-border'}`}
+                  />
+                  <span>Template No.</span>
+                  {selectedTemplates.length > 0 && <span className="opacity-70">({selectedTemplates.length})</span>}
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    className={['h-4 w-4 transition-transform duration-200', openFilter === 'template' ? 'rotate-180' : ''].join(' ')}
+                  >
+                    <path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </motion.button>
+
+                {openFilter === 'template' && (
+                  <div
+                    id="portfolio-filter-template"
+                    data-lenis-prevent
+                    className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
+                    style={{ backgroundColor: 'var(--cat-bg)', opacity: 1 }}
+                    role="region"
+                    aria-label="Template No. filter options"
+                  >
+                    {templateOptions.size > 6 && (
+                      <div className="border-b border-border/60 p-2">
+                        <input
+                          type="text"
+                          value={filterSearch}
+                          onChange={(e) => setFilterSearch(e.target.value)}
+                          placeholder="Search template no.…"
+                          autoFocus
+                          className="w-full border border-border bg-transparent px-3 py-2 font-mono text-[11px] text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
+                        />
+                      </div>
+                    )}
+                    <div className="max-h-80 overflow-y-auto p-2">
+                      {(() => {
+                        const values = searchFilterValues(sortFilterValues([...templateOptions.keys()]), filterSearch);
+                        if (values.length === 0) {
+                          return <p className="px-3 py-4 font-mono text-[11px] text-cat-muted">No matches.</p>;
+                        }
+                        return values.map((value) => (
+                          <label
+                            key={value}
+                            className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-[11px] uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedTemplates.includes(value)}
+                              onChange={() => handleTemplateValueChange(value)}
+                              className="h-4 w-4 shrink-0 accent-[var(--cat-accent)]"
+                            />
+                            <span>{value}</span>
+                            <span className="ml-auto text-cat-muted">{templateOptions.get(value)}</span>
+                          </label>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -141,58 +731,19 @@ export default function PortfolioGrid({
         ref={gridRef}
         className="columns-1 gap-4 md:columns-2 lg:columns-3"
       >
-        {visible.map((item, i) => {
-          const aspect = aspectVariants[i % aspectVariants.length];
-          const gradient = categoryGradients[item.category] || categoryGradients.branding;
-          const isAppearing = appearing.has(item.id);
-
-          return (
-            <div
-              key={item.id}
-              data-category={item.category}
-              className={[
-                'group relative mb-4 break-inside-avoid overflow-hidden border border-border bg-cat-surface p-6',
-                'transition-all duration-300 ease-out hover:-translate-y-1 hover:border-cat-accent',
-                isAppearing ? 'animate-slide-up' : '',
-              ].join(' ')}
-              style={
-                isAppearing
-                  ? { animationDelay: `${(i % ITEMS_PER_PAGE) * 80}ms` }
-                  : undefined
-              }
-            >
-              {/* Visual Header - Gradient block */}
-              <div
-                className={`${aspect} w-full border border-border/20 mb-6`}
-                style={{ background: gradient }}
-              />
-
-              {/* Text Details Area */}
-              <div>
-                <span className="font-mono text-label uppercase text-cat-accent-dark block">
-                  {item.category}
-                </span>
-                <h3 className="mt-2 font-display text-2xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
-                  {item.title}
-                </h3>
-                {item.description && (
-                  <p className="mt-3 font-body text-body-base text-cat-body line-clamp-3 leading-relaxed">
-                    {item.description}
-                  </p>
-                )}
-                
-                <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between">
-                  <span className="font-mono text-[10px] text-cat-muted uppercase tracking-wider">
-                    {item.location || 'Worldwide'}
-                  </span>
-                  <span className="inline-flex items-center gap-1 font-body text-xs font-semibold uppercase tracking-wider text-cat-accent-dark">
-                    View Project <span aria-hidden="true">&rarr;</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {visible.map((item, i) => (
+          <PortfolioCard
+            key={item.id}
+            item={item}
+            aspect={CARD_ASPECT}
+            isAppearing={appearing.has(item.id)}
+            delayMs={(i % ITEMS_PER_PAGE) * 80}
+            priority={i < 3}
+            isSaved={savedIds.has(item.id)}
+            onBuy={handleBuyItem}
+            onToggleSave={handleToggleSave}
+          />
+        ))}
       </div>
 
       {/* Empty state */}
@@ -207,11 +758,284 @@ export default function PortfolioGrid({
         <div className="mt-12 flex justify-center">
           <button
             onClick={handleLoadMore}
-            className="border border-accent-gold bg-transparent px-8 py-3 font-body text-label uppercase tracking-wider text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+            className="border border-accent-gold bg-transparent px-8 py-3 font-body text-label uppercase tracking-wider text-accent-gold transition-colors duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
           >
             Load more
           </button>
         </div>
+      )}
+
+      {mounted && createPortal(
+        <>
+      {cartOpen && (
+        <div
+          className="fixed inset-0 z-[210] bg-black/35"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setCartOpen(false);
+          }}
+        >
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="portfolio-cart-title"
+            className="animate-[cart-drawer-in_240ms_cubic-bezier(0.22,1,0.36,1)] absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-[#FDFCFA] text-[#1C2530] shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-[#D9D4CC] px-6 py-5">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-[#6B5420]">Quote cart</p>
+                <h2 id="portfolio-cart-title" className="mt-1 font-display text-3xl">Selected assets</h2>
+              </div>
+              <button type="button" onClick={() => setCartOpen(false)} className="flex h-11 w-11 items-center justify-center border border-[#D9D4CC] text-xl" aria-label="Close cart">×</button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {cartItems.length === 0 ? (
+                <p className="font-body text-sm text-[#5B6470]">Your cart is empty.</p>
+              ) : (
+                <div className="space-y-5">
+                  {cartItems.map((item) => {
+                    const isExpanded = expandedCartIds.has(item.id);
+                    return (
+                    <div key={item.id} className="border-b border-[#D9D4CC] pb-5">
+                      <div className="flex gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedCartIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
+                            return next;
+                          })}
+                          aria-expanded={isExpanded}
+                          aria-label={isExpanded ? `Hide larger preview of ${item.title}` : `Show larger preview of ${item.title}`}
+                          className="relative h-16 w-16 shrink-0 overflow-hidden border border-[#D9D4CC] bg-[#F5F2EC] transition-opacity hover:opacity-80"
+                        >
+                          {item.image ? (
+                            <Image src={item.image} alt={item.title} fill sizes="64px" className="object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <span className="font-display text-xl font-bold text-[#1C2530] opacity-10">{item.title.charAt(0)}</span>
+                            </div>
+                          )}
+                          <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center bg-black/55 text-white">
+                            <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              {isExpanded ? <path d="M18 6 6 18M6 6l12 12" /> : <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />}
+                            </svg>
+                          </span>
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <h3 className="font-display text-xl">{item.title}</h3>
+                              <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-[#5B6470]">{item.category}</p>
+                            </div>
+                            <button type="button" onClick={() => setCartItems(removeFromPortfolioCart(item.id))} className="font-mono text-[10px] uppercase tracking-wider text-[#7A4A44] underline">Remove</button>
+                          </div>
+                          <div className="mt-4 flex items-center justify-between">
+                            <div className="flex items-center border border-[#D9D4CC]">
+                              <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity - 1))} className="h-9 w-9">−</button>
+                              <span className="w-9 text-center font-mono text-xs">{item.quantity}</span>
+                              <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity + 1))} className="h-9 w-9">+</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <Link
+                          href={getCartItemHref(item.id)}
+                          onClick={() => setCartOpen(false)}
+                          className="group mt-4 flex items-center gap-4 border border-[#D9D4CC] bg-[#F5F2EC] p-3 transition-colors hover:border-[#1C2530] animate-fadeIn"
+                        >
+                          <div className="relative h-28 w-28 shrink-0 overflow-hidden border border-[#D9D4CC] bg-white">
+                            {item.image ? (
+                              <Image src={item.image} alt={item.title} fill sizes="112px" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <span className="font-display text-3xl font-bold text-[#1C2530] opacity-10">{item.title.charAt(0)}</span>
+                              </div>
+                            )}
+                          </div>
+                          <span className="font-mono text-[10px] uppercase tracking-widest text-[#6B5420] group-hover:text-[#1C2530]">
+                            View product &rarr;
+                          </span>
+                        </Link>
+                      )}
+                    </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {cartItems.length > 0 && (
+              <div className="border-t border-[#D9D4CC] px-6 py-5">
+                <p className="font-mono text-[10px] text-[#5B6470]">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
+                <Link href="/pricing" onClick={() => setCartOpen(false)} className="mt-5 block bg-[#1C2530] px-5 py-3 text-center font-mono text-[10px] uppercase tracking-widest text-white hover:bg-[#374151]">Continue to checkout</Link>
+                <button type="button" onClick={() => setCartOpen(false)} className="mt-3 w-full py-2 font-mono text-[10px] uppercase tracking-widest text-[#5B6470] underline">Continue browsing</button>
+              </div>
+            )}
+          </aside>
+        </div>
+      )}
+
+      {savedOpen && (
+        <div
+          className="fixed inset-0 z-[210] bg-black/35"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSavedOpen(false);
+          }}
+        >
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="portfolio-saved-title"
+            className="animate-[cart-drawer-in_240ms_cubic-bezier(0.22,1,0.36,1)] absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-[#FDFCFA] text-[#1C2530] shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-[#D9D4CC] px-6 py-5">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-[#6B5420]">Saved items</p>
+                <h2 id="portfolio-saved-title" className="mt-1 font-display text-3xl">Your favourites</h2>
+              </div>
+              <button type="button" onClick={() => setSavedOpen(false)} className="flex h-11 w-11 items-center justify-center border border-[#D9D4CC] text-xl" aria-label="Close saved items">×</button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {savedItems.length === 0 ? (
+                <p className="font-body text-sm text-[#5B6470]">Nothing saved yet. Tap the heart on any piece to keep it here for quick access later.</p>
+              ) : (
+                <div className="space-y-5">
+                  {savedItems.map((item) => (
+                    <div key={item.id} className="border-b border-[#D9D4CC] pb-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="font-display text-xl">{item.title}</h3>
+                          <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-[#5B6470]">{item.category}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSavedItems((prev) => {
+                            toggleSavedItem(item);
+                            return prev.filter((entry) => entry.id !== item.id);
+                          })}
+                          className="font-mono text-[10px] uppercase tracking-wider text-[#7A4A44] underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Link
+                          href={`/portfolio/${item.id}`}
+                          onClick={() => setSavedOpen(false)}
+                          className="border border-[#D9D4CC] px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-[#5B6470] hover:border-[#1C2530] hover:text-[#1C2530]"
+                        >
+                          View
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addToPortfolioCart({ id: item.id, title: item.title, category: item.category, image: item.image, serviceType: categoryToServiceLabel(item.category) ?? undefined });
+                            setCartItems(readPortfolioCart());
+                            setToast({ key: Date.now(), title: item.title });
+                          }}
+                          className="border border-cat-accent bg-cat-accent px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-cat-bg hover:bg-cat-accent-dark"
+                        >
+                          Add to cart
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* Persistent cart trigger — lets people reopen the drawer without another Buy click */}
+      {!cartOpen && cartCount > 0 && (
+        <motion.button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="fixed bottom-6 left-6 z-[190] flex items-center gap-3 border border-cat-heading bg-cat-heading px-5 py-3 text-cat-bg shadow-[0_20px_50px_rgba(24,31,39,0.25)]"
+          aria-label={`Open cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="9" cy="20" r="1" />
+            <circle cx="19" cy="20" r="1" />
+            <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
+          </svg>
+          <span className="font-mono text-[10px] font-medium uppercase tracking-widest">Cart</span>
+          <span className="flex h-5 min-w-5 items-center justify-center bg-cat-accent px-1 font-mono text-[10px] font-semibold text-cat-heading">
+            {cartCount}
+          </span>
+        </motion.button>
+      )}
+
+      {/* Persistent saved-items trigger — stacks above the cart trigger when both are visible */}
+      {!savedOpen && savedItems.length > 0 && (
+        <motion.button
+          type="button"
+          onClick={() => setSavedOpen(true)}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className={`fixed left-6 z-[190] flex items-center gap-3 border border-cat-heading bg-cat-heading px-5 py-3 text-cat-bg shadow-[0_20px_50px_rgba(24,31,39,0.25)] ${!cartOpen && cartCount > 0 ? 'bottom-24' : 'bottom-6'}`}
+          aria-label={`Open saved items, ${savedItems.length} item${savedItems.length === 1 ? '' : 's'}`}
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="#7A4A44" stroke="#7A4A44" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 20.5s-7.5-4.6-10-9.3C.4 8 1.8 4.5 5 3.6c2-.5 3.9.3 5 2 1.1-1.7 3-2.5 5-2 3.2.9 4.6 4.4 3 7.6-2.5 4.7-10 9.3-10 9.3Z" />
+          </svg>
+          <span className="font-mono text-[10px] font-medium uppercase tracking-widest">Saved</span>
+          <span className="flex h-5 min-w-5 items-center justify-center bg-cat-accent px-1 font-mono text-[10px] font-semibold text-cat-heading">
+            {savedItems.length}
+          </span>
+        </motion.button>
+      )}
+
+      {/* "Added to cart" toast — confirms the add without blocking further browsing */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.key}
+            role="status"
+            aria-live="polite"
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+            className="fixed bottom-6 right-6 z-[220] flex max-w-sm items-center gap-4 rounded-sm border border-[#C6A85C]/30 bg-[#0F1116] px-5 py-4 shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
+          >
+            <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-[#C6A85C] text-[#C6A85C] text-base">
+              ✓
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-[#C6A85C]">Added to cart</p>
+              <p className="mt-0.5 truncate font-display text-sm text-white">{toast.title}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCartOpen(true);
+                setToast(null);
+              }}
+              className="ml-1 shrink-0 font-mono text-[10px] font-medium uppercase tracking-wider text-[#C6A85C] transition-colors hover:text-white"
+            >
+              View cart →
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+        </>,
+        document.body
       )}
     </div>
   );

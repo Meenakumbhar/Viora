@@ -31,6 +31,7 @@ export default function PortfolioPageContent({
               items={initialItems}
               onCategoryChange={setActiveCategory}
               initialCategory={activeCategory}
+              showFilters={activeCategory === 'all'}
             />
           </SectionReveal>
         </div>

@@ -1,0 +1,214 @@
+import {
+  pgTable,
+  uuid,
+  text,
+  boolean,
+  timestamp,
+  date,
+  jsonb,
+  integer,
+  numeric,
+  unique,
+} from 'drizzle-orm/pg-core';
+import { user } from './auth-schema';
+
+// Column keys intentionally mirror the existing snake_case shape used
+// throughout types/database.ts and every API response — this schema is the
+// source of truth for the same columns, not a stylistic rewrite, so query
+// results need no remapping to slot into the current normalizer functions.
+
+// The `users` table is now owned by Better Auth — see db/auth-schema.ts
+// (generated via `npx @better-auth/cli generate`, config in lib/auth.ts).
+// It defines `user`, `session`, `account`, and `verification`.
+
+export const enquiries = pgTable('enquiries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone'),
+  country: text('country'),
+  service_type: text('service_type').notNull(),
+  event_date: date('event_date'),
+  quantity_estimate: text('quantity_estimate'),
+  description: text('description'),
+  // Delivery/venue address — only asked of returning customers via the
+  // logged-in quick-quote form, since it's the kind of detail that changes
+  // per order rather than something worth saving to their profile.
+  address: text('address'),
+  source: text('source'),
+  portfolio_items: jsonb('portfolio_items'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  status: text('status').notNull().default('new'),
+});
+
+export const orderForms = pgTable('order_forms', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  enquiry_id: uuid('enquiry_id')
+    .notNull()
+    .unique('order_forms_enquiry_id_key')
+    .references(() => enquiries.id, { onDelete: 'cascade' }),
+  deceased_name: text('deceased_name'),
+  funeral_date: date('funeral_date'),
+  funeral_time: text('funeral_time'),
+  venue_name: text('venue_name'),
+  date_of_birth: date('date_of_birth'),
+  date_of_death: date('date_of_death'),
+  age_of_deceased: text('age_of_deceased'),
+  photo_option: text('photo_option'),
+  bespoke_design: boolean('bespoke_design').notNull().default(false),
+  bespoke_details: text('bespoke_details'),
+  number_of_pages: text('number_of_pages'),
+  inside_pages_style: text('inside_pages_style'),
+  quantity: text('quantity'),
+  photo_qty: integer('photo_qty'),
+  photo_supplied_via: text('photo_supplied_via'),
+  photo_instructions: text('photo_instructions'),
+  additional_products: jsonb('additional_products'),
+  callback_requested: boolean('callback_requested').notNull().default(false),
+  callback_phone: text('callback_phone'),
+  additional_notes: text('additional_notes'),
+  status: text('status').notNull().default('draft'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const subscribers = pgTable('subscribers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique('subscribers_email_key'),
+  first_name: text('first_name'),
+  country: text('country'),
+  subscribed_at: timestamp('subscribed_at', { withTimezone: true }).notNull().defaultNow(),
+  active: boolean('active').notNull().default(true),
+});
+
+export const portfolioItems = pgTable('portfolio_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  category: text('category').notNull(),
+  tags: text('tags').array().notNull().default([]),
+  filters: jsonb('filters').notNull().default({}),
+  template_number: text('template_number'),
+  image_url: text('image_url').notNull(),
+  image_urls: jsonb('image_urls'),
+  description: text('description'),
+  location: text('location'),
+  published: boolean('published').notNull().default(true),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const posts = pgTable('posts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique('posts_slug_key'),
+  content: text('content').notNull(),
+  excerpt: text('excerpt'),
+  category: text('category'),
+  image_url: text('image_url'),
+  published_at: date('published_at').notNull().defaultNow(),
+  published: boolean('published').notNull().default(true),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const orders = pgTable('orders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  enquiry_id: uuid('enquiry_id').references(() => enquiries.id, { onDelete: 'set null' }),
+  customer_name: text('customer_name').notNull(),
+  customer_email: text('customer_email').notNull(),
+  service_type: text('service_type').notNull(),
+  event_date: date('event_date'),
+  quantity_estimate: text('quantity_estimate'),
+  details: text('details'),
+  portfolio_items: jsonb('portfolio_items'),
+  status: text('status').notNull().default('pending'),
+  payment_status: text('payment_status').notNull().default('unpaid'),
+  payment_amount: numeric('payment_amount', { precision: 10, scale: 2 }),
+  payment_provider: text('payment_provider'),
+  paypal_order_id: text('paypal_order_id'),
+  stripe_session_id: text('stripe_session_id'),
+  assigned_designer_id: text('assigned_designer_id').references(() => user.id, { onDelete: 'set null' }),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const orderStatusHistory = pgTable('order_status_history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  order_id: uuid('order_id')
+    .notNull()
+    .references(() => orders.id, { onDelete: 'cascade' }),
+  status: text('status').notNull(),
+  note: text('note'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const designRevisions = pgTable(
+  'design_revisions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    order_id: uuid('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    image_urls: text('image_urls').array().notNull(),
+    notes: text('notes'),
+    // The live column's actual default is 'pending_review', not
+    // 'pending_proofreader_review' as neon_schema.sql documents — found via
+    // drizzle-kit introspect. Harmless in practice: createDesignRevision()
+    // always sets status explicitly, so the column default is never
+    // exercised, but this schema reflects the real live value, not the docs.
+    status: text('status').notNull().default('pending_review'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique('design_revisions_order_id_version_key').on(table.version, table.order_id)]
+);
+
+export const designComments = pgTable('design_comments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  revision_id: uuid('revision_id')
+    .notNull()
+    .references(() => designRevisions.id, { onDelete: 'cascade' }),
+  image_index: integer('image_index').notNull().default(0),
+  x: numeric('x', { precision: 6, scale: 5 }).notNull(),
+  y: numeric('y', { precision: 6, scale: 5 }).notNull(),
+  comment: text('comment').notNull(),
+  designer_resolved: boolean('designer_resolved').notNull().default(false),
+  proofreader_resolved: boolean('proofreader_resolved').notNull().default(false),
+  author_role: text('author_role').notNull().default('customer'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// A specific price for one actual portfolio piece, the same for every
+// customer who doesn't have something more specific set for them (see
+// customerItemPrices below, and the full lookup order documented on
+// getEffectivePrice in lib/db.ts).
+export const portfolioItemPrices = pgTable('portfolio_item_prices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  portfolio_item_id: uuid('portfolio_item_id')
+    .notNull()
+    .unique('portfolio_item_prices_portfolio_item_id_key')
+    .references(() => portfolioItems.id, { onDelete: 'cascade' }),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').notNull().default('GBP'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// The genuinely per-customer, per-piece price — the same item can cost a
+// different amount for different customers. This is the most specific
+// price and always wins first (see getEffectivePrice in lib/db.ts), before
+// portfolioItemPrices' shared baseline. There's deliberately no `set_by`
+// column since admin access here is a single shared password with no
+// per-admin identity (see utils/admin-auth.ts), so there's nothing
+// meaningful to record there.
+export const customerItemPrices = pgTable('customer_item_prices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  portfolio_item_id: uuid('portfolio_item_id')
+    .notNull()
+    .references(() => portfolioItems.id, { onDelete: 'cascade' }),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').notNull().default('GBP'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [unique('customer_item_prices_user_item_key').on(table.user_id, table.portfolio_item_id)]);

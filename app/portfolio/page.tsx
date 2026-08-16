@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import PortfolioPageContent from '@/components/PortfolioPageContent';
-import { getPortfolioItems } from '@/lib/supabase';
+import { getPortfolioItems } from '@/lib/db';
+import { isCategoryActive } from '@/lib/active-services';
 
 export const metadata: Metadata = {
   title: 'Portfolio',
@@ -13,7 +14,7 @@ export default async function PortfolioPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category } = await searchParams;
-  const items = await getPortfolioItems();
+  const items = (await getPortfolioItems()).filter((item) => isCategoryActive(item.category));
   const normalizedCategory = typeof category === 'string' ? category.toLowerCase() : 'all';
 
   return (

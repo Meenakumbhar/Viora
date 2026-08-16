@@ -1,95 +1,127 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import QuoteForm from '@/components/ui/QuoteForm';
 
 export const metadata: Metadata = {
-  title: 'Contact',
-  description: 'Get in touch with Memories in Prints. Request a quote for wedding stationery, funeral print, sports programmes, branding, and more.',
+  title: 'Get a Quote',
+  description: 'Request a quote from Memories in Prints. Wedding stationery, funeral print, sports programmes, branding, and more — tell us about your project.',
 };
 
-export default function ContactPage() {
+const CONTACTS = [
+  {
+    label: 'Email',
+    handle: 'hello@memoriesinprints.com',
+    href: 'mailto:hello@memoriesinprints.com',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <path d="m2 7 10 7 10-7" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Instagram',
+    handle: '@memoriesinprints',
+    href: 'https://instagram.com/memoriesinprints',
+    external: true,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="2" y="2" width="20" height="20" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Facebook',
+    handle: '/memoriesinprints',
+    href: 'https://facebook.com/memoriesinprints',
+    external: true,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'LinkedIn',
+    handle: '/memoriesinprints',
+    href: 'https://linkedin.com/company/memoriesinprints',
+    external: true,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+        <rect x="2" y="9" width="4" height="12" />
+        <circle cx="4" cy="4" r="2" />
+      </svg>
+    ),
+  },
+];
+
+interface ContactPageProps {
+  searchParams: Promise<{ service?: string; details?: string; cart?: string }>;
+}
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const { service, details, cart } = await searchParams;
+
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-      {/* Left Panel — Quote Form */}
-      <div className="bg-bg-primary px-6 py-24 md:px-12 lg:px-20 lg:py-32">
-        <h1 className="font-display text-display-lg text-text-primary">
-          Start your <em className="italic text-accent-gold">project</em>
+    <main id="main-content" className="bg-bg-primary min-h-screen">
+      {/* ── Page header ────────────────────────────────────────────── */}
+      <div className="container-wide pt-32 pb-12">
+        <span className="font-mono text-label uppercase tracking-wider text-accent-gold">
+          Request a Quote
+        </span>
+        <h1 className="mt-3 font-display text-display-lg text-text-heading max-w-xl">
+          Start your{' '}
+          <em className="italic text-accent-gold">project</em>
         </h1>
-        <p className="mt-4 font-body text-body-lg text-text-muted">
-          Tell us what you need. We respond within 24 hours.
-        </p>
-
-        <div className="mt-12">
-          <QuoteForm />
-        </div>
-      </div>
-
-      {/* Right Panel — Contact Info */}
-      <div className="bg-bg-secondary px-6 py-24 md:px-12 lg:px-20 lg:py-32 border-t border-border lg:border-t-0 lg:border-l">
-        <h2 className="font-display text-display-md text-text-primary">
-          Other ways to <em className="italic text-accent-gold">reach us</em>
-        </h2>
-
-        {/* Email */}
-        <div className="mt-12">
-          <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
-            Email
-          </span>
-          <a
-            href="mailto:hello@memoriesinprints.com"
-            className="mt-2 inline-block font-body text-body-lg text-text-primary transition-colors duration-300 hover:text-accent-gold"
-          >
-            hello@memoriesinprints.com
-          </a>
-        </div>
-
-        {/* Response Time */}
-        <div className="mt-8">
-          <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
-            Response Time
-          </span>
-          <p className="mt-2 font-body text-body-lg text-text-muted">
-            We reply within 24 hours, usually much sooner.
-          </p>
-        </div>
-
-        {/* Instagram */}
-        <div className="mt-8">
-          <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
-            Instagram
-          </span>
-          <a
-            href="https://instagram.com/memoriesinprints"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-block font-body text-body-lg text-text-primary transition-colors duration-300 hover:text-accent-gold"
-          >
-            @memoriesinprints
-          </a>
-        </div>
-
-        {/* Studio Note */}
-        <div className="mt-12 border border-border p-6">
-          <h3 className="font-display text-xl text-text-primary">
-            Global studio
-          </h3>
-          <p className="mt-3 font-body text-body-base text-text-muted leading-relaxed">
-            We are a remote studio serving clients worldwide. All communication is handled via email and video call. No physical showroom — but we ship sample packs on request.
-          </p>
-        </div>
-
-        {/* FAQ Teaser */}
-        <p className="mt-8 font-body text-body-base text-text-muted">
-          Have a question? Check our{' '}
-          <Link
-            href="/pricing#faq"
-            className="text-accent-gold link-underline font-medium"
-          >
-            frequently asked questions
-          </Link>
-          .
+        <p className="mt-4 font-body text-body-lg text-text-muted max-w-lg">
+          Tell us what you need — we respond within 24 hours.
         </p>
       </div>
-    </div>
+
+      {/* ── Divider ────────────────────────────────────────────────── */}
+      <div className="border-t border-border" />
+
+      {/* ── Form section ───────────────────────────────────────────── */}
+      <section className="container-wide py-16 max-w-2xl">
+        <QuoteForm initialService={service} initialDetails={details} fromCart={cart === '1'} />
+      </section>
+
+      {/* ── Divider ────────────────────────────────────────────────── */}
+      <div className="border-t border-border" />
+
+      {/* ── Contact strip ──────────────────────────────────────────── */}
+      <section className="container-wide py-10" aria-label="Contact channels">
+        <p className="mb-6 font-mono text-[10px] uppercase tracking-widest text-text-muted">
+          Other ways to reach us
+        </p>
+        <div className="flex flex-wrap gap-x-8 gap-y-5">
+          {CONTACTS.map((c) => (
+            <a
+              key={c.label}
+              href={c.href}
+              target={c.external ? '_blank' : undefined}
+              rel={c.external ? 'noopener noreferrer' : undefined}
+              className="group flex items-center gap-3 text-text-heading transition-all duration-200 hover:text-accent-gold"
+            >
+              {/* Icon */}
+              <span className="flex h-9 w-9 items-center justify-center border border-border rounded-full text-text-muted transition-all duration-200 group-hover:border-accent-gold group-hover:text-accent-gold">
+                {c.icon}
+              </span>
+              {/* Text */}
+              <span className="flex flex-col">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
+                  {c.label}
+                </span>
+                <span className="font-body text-body-base leading-tight">
+                  {c.handle}
+                </span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }
