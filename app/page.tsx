@@ -102,7 +102,7 @@ export default async function Home() {
               />
 
               <p className="font-body text-body-lg text-text-muted max-w-lg mt-6">
-                Weddings. Funerals. Events. Sport. Brand.
+                Funerals and Weddings.
                 <br />
                 Design and print that honours what matters.
               </p>
@@ -160,8 +160,8 @@ export default async function Home() {
                 </span>
 
                 <AnimatedHeadline
-                  text="Designed with intention"
-                  accentWord="intention"
+                  text="Designed with Intention"
+                  accentWord="Intention"
                   className="font-display text-display-lg text-text-heading mt-4"
                 />
 
@@ -169,18 +169,17 @@ export default async function Home() {
                   <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
                     Memories in Prints is a full-service design and print studio with a
                     global client base. We produce print for life&rsquo;s most meaningful
-                    occasions — and for the brands and organisations that shape communities.
+                    occasions and for the brands and organisations that shape communities.
                   </p>
 
                   <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
                     Founded with roots in funeral print, we understand the weight some
-                    briefs carry. That background informs everything we do — precision,
+                    briefs carry. That background informs everything we do precision,
                     sensitivity, and a refusal to cut corners.
                   </p>
 
                   <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
-                    We serve families, wedding planners, event organisers, sports clubs,
-                    small businesses, and agencies in over <CountUp end={30} /> countries. Whether digital or
+                    We serve families, wedding planners and event organisers. Whether digital or
                     printed, every project receives the same level of care.
                   </p>
                 </div>
@@ -409,10 +408,9 @@ export default async function Home() {
                   opacity="0.6"
                 />
               </svg>
-              <h3 className="font-display text-xl text-text-heading mt-6">Global reach</h3>
+              <h3 className="font-display text-xl text-text-heading mt-6">Inclusive</h3>
               <p className="font-body text-body-base text-text-muted mt-3 max-w-xs mx-auto">
-                Delivered to clients in <CountUp end={30} suffix="+" /> countries. Tracked shipping and digital
-                delivery worldwide.
+                Transparent pricing with no surprises. what you see is what you pay.
               </p>
             </div>
           </div>

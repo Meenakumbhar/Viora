@@ -17,7 +17,7 @@ export default function AboutPage() {
           Our Story
         </span>
         <h1 className="mt-4 font-display text-display-xl text-text-primary max-w-4xl">
-          Designed with <em className="italic text-accent-gold">intention</em>
+          Designed with <em className="italic text-accent-gold">Intention</em>
         </h1>
         <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
           We produce design and print that honours life&apos;s most meaningful occasions — and the organisations that shape communities.
@@ -67,7 +67,7 @@ export default function AboutPage() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="lg:col-span-7 lg:order-1 lg:pr-12">
                 <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
                   The Founder

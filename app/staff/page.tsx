@@ -153,9 +153,16 @@ export default async function StaffDashboardPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/staff/orders/${order.id}`} className="font-mono text-[10px] uppercase tracking-wider text-[#C6A85C] hover:text-white">
-                      Open →
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      {order.enquiry_id && (
+                        <Link href={`/staff/order-form/${order.enquiry_id}`} className="font-mono text-[10px] uppercase tracking-wider text-white/40 hover:text-white">
+                          Order form
+                        </Link>
+                      )}
+                      <Link href={`/staff/orders/${order.id}`} className="font-mono text-[10px] uppercase tracking-wider text-[#C6A85C] hover:text-white">
+                        Open →
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

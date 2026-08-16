@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 const CONTACTS = [
   {
     label: 'Email',
-    handle: 'hello@memoriesinprints.com',
-    href: 'mailto:hello@memoriesinprints.com',
+    handle: 'info@memoriesinprints.com',
+    href: 'mailto:info@memoriesinprints.com',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -21,7 +21,7 @@ const CONTACTS = [
   {
     label: 'Instagram',
     handle: '@memoriesinprints',
-    href: 'https://instagram.com/memoriesinprints',
+    href: 'https://www.instagram.com/memoriesin.prints/',
     external: true,
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -34,7 +34,7 @@ const CONTACTS = [
   {
     label: 'Facebook',
     handle: '/memoriesinprints',
-    href: 'https://facebook.com/memoriesinprints',
+    href: 'https://www.facebook.com/profile.php?id=61584548137585&sk=photos',
     external: true,
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -45,7 +45,7 @@ const CONTACTS = [
   {
     label: 'LinkedIn',
     handle: '/memoriesinprints',
-    href: 'https://linkedin.com/company/memoriesinprints',
+    href: 'https://www.linkedin.com/company/memoriesinprintseu/',
     external: true,
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -138,6 +138,8 @@ export interface OrderForm {
   callback_requested: boolean;
   callback_phone: string | null;
   additional_notes: string | null;
+  backpage_information: string | null;
+  attachment_url: string | null;
   status: OrderFormStatus;
   created_at: string;
   updated_at: string;

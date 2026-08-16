@@ -3,6 +3,7 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import { products } from '@/lib/data';
+import FileUpload from '@/components/ui/FileUpload';
 import type {
   Enquiry,
   OrderForm,
@@ -128,6 +129,8 @@ interface FormState {
   callback_requested: boolean;
   callback_phone: string;
   additional_notes: string;
+  backpage_information: string;
+  attachment_url: string;
 }
 
 function toFormState(orderForm: OrderForm | null): FormState {
@@ -152,6 +155,8 @@ function toFormState(orderForm: OrderForm | null): FormState {
     callback_requested: orderForm?.callback_requested ?? false,
     callback_phone: orderForm?.callback_phone ?? '',
     additional_notes: orderForm?.additional_notes ?? '',
+    backpage_information: orderForm?.backpage_information ?? '',
+    attachment_url: orderForm?.attachment_url ?? '',
   };
 }
 
@@ -278,20 +283,6 @@ export default function OrderFormClient({
             <FieldLabel>Name of the deceased (as it should appear)</FieldLabel>
             <TextField value={data.deceased_name} onChange={(v) => setField('deceased_name', v)} placeholder="Full name" />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <FieldLabel>Funeral date</FieldLabel>
-              <TextField type="date" value={data.funeral_date} onChange={(v) => setField('funeral_date', v)} />
-            </div>
-            <div>
-              <FieldLabel>Funeral time</FieldLabel>
-              <TextField value={data.funeral_time} onChange={(v) => setField('funeral_time', v)} placeholder="e.g. 12:00pm" />
-            </div>
-          </div>
-          <div>
-            <FieldLabel>Church, crematorium, or venue</FieldLabel>
-            <TextField value={data.venue_name} onChange={(v) => setField('venue_name', v)} />
-          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <FieldLabel>Date of birth</FieldLabel>
@@ -305,6 +296,20 @@ export default function OrderFormClient({
               <FieldLabel hint="if to be displayed">Age</FieldLabel>
               <TextField value={data.age_of_deceased} onChange={(v) => setField('age_of_deceased', v)} />
             </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <FieldLabel>Funeral date</FieldLabel>
+              <TextField type="date" value={data.funeral_date} onChange={(v) => setField('funeral_date', v)} />
+            </div>
+            <div>
+              <FieldLabel>Funeral time</FieldLabel>
+              <TextField value={data.funeral_time} onChange={(v) => setField('funeral_time', v)} placeholder="e.g. 12:00pm" />
+            </div>
+          </div>
+          <div>
+            <FieldLabel>Church, crematorium, or venue</FieldLabel>
+            <TextField value={data.venue_name} onChange={(v) => setField('venue_name', v)} />
           </div>
         </SectionCard>
 
@@ -464,7 +469,7 @@ export default function OrderFormClient({
           </div>
         </SectionCard>
 
-        <SectionCard title="Anything else?">
+        <SectionCard title="Inside Information">
           <label className="flex items-start gap-3">
             <input
               type="checkbox"
@@ -483,7 +488,6 @@ export default function OrderFormClient({
             </div>
           )}
           <div>
-            <FieldLabel>Additional information</FieldLabel>
             <TextAreaField
               value={data.additional_notes}
               onChange={(v) => setField('additional_notes', v)}
@@ -491,6 +495,28 @@ export default function OrderFormClient({
               rows={4}
             />
           </div>
+        </SectionCard>
+
+        <SectionCard title="Backpage Information">
+          <div>
+            <TextAreaField
+              value={data.backpage_information}
+              onChange={(v) => setField('backpage_information', v)}
+              placeholder="Thanks, wake, and donation information..."
+              rows={4}
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Attachments" subtitle="A photo, PDF, or other file to go with this order — an alternative to emailing or posting it.">
+          <FileUpload
+            value={data.attachment_url}
+            onChange={(url) => setField('attachment_url', url)}
+            folder="order-form-attachments"
+            filenamePrefix={enquiry.id.slice(0, 8).toUpperCase()}
+            label="Attach a file"
+            helperText="PNG, JPG, WebP, AVIF, GIF, or PDF up to 10MB"
+          />
         </SectionCard>
 
         {status === 'error' && errorMessage && (

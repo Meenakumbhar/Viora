@@ -13,7 +13,7 @@ export default function Logo({
   // width × height of the visible container that holds the logo image.
   // Because the PNG is a square canvas, we want a square (or near-square)
   // container so the graphic fills it properly without being squeezed.
-  containerWidth = 64,
+  containerWidth = 120,
   containerHeight = 64,
   imgClassName = '',
   textClassName = 'font-display font-light text-xl tracking-wide',
