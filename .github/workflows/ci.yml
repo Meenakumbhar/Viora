@@ -34,6 +34,15 @@ jobs:
         run: npm run test:e2e
         env:
           CI: true
+          # Sandbox PayPal credentials — the dev server this step boots (via
+          # Playwright's webServer) needs these to render the PayPal button
+          # container at all; checkout.spec.ts only asserts our own
+          # container mounts, never a real PayPal payment, so sandbox
+          # credentials (not live) are all that's needed here.
+          PAYPAL_MODE: ${{ secrets.PAYPAL_MODE }}
+          PAYPAL_CLIENT_ID: ${{ secrets.PAYPAL_CLIENT_ID }}
+          PAYPAL_CLIENT_SECRET: ${{ secrets.PAYPAL_CLIENT_SECRET }}
+          NEXT_PUBLIC_PAYPAL_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_PAYPAL_CLIENT_ID }}
 
       - name: Upload Playwright report
         if: always()

@@ -24,7 +24,7 @@ test.describe('login / logout', () => {
     await page.getByRole('button', { name: 'Log in' }).click();
 
     await expect(page).toHaveURL(/\/account$/);
-    await expect(page.getByText('No orders yet.')).toBeVisible();
+    await expect(page.getByText('No orders yet')).toBeVisible();
 
     await page.getByRole('button', { name: 'Log out' }).click();
     await expect(page).toHaveURL(/\/login$/);
