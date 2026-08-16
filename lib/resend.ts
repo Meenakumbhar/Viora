@@ -12,9 +12,9 @@ interface SendEmailOptions {
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // Sender address — must be on a domain verified in the Resend dashboard, or sends will fail.
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Memories in Prints <hello@memoriesinprints.com>';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Memories in Prints <info@memoriesinprints.com>';
 // Where internal notifications (e.g. "New Enquiry Received") land — your own inbox, not a sender.
-const STUDIO_EMAIL = process.env.RESEND_STUDIO_EMAIL || 'hello@memoriesinprints.com';
+const STUDIO_EMAIL = process.env.RESEND_STUDIO_EMAIL || 'info@memoriesinprints.com';
 
 // All values interpolated into email HTML below come from user/admin free text —
 // escape it so a name, brief, or status note can't break the markup.
@@ -465,7 +465,10 @@ export async function sendEnquiryAutoReply(enquiry: { id: string; name: string; 
 
 export async function sendOrderFormSubmittedEmail(enquiry: Enquiry, orderForm: OrderForm) {
   const name = escapeHtml(enquiry.name);
-  const manageUrl = `${SITE_URL}/order-form/${enquiry.id}`;
+  // Points staff at the read-only summary, not the customer's own editable
+  // link — the same URL for both would let a staff view accidentally alter
+  // the customer's answers.
+  const manageUrl = `${SITE_URL}/staff/order-form/${enquiry.id}`;
   const deceasedName = orderForm.deceased_name ? escapeHtml(orderForm.deceased_name) : '—';
 
   return sendEmail({

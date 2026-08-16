@@ -45,27 +45,27 @@ const NAV_LINKS: NavLink[] = [
   //   ],
   // },
   {
-    label: 'Products',
-    href: '/products',
-    dropdown: products.map((product) => ({ label: product.title, href: `/products/${product.slug}` })),
-  },
-  {
     label: 'Portfolio',
     href: '/portfolio',
     dropdown: [
       // "All Work" temporarily hidden — see SHOW_ALL_FILTER in PortfolioGrid.tsx.
-      { label: 'Wedding', href: '/portfolio?category=wedding' },
       { label: 'Funeral', href: '/portfolio?category=funeral' },
+      { label: 'Wedding', href: '/portfolio?category=wedding' },
       { label: 'Sports', href: '/portfolio?category=sports' },
       { label: 'Branding', href: '/portfolio?category=branding' },
     ],
   },
   {
-    label: 'About',
+    label: 'Products',
+    href: '/products',
+    dropdown: products.map((product) => ({ label: product.title, href: `/products/${product.slug}` })),
+  },
+  {
+    label: 'About Us',
     href: '/about',
   },
   { label: 'Process', href: '/process' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'Contact US', href: '/contact' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -259,11 +259,10 @@ export default function Nav() {
 
       <nav
         aria-label="Main navigation"
-        className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ${
-          scrolled
-            ? 'bg-bg-primary/95 backdrop-blur-md border-b border-border/50'
-            : 'bg-transparent'
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ${scrolled
+          ? 'bg-bg-primary/95 backdrop-blur-md border-b border-border/50'
+          : 'bg-transparent'
+          }`}
       >
         <div className="container-wide h-full flex items-center justify-between">
           {/* ── Logo ─────────────────────────────────────────────────── */}
@@ -288,11 +287,10 @@ export default function Nav() {
                 >
                   <Link
                     href={link.href}
-                    className={`flex items-center font-body font-normal text-label uppercase tracking-[0.12em] transition-colors duration-200 ${
-                      isActive(link.href)
-                        ? 'text-accent-gold'
-                        : 'text-text-heading hover:text-accent-gold'
-                    }`}
+                    className={`flex items-center font-body font-normal text-label uppercase tracking-[0.12em] transition-colors duration-200 ${isActive(link.href)
+                      ? 'text-accent-gold'
+                      : 'text-text-heading hover:text-accent-gold'
+                      }`}
                     aria-haspopup={link.dropdown ? 'true' : undefined}
                     aria-expanded={
                       link.dropdown
@@ -308,11 +306,10 @@ export default function Nav() {
                   {/* Dropdown */}
                   {link.dropdown && (
                     <div
-                      className={`absolute top-full left-0 bg-bg-primary border border-border py-2 min-w-[220px] shadow-lg transition-all duration-200 ${
-                        activeDropdown === link.label
-                          ? 'opacity-100 translate-y-0 pointer-events-auto'
-                          : 'opacity-0 -translate-y-2 pointer-events-none'
-                      }`}
+                      className={`absolute top-full left-0 bg-bg-primary border border-border py-2 min-w-[220px] shadow-lg transition-all duration-200 ${activeDropdown === link.label
+                        ? 'opacity-100 translate-y-0 pointer-events-auto'
+                        : 'opacity-0 -translate-y-2 pointer-events-none'
+                        }`}
                       role="menu"
                     >
                       {link.dropdown.filter((item) => isNavHrefActive(item.href)).map((item) => {
@@ -381,19 +378,16 @@ export default function Nav() {
             className="lg:hidden relative w-8 h-8 flex flex-col items-center justify-center gap-1.5 z-[60]"
           >
             <span
-              className={`block h-[2px] w-6 bg-text-heading transition-all duration-300 origin-center ${
-                mobileOpen ? 'rotate-45 translate-y-[4px]' : ''
-              }`}
+              className={`block h-[2px] w-6 bg-text-heading transition-all duration-300 origin-center ${mobileOpen ? 'rotate-45 translate-y-[4px]' : ''
+                }`}
             />
             <span
-              className={`block h-[2px] w-6 bg-text-heading transition-all duration-300 ${
-                mobileOpen ? 'opacity-0 scale-x-0' : ''
-              }`}
+              className={`block h-[2px] w-6 bg-text-heading transition-all duration-300 ${mobileOpen ? 'opacity-0 scale-x-0' : ''
+                }`}
             />
             <span
-              className={`block h-[2px] w-6 bg-text-heading transition-all duration-300 origin-center ${
-                mobileOpen ? '-rotate-45 -translate-y-[4px]' : ''
-              }`}
+              className={`block h-[2px] w-6 bg-text-heading transition-all duration-300 origin-center ${mobileOpen ? '-rotate-45 -translate-y-[4px]' : ''
+                }`}
             />
           </button>
         </div>
@@ -407,11 +401,10 @@ export default function Nav() {
         role="dialog"
         aria-modal="true"
         aria-label="Mobile navigation"
-        className={`fixed inset-0 bg-bg-primary z-50 flex flex-col items-center justify-center transition-all duration-500 lg:hidden ${
-          mobileOpen
-            ? 'opacity-100 pointer-events-auto'
-            : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 bg-bg-primary z-50 flex flex-col items-center justify-center transition-all duration-500 lg:hidden ${mobileOpen
+          ? 'opacity-100 pointer-events-auto'
+          : 'opacity-0 pointer-events-none'
+          }`}
       >
         {/* Close button */}
         <button
@@ -451,11 +444,10 @@ export default function Nav() {
               <Link
                 href={section.href}
                 onClick={() => setMobileOpen(false)}
-                className={`font-display text-display-md transition-colors duration-200 ${
-                  isActive(section.href)
-                    ? 'text-accent-gold'
-                    : 'text-text-heading hover:text-accent-gold'
-                }`}
+                className={`font-display text-display-md transition-colors duration-200 ${isActive(section.href)
+                  ? 'text-accent-gold'
+                  : 'text-text-heading hover:text-accent-gold'
+                  }`}
               >
                 {section.label}
               </Link>

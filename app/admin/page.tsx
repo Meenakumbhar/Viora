@@ -246,7 +246,12 @@ export default async function AdminPage() {
                         <StatusBadge status={e.status} />
                       </td>
                       <td className="px-4 py-3">
-                        <EnquiryOrderAction enquiry={e} existingOrder={orderByEnquiryId.get(e.id)} />
+                        <div className="flex items-center gap-3">
+                          <EnquiryOrderAction enquiry={e} existingOrder={orderByEnquiryId.get(e.id)} />
+                          <Link href={`/admin/order-form/${e.id}`} className="font-mono text-[10px] uppercase tracking-wider text-white/30 hover:text-[#C6A85C] transition-colors">
+                            Order form
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

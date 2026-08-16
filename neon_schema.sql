@@ -66,11 +66,19 @@ CREATE TABLE IF NOT EXISTS order_forms (
     callback_requested BOOLEAN NOT NULL DEFAULT FALSE,
     callback_phone TEXT,
     additional_notes TEXT,
+    -- Thanks/wake/donation wording for the back cover — distinct from
+    -- additional_notes (internal notes for the design team).
+    backpage_information TEXT,
+    -- A single supporting file (photo, PDF, etc.) attached directly instead
+    -- of emailed/posted — see photo_supplied_via above for that older path.
+    attachment_url TEXT,
     status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'submitted')),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_order_forms_enquiry_id ON order_forms(enquiry_id);
+ALTER TABLE order_forms ADD COLUMN IF NOT EXISTS backpage_information TEXT;
+ALTER TABLE order_forms ADD COLUMN IF NOT EXISTS attachment_url TEXT;
 
 -- 2. Create Subscribers Table (Newsletter)
 CREATE TABLE IF NOT EXISTS subscribers (

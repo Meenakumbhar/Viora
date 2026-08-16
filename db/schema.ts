@@ -67,6 +67,14 @@ export const orderForms = pgTable('order_forms', {
   callback_requested: boolean('callback_requested').notNull().default(false),
   callback_phone: text('callback_phone'),
   additional_notes: text('additional_notes'),
+  // Thanks/wake/donation wording for the back cover — a distinct field from
+  // additional_notes above (internal notes for the design team), not a
+  // reuse of it.
+  backpage_information: text('backpage_information'),
+  // A single supporting file (photo, PDF, etc.) the customer can attach
+  // directly instead of emailing/posting it — see photo_supplied_via above
+  // for the older out-of-band path, which still works alongside this.
+  attachment_url: text('attachment_url'),
   status: text('status').notNull().default('draft'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

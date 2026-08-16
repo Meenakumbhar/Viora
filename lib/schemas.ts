@@ -112,6 +112,8 @@ export const orderFormInputSchema = z.object({
   callback_requested: z.boolean().optional(),
   callback_phone: z.string().trim().max(50).nullish(),
   additional_notes: z.string().trim().max(5000).nullish(),
+  backpage_information: z.string().trim().max(5000).nullish(),
+  attachment_url: z.string().trim().max(2000).nullish(),
 });
 
 export const portfolioItemInputSchema = z.object({

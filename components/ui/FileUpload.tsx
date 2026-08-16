@@ -7,6 +7,8 @@ interface FileUploadProps {
   value?: string;
   onChange: (url: string, key?: string) => void;
   folder?: string;
+  /** Prepended to the filename (e.g. a short order/job reference) so uploads stay distinguishable in storage. */
+  filenamePrefix?: string;
   accept?: string;
   maxSizeMB?: number;
   label?: string;
@@ -18,6 +20,7 @@ export default function FileUpload({
   value = '',
   onChange,
   folder = 'portfolio',
+  filenamePrefix,
   accept = 'image/jpeg,image/png,image/webp,image/avif,image/svg+xml,application/pdf',
   maxSizeMB = 10,
   label = 'Upload Media',
@@ -50,8 +53,12 @@ export default function FileUpload({
     setProgress(15);
 
     try {
+      const namedFile = filenamePrefix
+        ? new File([file], `${filenamePrefix}_${file.name}`, { type: file.type })
+        : file;
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', namedFile);
       formData.append('folder', folder);
 
       // Simulated smooth progress while waiting for network
@@ -176,14 +183,28 @@ export default function FileUpload({
 
             {/* URL info & Action buttons */}
             <div className="min-w-0 flex-1">
-              <p className="truncate font-mono text-xs text-text-heading">
+              <a
+                href={value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block truncate font-mono text-xs text-text-heading hover:text-accent-gold hover:underline"
+              >
                 {value.split('/').pop() || 'Uploaded File'}
-              </p>
+              </a>
               <p className="mt-1 truncate font-mono text-[10px] text-text-muted">
                 {value}
               </p>
 
               <div className="mt-3 flex items-center gap-3">
+                <a
+                  href={value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-xs text-accent-gold hover:underline"
+                >
+                  View / download
+                </a>
+                <span className="text-border">·</span>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -224,7 +245,7 @@ export default function FileUpload({
             <div className="w-full max-w-xs space-y-3">
               <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-accent-gold border-t-transparent" />
               <p className="font-mono text-xs text-accent-gold">
-                Uploading to Cloudflare R2... {progress}%
+                Uploading... {progress}%
               </p>
               {/* Progress bar */}
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">

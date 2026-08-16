@@ -224,6 +224,8 @@ function normalizeOrderForm(row: any): OrderForm {
     callback_requested: Boolean(row.callback_requested),
     callback_phone: row.callback_phone != null ? String(row.callback_phone) : null,
     additional_notes: row.additional_notes != null ? String(row.additional_notes) : null,
+    backpage_information: row.backpage_information != null ? String(row.backpage_information) : null,
+    attachment_url: row.attachment_url != null ? String(row.attachment_url) : null,
     status: row.status === 'submitted' ? 'submitted' : 'draft',
     created_at: toIsoTimestampString(row.created_at),
     updated_at: toIsoTimestampString(row.updated_at),
@@ -589,6 +591,8 @@ export async function upsertOrderForm(
     callback_requested: input.callback_requested ?? false,
     callback_phone: input.callback_phone?.trim() || null,
     additional_notes: input.additional_notes?.trim() || null,
+    backpage_information: input.backpage_information?.trim() || null,
+    attachment_url: input.attachment_url?.trim() || null,
     status: submit ? 'submitted' : 'draft',
   };
 

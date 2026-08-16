@@ -281,7 +281,7 @@ export const products: ProductData[] = [
     subtitle: 'A Beautiful Place to Store Treasured Keepsakes',
     description: 'Memory Boxes provide a beautiful and secure place to store treasured keepsakes, photographs, cards, and meaningful mementos in memory of a loved one. Crafted using premium-quality materials, each box features a magnetic closure for safe and elegant storage while creating a lasting tribute that can be cherished for years to come. Choose from a range of standard designs or create a completely personalised memory box with your own photographs, colours, and wording.',
     category: 'funeral',
-    image: null,
+    image: '/images/products/Memory-Box.png',
     sizes: [
       { label: 'Large', dimensions: '300 × 310 × 70 mm' },
       { label: 'Medium', dimensions: '245 × 300 × 70 mm' },
@@ -339,7 +339,7 @@ export const products: ProductData[] = [
     subtitle: 'Beautiful Memorial Portraits to Treasure Forever',
     description: 'Honour the memory of your loved one with high-quality portraits designed to look beautiful during the ceremony — and continue to be cherished for years to come. Each style is carefully selected for exceptional quality at an affordable price.',
     category: 'funeral',
-    image: null,
+    image: '/images/products/bookmarks.jpg',
     sizes: [
       { label: 'The Classic', dimensions: '229 × 305 mm', description: 'A timeless A4 portrait mounted in durable, drop-resistant tempered glass with its own stand. Perfect for display on a shelf, desk, or wall.' },
       { label: 'The Contemporary', dimensions: '305 × 305 × 38 mm or 305 × 406 × 38 mm', description: 'A lightweight, premium canvas print stretched over a sturdy frame and fitted with hanging eyes. Optional black wooden float frame available.' },
@@ -362,28 +362,28 @@ export function getRelatedProducts(slugs: string[]): ProductData[] {
 
 export const testimonials: Testimonial[] = [
   {
-    quote: 'The order of service they produced was so beautiful. Several guests asked who made it.',
-    name: 'Sarah M.',
+    quote: 'Absolutely stunning designs. The team was very helpful in guiding me through the process.',
+    name: 'David Smith',
     location: 'London, UK',
   },
   {
-    quote: 'Delivered to Texas in time for the wedding. Exactly what we had in mind.',
-    name: 'Jamie R.',
+    quote: 'I found the perfect tribute for my father. The quality exceeded my expectations.',
+    name: 'Emily Davis',
     location: 'Dallas, TX',
   },
   {
-    quote: 'The team branding pack elevated our whole club identity overnight.',
-    name: 'Marcus T.',
+    quote: 'TProfessional, beautiful, and compassionate service. Highly recommend',
+    name: 'Amelia brown',
     location: 'Melbourne, Australia',
   },
   {
-    quote: 'Working with them on our rebrand was seamless. The attention to typography alone set them apart.',
-    name: 'Priya K.',
-    location: 'Mumbai, India',
+    quote: 'Very smooth process and such heartfelt designs. I am truly grateful.',
+    name: 'Jame Lee',
+    location: 'London, UK',
   },
   {
-    quote: 'They handled everything with such care. During the hardest week of our lives, one less thing to worry about.',
-    name: 'David & Clare H.',
+    quote: 'The templates were beautiful and easy to customize. It made a difficult time much more comforting.',
+    name: 'Sarah Johnson',
     location: 'Edinburgh, UK',
   },
 ];
@@ -407,19 +407,19 @@ export const processSteps: ProcessStep[] = [
     number: 3,
     title: 'Design',
     description: 'Your first proof is delivered as a high-resolution PDF. We walk you through the design choices and welcome your feedback. Revisions are included as standard.',
-    timeframe: 'Day 3–7',
+    timeframe: 'Day  2-3',
   },
   {
     number: 4,
     title: 'Approve',
     description: 'Once you are happy, sign off the final proof. We run a pre-flight check on every file before it goes to print — nothing leaves the studio without a final review.',
-    timeframe: 'Day 7–8',
+    timeframe: 'Day 3-4',
   },
   {
     number: 5,
     title: 'Deliver',
     description: 'Printed items ship tracked worldwide. Digital files are sent directly via email. You receive a confirmation with tracking details and an estimated arrival date.',
-    timeframe: 'Day 9–14',
+    timeframe: 'Day 4-6',
   },
 ];
 
