@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getOrderById, getOrderHistory, updateOrderStatus } from '@/lib/db';
 import { sendOrderStatusUpdateEmail } from '@/lib/resend';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Order, OrderStatus, OrderWithHistory } from '@/types/database';
 
 const VALID_STATUSES: OrderStatus[] = ['pending', 'in_progress', 'completed'];
+const updateStatusSchema = z.object({
+  status: z.enum(VALID_STATUSES as [OrderStatus, ...OrderStatus[]]),
+  note: z.string().trim().max(2000).nullish(),
+});
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,14 +34,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    const body = await request.json().catch(() => ({}));
-    const { status, note } = body;
+    const parsed = await parseJsonBody(request, updateStatusSchema, 'orders/:id');
+    if (parsed.error) return parsed.error;
+    const { status, note } = parsed.data;
 
-    if (!VALID_STATUSES.includes(status)) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'Invalid status.' }, { status: 400 });
-    }
-
-    const noteText = typeof note === 'string' && note.trim() ? note.trim() : null;
+    const noteText = note?.trim() || null;
     const order = await updateOrderStatus(id, status, noteText);
 
     if (!order) {

@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrderById, getUserById, getDesignRevisionsForCustomer } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
 import type { ApiResponse, DesignRevision } from '@/types/database';
 
 // GET /api/account/orders/[id]/designs — the logged-in customer's own revisions + comments for an order
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const user = await getUserById(session.userId);
+    const user = await getUserById(session.user.id);
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }

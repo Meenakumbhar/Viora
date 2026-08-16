@@ -22,12 +22,12 @@ const THEME = {
 export default function StatCard({ label, value, sub, theme = 'dark', accent }: StatCardProps) {
   const t = THEME[theme];
   return (
-    <div className={`border p-5 ${t.card}`}>
-      <p className={`font-mono text-[10px] uppercase tracking-widest ${t.label}`}>{label}</p>
-      <p className="mt-2 font-display text-4xl font-light" style={{ color: accent ?? '#C6A85C' }}>
+    <div className={`border p-6 ${t.card}`}>
+      <p className={`font-mono text-xs uppercase tracking-widest ${t.label}`}>{label}</p>
+      <p className="mt-2 font-display text-5xl font-light" style={{ color: accent ?? '#C6A85C' }}>
         {value}
       </p>
-      {sub && <p className={`mt-1 font-mono text-[10px] ${t.sub}`}>{sub}</p>}
+      {sub && <p className={`mt-1.5 font-mono text-xs ${t.sub}`}>{sub}</p>}
     </div>
   );
 }

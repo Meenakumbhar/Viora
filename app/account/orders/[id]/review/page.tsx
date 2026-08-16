@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect, notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
 import { getUserById, getOrderById, getDesignRevisionsForCustomer } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
 import DashboardShell, { type DashboardNavItem } from '@/components/dashboard/DashboardShell';
 import UserLogoutButton from '@/components/ui/UserLogoutButton';
 import DesignReviewSubmit from '@/components/ui/DesignReviewSubmit';
@@ -27,14 +27,13 @@ const STATUS_LABELS: Record<DesignRevision['status'], string> = {
 
 export default async function ReviewDesignPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const session = await verifySessionToken(cookieStore.get(USER_SESSION_COOKIE)?.value);
+  const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
     redirect(`/login?next=/account/orders/${id}/review`);
   }
 
-  const user = await getUserById(session.userId);
+  const user = await getUserById(session.user.id);
   if (!user) {
     redirect('/login');
   }

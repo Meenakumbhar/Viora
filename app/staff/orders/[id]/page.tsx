@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { getUserById, getOrderById, getDesignRevisionsForOrder, getDesigners } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 import DashboardShell, { type DashboardNavItem } from '@/components/dashboard/DashboardShell';
 import DesignManager from '@/components/dashboard/DesignManager';
 import ProofreaderPanel from '@/components/dashboard/ProofreaderPanel';
@@ -21,11 +21,10 @@ const NAV_ITEMS: DashboardNavItem[] = [{ label: 'Dashboard', href: '/staff', exa
 
 export default async function StaffOrderDesignsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const session = await verifySessionToken(cookieStore.get(USER_SESSION_COOKIE)?.value);
+  const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect(`/login?next=/staff/orders/${id}`);
 
-  const user = await getUserById(session.userId);
+  const user = await getUserById(session.user.id);
   if (!user || !['designer', 'employee', 'proofreader', 'admin'].includes(user.role)) {
     redirect('/account');
   }

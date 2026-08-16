@@ -1,24 +1,12 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import OrderStepper, { type DisplayStage } from '@/components/ui/OrderStepper';
 import OrderPaymentSection from '@/components/ui/OrderPaymentSection';
-import type { Order, OrderStatus, OrderStatusHistoryEntry, DesignRevision, Enquiry } from '@/types/database';
-
-const STATUS_LABELS: Record<DisplayStage, string> = {
-  placed: 'Placed',
-  pending: 'Pending',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-};
-
-const STATUS_COLORS: Record<DisplayStage, string> = {
-  placed: 'text-violet-600 border-violet-500/30',
-  pending: 'text-amber-600 border-amber-500/30',
-  in_progress: 'text-blue-600 border-blue-500/30',
-  completed: 'text-emerald-600 border-emerald-500/30',
-};
+import { accentForServiceType } from '@/lib/order-category';
+import { STATUS_LABELS, STATUS_COLORS } from '@/lib/order-status';
+import type { Order, OrderStatusHistoryEntry, DesignRevision, Enquiry } from '@/types/database';
 
 // A quote that hasn't been turned into an order yet — no production work,
 // payment, or design review exists for it, so it only ever shows as 'placed'.
@@ -38,231 +26,255 @@ interface OrderRowData {
 
 export type AccountRow = PlacedRow | OrderRowData;
 
-export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
-  const [expandedId, setExpandedId] = useState<string | null>(rows.length === 1 ? rows[0].id : null);
+interface StripeReturn {
+  status: 'success' | 'cancelled';
+  orderId: string | null;
+}
+
+function JobNumber({ id }: { id: string }) {
+  return <p className="font-mono text-xs text-text-muted">JOB #{id.slice(0, 8).toUpperCase()}</p>;
+}
+
+function StatusTag({ status }: { status: DisplayStage }) {
+  const color = STATUS_COLORS[status];
+  return (
+    <span
+      className="inline-flex items-center border px-2.5 py-1 font-mono text-xs uppercase tracking-wider"
+      style={{ color, borderColor: `${color}55`, backgroundColor: `${color}0D` }}
+    >
+      {STATUS_LABELS[status]}
+    </span>
+  );
+}
+
+export default function CustomerOrderList({ rows, stripeReturn }: { rows: AccountRow[]; stripeReturn?: StripeReturn }) {
+  const [expandedId, setExpandedId] = useState<string | null>(
+    stripeReturn?.orderId ?? (rows.length === 1 ? rows[0].id : null)
+  );
 
   return (
-    <div className="mt-8 border border-border">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border bg-black/[0.02]">
-            <th className="w-8 px-2 py-3" />
-            <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-text-muted">Order</th>
-            <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-text-muted hidden md:table-cell">Service</th>
-            <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-text-muted hidden lg:table-cell">Placed</th>
-            <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-text-muted">Status</th>
-            <th className="px-3 py-3 text-right font-mono text-[10px] uppercase tracking-wider text-text-muted">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const isOpen = expandedId === row.id;
+    <div>
+      {stripeReturn?.status === 'success' && (
+        <div className="mb-4 border border-emerald-500/30 bg-emerald-500/5 px-5 py-4">
+          <p className="font-mono text-sm uppercase tracking-widest text-emerald-600">Payment received</p>
+          <p className="mt-1 font-body text-base text-text-muted">
+            We&apos;re finalizing your payment now — this may take a few seconds to reflect below.
+          </p>
+        </div>
+      )}
+      {stripeReturn?.status === 'cancelled' && (
+        <div className="mb-4 border border-amber-500/30 bg-amber-500/5 px-5 py-4">
+          <p className="font-mono text-sm uppercase tracking-widest text-amber-600">Checkout cancelled</p>
+          <p className="mt-1 font-body text-base text-text-muted">No payment was taken — you can try again below.</p>
+        </div>
+      )}
 
-            if (row.kind === 'placed') {
-              const { enquiry } = row;
-              return (
-                <Fragment key={row.id}>
-                  <tr
-                    onClick={() => setExpandedId(isOpen ? null : row.id)}
-                    className={`cursor-pointer border-b border-border transition-colors hover:bg-black/[0.02] ${isOpen ? 'bg-black/[0.02]' : ''}`}
-                  >
-                    <td className="px-2 py-2.5 text-center">
-                      <span className={`inline-block font-mono text-xs text-text-muted transition-transform ${isOpen ? 'rotate-90 text-accent-gold' : ''}`}>▸</span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <p className="font-mono text-[10px] text-text-muted">#{enquiry.id.slice(0, 8).toUpperCase()}</p>
-                    </td>
-                    <td className="hidden max-w-[220px] truncate px-3 py-2.5 font-body text-sm text-text-heading md:table-cell">{enquiry.service_type}</td>
-                    <td className="hidden px-3 py-2.5 font-mono text-[10px] text-text-muted lg:table-cell">
-                      {new Date(enquiry.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className={`inline-flex items-center border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${STATUS_COLORS.placed}`}>
-                        {STATUS_LABELS.placed}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-right font-mono text-xs text-text-muted">—</td>
-                  </tr>
+      <div className="space-y-3">
+        {rows.map((row) => {
+          const isOpen = expandedId === row.id;
 
-                  {isOpen && (
-                    <tr className="border-b border-border bg-black/[0.015]">
-                      <td colSpan={6} className="px-6 py-6">
-                        <h3 className="font-display text-xl text-text-heading">{enquiry.service_type}</h3>
-                        <p className="mt-2 font-body text-sm text-text-muted">
-                          We&apos;ve received this request — it&apos;ll move to Pending once our studio begins work.
-                        </p>
-
-                        {enquiry.quantity_estimate && (
-                          <p className="mt-4 font-mono text-[10px] uppercase tracking-widest text-text-muted">
-                            Estimated quantity <span className="normal-case text-text-heading">{enquiry.quantity_estimate}</span>
-                          </p>
-                        )}
-
-                        {enquiry.portfolio_items && enquiry.portfolio_items.length > 0 && (
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            {enquiry.portfolio_items.map((item) => (
-                              <Link
-                                key={item.id}
-                                href={`/portfolio/${item.id}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="border border-border px-3 py-1.5 font-mono text-[10px] text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
-                              >
-                                {item.title}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-
-                        {enquiry.description && (
-                          <p className="mt-4 border-l-2 border-border pl-4 font-body text-sm text-text-muted">{enquiry.description}</p>
-                        )}
-
-                        <div className="mt-8">
-                          <OrderStepper status="placed" theme="light" />
-                        </div>
-
-                        <div className="mt-8 border-t border-border pt-6">
-                          <Link
-                            href={`/order-form/${enquiry.id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-block border border-accent-gold px-5 py-2.5 font-body text-label uppercase tracking-wider text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary"
-                          >
-                            Order form
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            }
-
-            const { order, history, latestRevision } = row;
+          if (row.kind === 'placed') {
+            const { enquiry } = row;
+            const accent = accentForServiceType(enquiry.service_type);
             return (
-              <Fragment key={row.id}>
-                <tr
+              <div key={row.id} className="border border-border" style={{ borderLeft: `4px solid ${accent}` }}>
+                <button
+                  type="button"
                   onClick={() => setExpandedId(isOpen ? null : row.id)}
-                  className={`cursor-pointer border-b border-border transition-colors hover:bg-black/[0.02] ${isOpen ? 'bg-black/[0.02]' : ''}`}
+                  className={`flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-black/[0.02] ${isOpen ? 'bg-black/[0.02]' : ''}`}
                 >
-                  <td className="px-2 py-2.5 text-center">
-                    <span className={`inline-block font-mono text-xs text-text-muted transition-transform ${isOpen ? 'rotate-90 text-accent-gold' : ''}`}>▸</span>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <p className="font-mono text-[10px] text-text-muted">#{order.id.slice(0, 8).toUpperCase()}</p>
-                    {latestRevision && latestRevision.status === 'pending_review' && (
-                      <p className="mt-0.5 font-mono text-[9px] uppercase tracking-widest text-accent-gold">Review needed</p>
-                    )}
-                  </td>
-                  <td className="hidden max-w-[220px] truncate px-3 py-2.5 font-body text-sm text-text-heading md:table-cell">{order.service_type}</td>
-                  <td className="hidden px-3 py-2.5 font-mono text-[10px] text-text-muted lg:table-cell">
-                    {new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <span className={`inline-flex items-center border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${STATUS_COLORS[order.status]}`}>
-                      {STATUS_LABELS[order.status]}
+                  <div className="flex min-w-0 items-center gap-4">
+                    <span className={`shrink-0 font-mono text-sm text-text-muted transition-transform ${isOpen ? 'rotate-90 text-accent-gold' : ''}`}>▸</span>
+                    <div className="min-w-0">
+                      <JobNumber id={enquiry.id} />
+                      <p className="mt-0.5 truncate font-display text-lg text-text-heading">{enquiry.service_type}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="hidden font-mono text-xs text-text-muted sm:inline">
+                      {new Date(enquiry.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono text-xs text-text-heading">
-                    {order.payment_amount !== null ? `£${order.payment_amount.toFixed(2)}` : '—'}
-                  </td>
-                </tr>
+                    <StatusTag status="placed" />
+                  </div>
+                </button>
 
                 {isOpen && (
-                  <tr className="border-b border-border bg-black/[0.015]">
-                    <td colSpan={6} className="px-6 py-6">
-                      <h3 className="font-display text-xl text-text-heading">{order.service_type}</h3>
+                  <div className="border-t border-dashed border-border px-5 py-6 sm:px-8">
+                    <p className="font-body text-base text-text-muted">
+                      We&apos;ve received this request — it&apos;ll move to Pending once our studio begins work.
+                    </p>
 
-                      {latestRevision && latestRevision.status === 'pending_review' && (
-                        <Link
-                          href={`/account/orders/${order.id}/review`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-4 flex items-center justify-between border border-accent-gold/40 bg-accent-gold/5 px-4 py-3 transition-colors hover:bg-accent-gold/10"
-                        >
-                          <span className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
-                            Your design (v{latestRevision.version}) is ready to review
-                          </span>
-                          <span className="font-mono text-[11px] text-accent-gold">→</span>
-                        </Link>
-                      )}
-                      {latestRevision && latestRevision.status === 'changes_requested' && (
-                        <div className="mt-4 border border-border bg-white/[0.02] px-4 py-3">
-                          <span className="font-mono text-[11px] uppercase tracking-widest text-text-muted">
-                            Changes requested on v{latestRevision.version} — the studio is working on a revised proof
-                          </span>
-                        </div>
-                      )}
-                      {latestRevision && latestRevision.status === 'approved' && (
-                        <div className="mt-4 border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
-                          <span className="font-mono text-[11px] uppercase tracking-widest text-emerald-600">
-                            Design v{latestRevision.version} approved ✓
-                          </span>
-                        </div>
-                      )}
+                    {enquiry.quantity_estimate && (
+                      <p className="mt-4 font-mono text-xs uppercase tracking-widest text-text-muted">
+                        Estimated quantity <span className="normal-case text-text-heading">{enquiry.quantity_estimate}</span>
+                      </p>
+                    )}
 
-                      {order.portfolio_items && order.portfolio_items.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {order.portfolio_items.map((item) => (
-                            <Link
-                              key={item.id}
-                              href={`/portfolio/${item.id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="border border-border px-3 py-1.5 font-mono text-[10px] text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
-                            >
-                              {item.title}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-
-                      {order.details && (
-                        <p className="mt-4 border-l-2 border-border pl-4 font-body text-sm text-text-muted">{order.details}</p>
-                      )}
-
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <OrderPaymentSection order={order} />
-                      </div>
-
-                      <div className="mt-8">
-                        <OrderStepper status={order.status} theme="light" />
-                      </div>
-
-                      {order.enquiry_id && (
-                        <div className="mt-8 border-t border-border pt-6">
+                    {enquiry.portfolio_items && enquiry.portfolio_items.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {enquiry.portfolio_items.map((item) => (
                           <Link
-                            href={`/order-form/${order.enquiry_id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="font-mono text-[10px] uppercase tracking-wider text-text-muted underline transition-colors hover:text-accent-gold"
+                            key={item.id}
+                            href={`/portfolio/${item.id}`}
+                            className="border border-border px-3 py-1.5 font-mono text-xs text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
                           >
-                            View order form
+                            {item.title}
                           </Link>
-                        </div>
-                      )}
+                        ))}
+                      </div>
+                    )}
 
-                      {history.length > 0 && (
-                        <div className="mt-8 border-t border-border pt-6">
-                          <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-text-muted">History</p>
-                          <ul className="space-y-4 border-l border-border pl-5">
-                            {[...history].reverse().map((entry) => (
-                              <li key={entry.id} className="relative">
-                                <span className="absolute -left-[25px] top-1 h-2.5 w-2.5 rounded-full bg-accent-gold" aria-hidden="true" />
-                                <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">{STATUS_LABELS[entry.status]}</p>
-                                <p className="font-mono text-[10px] text-text-muted">
-                                  {new Date(entry.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                                {entry.note && <p className="mt-1 font-body text-sm text-text-heading">{entry.note}</p>}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
+                    {enquiry.description && (
+                      <p className="mt-4 border-l-2 border-border pl-4 font-body text-base text-text-muted">{enquiry.description}</p>
+                    )}
+
+                    <div className="mt-8">
+                      <OrderStepper status="placed" theme="light" />
+                    </div>
+
+                    <div className="mt-8 border-t border-border pt-6">
+                      <Link
+                        href={`/order-form/${enquiry.id}`}
+                        className="inline-block border border-accent-gold px-5 py-2.5 font-body text-label uppercase tracking-wider text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary"
+                      >
+                        Order form
+                      </Link>
+                    </div>
+                  </div>
                 )}
-              </Fragment>
+              </div>
             );
-          })}
-        </tbody>
-      </table>
+          }
+
+          const { order, history, latestRevision } = row;
+          const accent = accentForServiceType(order.service_type);
+          return (
+            <div key={row.id} className="border border-border" style={{ borderLeft: `4px solid ${accent}` }}>
+              <button
+                type="button"
+                onClick={() => setExpandedId(isOpen ? null : row.id)}
+                className={`flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-black/[0.02] ${isOpen ? 'bg-black/[0.02]' : ''}`}
+              >
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className={`shrink-0 font-mono text-sm text-text-muted transition-transform ${isOpen ? 'rotate-90 text-accent-gold' : ''}`}>▸</span>
+                  <div className="min-w-0">
+                    <JobNumber id={order.id} />
+                    <p className="mt-0.5 truncate font-display text-lg text-text-heading">{order.service_type}</p>
+                    {latestRevision && latestRevision.status === 'pending_review' && (
+                      <p className="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-accent-gold">Proof ready to review</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="hidden font-mono text-xs text-text-muted sm:inline">
+                    {new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
+                  </span>
+                  <span className="hidden font-mono text-sm text-text-heading sm:inline">
+                    {order.payment_amount !== null ? `£${order.payment_amount.toFixed(2)}` : '—'}
+                  </span>
+                  <StatusTag status={order.status} />
+                </div>
+              </button>
+
+              {isOpen && (
+                <div className="border-t border-dashed border-border px-5 py-6 sm:px-8">
+                  {latestRevision && latestRevision.status === 'pending_review' && (
+                    <Link
+                      href={`/account/orders/${order.id}/review`}
+                      className="flex items-center justify-between border border-accent-gold/40 bg-accent-gold/5 px-4 py-3 transition-colors hover:bg-accent-gold/10"
+                    >
+                      <span className="font-mono text-sm uppercase tracking-widest text-accent-gold">
+                        Your design (v{latestRevision.version}) is ready to review
+                      </span>
+                      <span className="font-mono text-sm text-accent-gold">→</span>
+                    </Link>
+                  )}
+                  {latestRevision && latestRevision.status === 'changes_requested' && (
+                    <div className="border border-border bg-white/[0.02] px-4 py-3">
+                      <span className="font-mono text-sm uppercase tracking-widest text-text-muted">
+                        Changes requested on v{latestRevision.version} — the studio is working on a revised proof
+                      </span>
+                    </div>
+                  )}
+                  {latestRevision && latestRevision.status === 'approved' && (
+                    <div className="border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
+                      <span className="font-mono text-sm uppercase tracking-widest text-emerald-600">
+                        Design v{latestRevision.version} approved ✓
+                      </span>
+                    </div>
+                  )}
+
+                  {order.portfolio_items && order.portfolio_items.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {order.portfolio_items.map((item) => (
+                        <Link
+                          key={item.id}
+                          href={`/portfolio/${item.id}`}
+                          className="border border-border px-3 py-1.5 font-mono text-xs text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
+                        >
+                          {item.title}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {order.details && (
+                    <p className="mt-4 border-l-2 border-border pl-4 font-body text-base text-text-muted">{order.details}</p>
+                  )}
+
+                  <div>
+                    <OrderPaymentSection order={order} />
+                  </div>
+
+                  <div className="mt-8">
+                    <OrderStepper status={order.status} theme="light" />
+                  </div>
+
+                  {order.status === 'completed' && (
+                    <div className="mt-8 border-t border-border pt-6">
+                      <Link
+                        href={`/account/quote?service=${encodeURIComponent(order.service_type)}&details=${encodeURIComponent(`Reordering — similar to a previous ${order.service_type} order.`)}`}
+                        className="inline-block border border-accent-gold px-5 py-2.5 font-mono text-sm uppercase tracking-widest text-accent-gold transition-colors hover:bg-accent-gold hover:text-bg-primary"
+                      >
+                        Request similar
+                      </Link>
+                    </div>
+                  )}
+
+                  {order.enquiry_id && (
+                    <div className="mt-8 border-t border-border pt-6">
+                      <Link
+                        href={`/order-form/${order.enquiry_id}`}
+                        className="font-mono text-xs uppercase tracking-wider text-text-muted underline transition-colors hover:text-accent-gold"
+                      >
+                        View order form
+                      </Link>
+                    </div>
+                  )}
+
+                  {history.length > 0 && (
+                    <div className="mt-8 border-t border-border pt-6">
+                      <p className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">History</p>
+                      <ul className="space-y-4 border-l border-border pl-5">
+                        {[...history].reverse().map((entry) => (
+                          <li key={entry.id} className="relative">
+                            <span className="absolute -left-[25px] top-1 h-2.5 w-2.5 rounded-full bg-accent-gold" aria-hidden="true" />
+                            <p className="font-mono text-xs uppercase tracking-widest text-accent-gold">{STATUS_LABELS[entry.status]}</p>
+                            <p className="font-mono text-xs text-text-muted">
+                              {new Date(entry.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            {entry.note && <p className="mt-1 font-body text-base text-text-heading">{entry.note}</p>}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

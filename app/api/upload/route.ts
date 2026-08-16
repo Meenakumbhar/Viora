@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { uploadToR2, deleteFromR2 } from '@/utils/r2';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse } from '@/types/database';
+
+const deleteSchema = z.object({ key: z.string().trim().min(1, 'File key is required for deletion.').max(500) });
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
@@ -107,15 +111,9 @@ export async function POST(request: NextRequest) {
 // DELETE /api/upload — Delete a file from Cloudflare R2
 export async function DELETE(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
-    const key = body.key as string | undefined;
-
-    if (!key || typeof key !== 'string') {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: 'File key is required for deletion.' },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, deleteSchema, 'upload/delete');
+    if (parsed.error) return parsed.error;
+    const { key } = parsed.data;
 
     await deleteFromR2(key);
 

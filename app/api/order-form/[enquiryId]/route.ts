@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getEnquiryById, getOrderFormByEnquiryId, upsertOrderForm } from '@/lib/db';
 import { sendOrderFormSubmittedEmail } from '@/lib/resend';
-import type { ApiResponse, OrderForm, OrderFormInput, Enquiry } from '@/types/database';
+import { orderFormInputSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
+import type { ApiResponse, OrderForm, Enquiry } from '@/types/database';
+
+const orderFormPostSchema = z.object({
+  submit: z.boolean().optional(),
+  form: orderFormInputSchema.optional(),
+});
 
 // The enquiry's own UUID is the access key — no login required, matching how
 // a customer reaches this from an emailed link before they may even have an
@@ -37,9 +45,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json<ApiResponse>({ success: false, error: 'Quote not found.' }, { status: 404 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const submit = body?.submit === true;
-    const input: OrderFormInput = body?.form ?? {};
+    const parsed = await parseJsonBody(request, orderFormPostSchema, 'order-form');
+    if (parsed.error) return parsed.error;
+    const submit = parsed.data.submit === true;
+    const input = parsed.data.form ?? {};
 
     if (submit && !input.deceased_name?.trim()) {
       return NextResponse.json<ApiResponse>(

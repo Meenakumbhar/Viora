@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
 import { getUserById, getAllOrders, getDesignRevisionsForOrder, getDesigners } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
 import DashboardShell, { type DashboardNavItem } from '@/components/dashboard/DashboardShell';
 import StatCard from '@/components/dashboard/StatCard';
 import UserLogoutButton from '@/components/ui/UserLogoutButton';
@@ -36,11 +36,10 @@ const DESIGN_STATUS_COLORS: Record<DesignRevisionStatus, string> = {
 };
 
 export default async function StaffDashboardPage() {
-  const cookieStore = await cookies();
-  const session = await verifySessionToken(cookieStore.get(USER_SESSION_COOKIE)?.value);
+  const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect('/login?next=/staff');
 
-  const user = await getUserById(session.userId);
+  const user = await getUserById(session.user.id);
   if (!user || !['designer', 'employee', 'proofreader', 'admin'].includes(user.role)) {
     redirect('/account');
   }

@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getOrderById, getUserById, assignOrderToDesigner } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Order } from '@/types/database';
+
+const assignSchema = z.object({
+  designerId: z.string().trim().min(1).max(200).nullable(),
+});
 
 // POST /api/staff/orders/[id]/assign — route an order to a designer (or unassign
 // with designerId: null). Proofreader or admin only — enforced here, since
 // proxy.ts only gates the /api/staff/* namespace broadly.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
-    const user = await getUserById(session.userId);
+    const user = await getUserById(session.user.id);
     if (!user || !['proofreader', 'admin'].includes(user.role)) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Forbidden.' }, { status: 403 });
     }
@@ -23,12 +29,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json<ApiResponse>({ success: false, error: 'Order not found.' }, { status: 404 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const designerId = body?.designerId;
-
-    if (designerId !== null && typeof designerId !== 'string') {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'designerId must be a string or null.' }, { status: 400 });
-    }
+    const parsed = await parseJsonBody(request, assignSchema, 'staff/orders/:id/assign');
+    if (parsed.error) return parsed.error;
+    const { designerId } = parsed.data;
 
     if (designerId !== null) {
       const designer = await getUserById(designerId);

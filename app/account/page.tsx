@@ -1,55 +1,71 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { getUserById, getOrdersByEmail, getOrderHistory, getDesignRevisionsForCustomer, getEnquiriesByEmail } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
-import DashboardShell, { type DashboardNavItem } from '@/components/dashboard/DashboardShell';
-import StatCard from '@/components/dashboard/StatCard';
+import { headers } from 'next/headers';
+import {
+  getUserById,
+  getOrdersByEmail,
+  getOrderHistoriesForOrders,
+  getDesignRevisionsForOrders,
+  getEnquiriesByEmail,
+  syncOrderPricingFromCatalog,
+} from '@/lib/db';
+import { auth } from '@/lib/auth';
 import UserLogoutButton from '@/components/ui/UserLogoutButton';
-import CustomerOrderList, { type AccountRow } from '@/components/dashboard/CustomerOrderList';
+import AccountShell from '@/components/dashboard/AccountShell';
+import OrdersView from '@/components/dashboard/OrdersView';
+import type { AccountRow } from '@/components/dashboard/CustomerOrderList';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Your account',
+  title: 'Your orders',
   robots: { index: false, follow: false },
 };
-
-const NAV_ITEMS: DashboardNavItem[] = [{ label: 'Overview', href: '/account', exact: true }];
 
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ verified?: string }>;
+  searchParams: Promise<{ verified?: string; stripe?: string; order?: string }>;
 }) {
-  const { verified } = await searchParams;
-  const cookieStore = await cookies();
-  const session = await verifySessionToken(cookieStore.get(USER_SESSION_COOKIE)?.value);
+  const { verified, stripe, order: stripeOrderId } = await searchParams;
+  const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
     redirect('/login');
   }
 
-  const user = await getUserById(session.userId);
+  const user = await getUserById(session.user.id);
 
   if (!user) {
     redirect('/login');
   }
 
-  const [orders, enquiries] = await Promise.all([
+  const [rawOrders, enquiries] = await Promise.all([
     getOrdersByEmail(user.email),
     getEnquiriesByEmail(user.email),
   ]);
-  const orderHistories = await Promise.all(orders.map((order) => getOrderHistory(order.id)));
-  const orderRevisions = await Promise.all(orders.map((order) => getDesignRevisionsForCustomer(order.id)));
 
-  const orderRows: AccountRow[] = orders.map((order, i) => ({
+  // Keeps each order's price current with the pricing catalog (negotiated
+  // price, or the price set on the specific piece it references) instead of
+  // showing a stale figure someone would otherwise have to re-enter by hand
+  // every time either changes. No-ops for orders already paid.
+  const orders = await Promise.all(rawOrders.map((order) => syncOrderPricingFromCatalog(order, user.id)));
+
+  const orderIds = orders.map((o) => o.id);
+  // Two batched queries covering every order at once, instead of one
+  // getOrderHistory + one getDesignRevisionsForCustomer call per order.
+  const [historyMap, revisionMap] = await Promise.all([
+    getOrderHistoriesForOrders(orderIds),
+    getDesignRevisionsForOrders(orderIds),
+  ]);
+
+  const orderRows: AccountRow[] = orders.map((order) => ({
     kind: 'order',
     id: order.id,
     order,
-    history: orderHistories[i],
-    latestRevision: [...orderRevisions[i]].sort((a, b) => b.version - a.version)[0],
+    history: historyMap.get(order.id) ?? [],
+    latestRevision: [...(revisionMap.get(order.id) ?? [])].sort((a, b) => b.version - a.version)[0],
   }));
 
   // A quote only shows as its own "Placed" row until an admin turns it into
@@ -66,72 +82,50 @@ export default async function AccountPage({
     return new Date(bDate).getTime() - new Date(aDate).getTime();
   });
 
-  const inProgress = orders.filter((o) => o.status === 'in_progress').length;
-  const awaitingReview = orderRows.filter((r) => r.kind === 'order' && r.latestRevision?.status === 'pending_review').length;
-
   return (
-    <DashboardShell
-      theme="light"
-      section="Account"
-      navItems={NAV_ITEMS}
-      userLabel={user.name ?? user.email}
+    <AccountShell
+      userName={user.name ? user.name : 'Welcome back'}
+      memberSince={new Date(user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
       logoutSlot={<UserLogoutButton />}
     >
       {verified === '1' && (
-        <div className="mb-8 max-w-md border border-accent-gold/40 bg-accent-gold/5 px-5 py-4">
-          <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">Email verified</p>
-          <p className="mt-1 font-body text-sm text-text-muted">Your account is now active.</p>
+        <div className="mb-6 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4">
+          <p className="font-mono text-sm uppercase tracking-widest text-accent-gold">Email verified</p>
+          <p className="mt-1 font-body text-base text-text-muted">Your account is now active.</p>
         </div>
       )}
 
-      <div className="mb-10">
-        <span className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">Overview</span>
-        <h1 className="mt-2 font-display text-4xl font-light text-text-heading" style={{ letterSpacing: '-0.02em' }}>
-          {user.name ? `Hi, ${user.name}` : 'Welcome back'}
-        </h1>
-      </div>
-
-      {orders.length > 0 && (
-        <div className="mb-12 grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <StatCard label="Total orders" value={orders.length} theme="light" />
-          <StatCard label="In progress" value={inProgress} theme="light" />
-          <StatCard label="Awaiting your review" value={awaitingReview} theme="light" accent={awaitingReview > 0 ? '#C6A85C' : undefined} />
-        </div>
-      )}
-
-      <div className="mb-12 max-w-md border border-border p-6">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-text-muted">Email</p>
-        <p className="mt-1 font-body text-text-heading">{user.email}</p>
-
-        <p className="mt-5 font-mono text-[10px] uppercase tracking-widest text-text-muted">Member since</p>
-        <p className="mt-1 font-body text-text-heading">
-          {new Date(user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-      </div>
-
-      {/* ── Order history ─────────────────────────────────────────── */}
-      <div className="border-t border-border pt-10">
-        <h2 className="font-display text-2xl font-light text-text-heading">Your orders</h2>
-        <p className="mt-1 font-body text-sm text-text-muted">
-          Every quote you&apos;ve placed, from first request through to completion.
-        </p>
-
-        {rows.length === 0 ? (
-          <p className="mt-4 font-body text-body-base text-text-muted">
-            No orders yet.{' '}
-            <Link href="/portfolio" className="text-accent-gold link-underline">
-              Browse the portfolio
-            </Link>{' '}
-            or{' '}
-            <Link href="/contact" className="text-accent-gold link-underline">
-              request a quote
-            </Link>{' '}
-            to get started.
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-heading">Your jobs</p>
+          <p className="mt-1.5 font-body text-base text-text-muted">
+            Every quote you&apos;ve placed, from first request through to completion.
           </p>
-        ) : (
-          <CustomerOrderList rows={rows} />
-        )}
+        </div>
+        <Link
+          href="/account/quote"
+          className="shrink-0 border border-accent-gold px-5 py-2.5 font-mono text-sm uppercase tracking-widest text-accent-gold transition-colors hover:bg-accent-gold hover:text-bg-primary"
+        >
+          New quote
+        </Link>
       </div>
-    </DashboardShell>
+
+      {rows.length === 0 ? (
+        <p className="mt-6 border border-dashed border-border px-5 py-8 text-center font-body text-body-base text-text-muted">
+          No orders yet — <Link href="/account/quote" className="text-accent-gold underline hover:text-accent-gold-dark">request a quote</Link> to get started.
+        </p>
+      ) : (
+        <div className="mt-6">
+          <OrdersView
+            rows={rows}
+            stripeReturn={
+              stripe === 'success' || stripe === 'cancelled'
+                ? { status: stripe, orderId: stripeOrderId ?? null }
+                : undefined
+            }
+          />
+        </div>
+      )}
+    </AccountShell>
   );
 }

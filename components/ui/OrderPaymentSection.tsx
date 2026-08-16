@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { Order } from '@/types/database';
+import StripeCheckoutButton from '@/components/ui/StripeCheckoutButton';
 
 const PayPalButton = dynamic(() => import('@/components/ui/PayPalButton'), { ssr: false });
 
@@ -55,16 +56,19 @@ export default function OrderPaymentSection({ order: initialOrder }: OrderPaymen
           )}
         </div>
 
-        {/* Pay Now button — only when amount is set and unpaid */}
+        {/* Payment method choice — only when amount is set and unpaid */}
         {canPay && !showPayPal && (
-          <button
-            type="button"
-            id={`pay-now-${order.id}`}
-            onClick={() => setShowPayPal(true)}
-            className="border border-accent-gold bg-accent-gold px-5 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90"
-          >
-            Pay £{order.payment_amount!.toFixed(2)}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              id={`pay-now-${order.id}`}
+              onClick={() => setShowPayPal(true)}
+              className="border border-accent-gold bg-accent-gold px-5 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90"
+            >
+              Pay via PayPal
+            </button>
+            <StripeCheckoutButton order={order} />
+          </div>
         )}
       </div>
 
@@ -86,9 +90,9 @@ export default function OrderPaymentSection({ order: initialOrder }: OrderPaymen
       )}
 
       {/* Paid confirmation */}
-      {isPaid && order.paypal_order_id && (
+      {isPaid && (order.paypal_order_id || order.stripe_session_id) && (
         <p className="mt-2 font-mono text-[10px] text-text-muted">
-          Ref: {order.paypal_order_id.slice(0, 16).toUpperCase()}
+          Ref: {(order.paypal_order_id ?? order.stripe_session_id!).slice(0, 16).toUpperCase()}
         </p>
       )}
     </div>

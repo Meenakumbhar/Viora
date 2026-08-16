@@ -121,12 +121,12 @@ export default function DashboardShell({
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className={`font-mono text-[10px] uppercase tracking-widest ${t.muted} md:hidden`}
+            className={`font-mono text-xs uppercase tracking-widest ${t.muted} md:hidden`}
             aria-label="Open menu"
           >
             ☰ Menu
           </button>
-          <span className="hidden font-mono text-[10px] uppercase tracking-widest md:block" style={{ opacity: 0.4 }}>
+          <span className="hidden font-mono text-xs uppercase tracking-widest md:block" style={{ opacity: 0.4 }}>
             {section}
           </span>
           <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export default function DashboardShell({
               <button
                 type="button"
                 onClick={() => setAnalyticsOpen((v) => !v)}
-                className={`hidden border px-2.5 py-1 font-mono text-[9px] uppercase tracking-widest transition-colors xl:inline-block ${t.sidebarBorder} ${
+                className={`hidden border px-2.5 py-1 font-mono text-sm uppercase tracking-widest transition-colors xl:inline-block ${t.sidebarBorder} ${
                   analyticsOpen ? t.navActive : t.muted
                 }`}
               >
@@ -142,11 +142,11 @@ export default function DashboardShell({
               </button>
             )}
             {roleLabel && (
-              <span className={`hidden border px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest sm:inline-block ${t.sidebarBorder} ${t.muted}`}>
+              <span className={`hidden border px-2 py-0.5 font-mono text-sm uppercase tracking-widest sm:inline-block ${t.sidebarBorder} ${t.muted}`}>
                 {roleLabel}
               </span>
             )}
-            <span className={`font-mono text-[10px] ${t.muted}`}>{userLabel}</span>
+            <span className={`font-mono text-xs ${t.muted}`}>{userLabel}</span>
           </div>
         </header>
 
@@ -191,7 +191,7 @@ function SidebarContent({
       <div className="px-6 py-7">
         <div className="flex items-center gap-2">
           <RegMark className={`h-3.5 w-3.5 ${t.accent}`} />
-          <span className="font-mono text-[10px] uppercase tracking-widest" style={{ opacity: 0.4 }}>
+          <span className="font-mono text-xs uppercase tracking-widest" style={{ opacity: 0.4 }}>
             {section}
           </span>
         </div>
@@ -206,7 +206,7 @@ function SidebarContent({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className={`flex items-center gap-2.5 px-3 py-2.5 font-mono text-[11px] uppercase tracking-wider transition-colors ${
+              className={`flex items-center gap-2.5 px-3 py-2.5 font-mono text-sm uppercase tracking-wider transition-colors ${
                 active ? t.navActive : t.navText
               }`}
             >
@@ -220,7 +220,7 @@ function SidebarContent({
       <div className={`border-t px-6 py-5 ${t.sidebarBorder}`}>
         <Link
           href="/"
-          className={`block font-mono text-[10px] uppercase tracking-widest ${t.navText}`}
+          className={`block font-mono text-xs uppercase tracking-widest ${t.navText}`}
         >
           ← Back to site
         </Link>

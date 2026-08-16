@@ -1,44 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrderById, getUserById, getDesignRevisionById, submitDesignReview } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
 import { sendDesignApprovedEmail, sendDesignChangesRequestedEmail } from '@/lib/resend';
+import { designCommentsSchema, proofreadBodySchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, DesignRevision, DesignCommentInput } from '@/types/database';
 
-const MAX_COMMENT_LENGTH = 2000;
+const reviewSchema = proofreadBodySchema(['approve', 'request_changes']);
 
 function sanitizeComments(input: unknown, imageCount: number): DesignCommentInput[] | null {
-  if (!Array.isArray(input)) return null;
-
-  const cleaned: DesignCommentInput[] = [];
-  for (const raw of input) {
-    if (!raw || typeof raw !== 'object') return null;
-    const { image_index, x, y, comment } = raw as Record<string, unknown>;
-
-    if (typeof image_index !== 'number' || !Number.isInteger(image_index) || image_index < 0 || image_index >= imageCount) {
-      return null;
-    }
-    if (typeof x !== 'number' || x < 0 || x > 1 || typeof y !== 'number' || y < 0 || y > 1) {
-      return null;
-    }
-    if (typeof comment !== 'string' || !comment.trim()) {
-      return null;
-    }
-
-    cleaned.push({ image_index, x, y, comment: comment.trim().slice(0, MAX_COMMENT_LENGTH) });
-  }
-
-  return cleaned;
+  const result = designCommentsSchema(imageCount).safeParse(input);
+  return result.success ? result.data : null;
 }
 
 // POST /api/account/orders/[id]/designs/[revisionId]/review — approve or request changes
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string; revisionId: string }> }) {
   try {
-    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const user = await getUserById(session.userId);
+    const user = await getUserById(session.user.id);
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
@@ -64,26 +47,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
     }
 
-    const body = await request.json().catch(() => ({}));
-    const action = body?.action;
-
-    if (action !== 'approve' && action !== 'request_changes') {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Action must be 'approve' or 'request_changes'." },
-        { status: 400 }
-      );
-    }
+    const parsedBody = await parseJsonBody(request, reviewSchema, 'account/.../review');
+    if (parsedBody.error) return parsedBody.error;
+    const { action, comments: rawComments } = parsedBody.data;
 
     let comments: DesignCommentInput[] = [];
     if (action === 'request_changes') {
-      const parsed = sanitizeComments(body?.comments, revision.image_urls.length);
-      if (!parsed || parsed.length === 0) {
+      const sanitized = sanitizeComments(rawComments, revision.image_urls.length);
+      if (!sanitized || sanitized.length === 0) {
         return NextResponse.json<ApiResponse>(
           { success: false, error: 'Add at least one comment to request changes.' },
           { status: 400 }
         );
       }
-      comments = parsed;
+      comments = sanitized;
     }
 
     const updated = await submitDesignReview(revisionId, action, comments);

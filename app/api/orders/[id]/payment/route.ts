@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { setOrderPaymentAmount, getOrderById, getOrderHistory } from '@/lib/db';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, OrderWithHistory } from '@/types/database';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+const setPaymentSchema = z.object({
+  amount: z.coerce.number().positive('A valid positive amount is required.').finite(),
+});
+
 // PATCH /api/orders/[id]/payment — Admin sets the payment amount for an order
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    const body = await request.json().catch(() => ({}));
-    const { amount } = body;
-
-    const parsed = Number(amount);
-
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'A valid positive amount is required.' }, { status: 400 });
-    }
+    const parsed = await parseJsonBody(request, setPaymentSchema, 'orders/:id/payment');
+    if (parsed.error) return parsed.error;
 
     // Round to 2 decimal places
-    const rounded = Math.round(parsed * 100) / 100;
+    const rounded = Math.round(parsed.data.amount * 100) / 100;
 
     const order = await setOrderPaymentAmount(id, rounded);
 

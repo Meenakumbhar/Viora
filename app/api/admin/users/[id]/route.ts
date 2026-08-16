@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { updateUserRole, toPublicUser } from '@/lib/db';
 import { USER_ROLES } from '@/types/database';
+import { userRoleSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, PublicUser } from '@/types/database';
+
+const updateRoleSchema = z.object({ role: userRoleSchema });
 
 // PATCH /api/admin/users/[id] — change a user's role (admin only, gated in proxy.ts)
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const body = await request.json().catch(() => ({}));
-    const role = body?.role;
+    const parsed = await parseJsonBody(request, updateRoleSchema, 'admin/users/:id');
+    if (parsed.error) return parsed.error;
+    const { role } = parsed.data;
 
-    if (typeof role !== 'string' || !USER_ROLES.includes(role as (typeof USER_ROLES)[number])) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: `Role must be one of: ${USER_ROLES.join(', ')}.` },
-        { status: 400 }
-      );
-    }
-
+    // userRoleSchema already validated `role` is one of USER_ROLES at runtime.
     const updated = await updateUserRole(id, role as (typeof USER_ROLES)[number]);
 
     if (!updated) {

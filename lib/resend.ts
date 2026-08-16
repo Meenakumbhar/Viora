@@ -198,8 +198,8 @@ export async function sendOrderStatusUpdateEmail(order: {
   });
 }
 
-export async function sendVerificationEmail(user: { email: string; name?: string | null; token: string; baseUrl: string }) {
-  const verifyUrl = `${user.baseUrl}/api/auth/verify?token=${encodeURIComponent(user.token)}`;
+export async function sendVerificationEmail(user: { email: string; name?: string | null; url: string }) {
+  const verifyUrl = user.url;
   const greetingName = user.name ? escapeHtml(user.name) : 'there';
 
   return sendEmail({
@@ -222,6 +222,41 @@ export async function sendVerificationEmail(user: { email: string; name?: string
         </p>
         <p style="font-size: 14px; line-height: 1.6; color: #8A8F96;">
           This link expires in 24 hours. If you didn't create this account, you can safely ignore this email.
+        </p>
+        <hr style="border: none; border-top: 1px solid #2A3340; margin: 32px 0;" />
+        <p style="color: #8A8F96; font-size: 14px;">
+          Memories in Prints · Global Design & Print Studio<br />
+          <a href="${SITE_URL}" style="color: #C6A85C;">${SITE_URL.replace(/^https?:\/\//, '')}</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendPasswordResetEmail(user: { email: string; name?: string | null; url: string }) {
+  const resetUrl = user.url;
+  const greetingName = user.name ? escapeHtml(user.name) : 'there';
+
+  return sendEmail({
+    to: user.email,
+    subject: 'Reset your password — Memories in Prints',
+    html: `
+      <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #0E1117; color: #F0EDE8; padding: 40px;">
+        <h1 style="font-family: Georgia, serif; color: #C6A85C; font-size: 28px; font-weight: 300;">Hi ${greetingName}, reset your password</h1>
+        <p style="font-size: 16px; line-height: 1.7; color: #F0EDE8;">
+          We received a request to reset the password for your Memories in Prints account. Click below to choose a new one.
+        </p>
+        <div style="margin: 32px 0; text-align: center;">
+          <a href="${resetUrl}" style="display: inline-block; background: #C6A85C; color: #0E1117; font-weight: 600; text-decoration: none; padding: 14px 32px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+            Reset password
+          </a>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; color: #8A8F96;">
+          Or paste this link into your browser:<br />
+          <a href="${resetUrl}" style="color: #C6A85C; word-break: break-all;">${resetUrl}</a>
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #8A8F96;">
+          This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email — your password won't be changed.
         </p>
         <hr style="border: none; border-top: 1px solid #2A3340; margin: 32px 0;" />
         <p style="color: #8A8F96; font-size: 14px;">

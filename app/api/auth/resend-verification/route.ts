@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserByEmail, setUserVerificationToken } from '@/lib/db';
-import { generateToken } from '@/lib/password';
-import { sendVerificationEmail } from '@/lib/resend';
+import { z } from 'zod';
+import { auth } from '@/lib/auth';
+import { getUserByEmail } from '@/lib/db';
+import { emailSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse } from '@/types/database';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+const resendVerificationSchema = z.object({ email: emailSchema });
 
 // Always returns the same generic message regardless of whether the email is
 // registered — avoids leaking which addresses have accounts.
@@ -13,20 +14,14 @@ const GENERIC_MESSAGE = 'If an unverified account exists for that email, a new v
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
-    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
-
-    if (!EMAIL_REGEX.test(email)) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'Please provide a valid email address.' }, { status: 400 });
-    }
+    const parsed = await parseJsonBody(request, resendVerificationSchema, 'auth/resend-verification');
+    if (parsed.error) return parsed.error;
+    const { email } = parsed.data;
 
     const user = await getUserByEmail(email);
 
     if (user && !user.email_verified) {
-      const token = generateToken();
-      const expires = new Date(Date.now() + TOKEN_TTL_MS);
-      await setUserVerificationToken(user.id, token, expires);
-      await sendVerificationEmail({ email: user.email, name: user.name, token, baseUrl: request.nextUrl.origin }).catch((err) => {
+      await auth.api.sendVerificationEmail({ body: { email, callbackURL: '/account?verified=1' } }).catch((err) => {
         console.error('[auth/resend-verification] send failed:', err);
       });
     }

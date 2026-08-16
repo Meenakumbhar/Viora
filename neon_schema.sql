@@ -5,28 +5,15 @@
 -- to initialize tables, indexes, and initial content in one click.
 -- ==============================================================================
 
--- 0. Create Users Table (customer accounts, email-verified via Resend)
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    name TEXT,
-    email_verified BOOLEAN DEFAULT FALSE NOT NULL,
-    verification_token TEXT,
-    verification_token_expires TIMESTAMPTZ,
-    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'employee', 'designer', 'proofreader', 'admin')),
-    -- Captured from the customer's first quote submission so repeat orders
-    -- don't need to re-collect contact details.
-    phone TEXT,
-    country TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_verification_token ON users(verification_token);
-
--- Add phone/country to an existing database without affecting current accounts.
-ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT;
+-- 0. Users, sessions, accounts, and email verification are now owned by
+-- Better Auth (lib/auth.ts) and defined in db/auth-schema.ts, generated via
+-- `npx @better-auth/cli generate`. This whole schema is applied with
+-- `npx drizzle-kit push` (config: drizzle.config.ts, sources: db/schema.ts +
+-- db/auth-schema.ts) rather than by hand-copying SQL from this file — that
+-- was the actual point of adopting Drizzle as the schema source of truth.
+-- The tables below (portfolio, orders, etc.) are still hand-maintained here
+-- for now; treat this file as historical/reference, not something to run
+-- against a database that already has the Drizzle-managed tables in it.
 
 -- 1. Create Enquiries Table
 CREATE TABLE IF NOT EXISTS enquiries (
@@ -39,6 +26,7 @@ CREATE TABLE IF NOT EXISTS enquiries (
     event_date DATE,
     quantity_estimate TEXT,
     description TEXT,
+    address TEXT,
     source TEXT,
     portfolio_items JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -47,6 +35,8 @@ CREATE TABLE IF NOT EXISTS enquiries (
 
 -- Add portfolio_items to an existing database without affecting current enquiries.
 ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS portfolio_items JSONB;
+-- Delivery/venue address, captured on the logged-in quick-quote form.
+ALTER TABLE enquiries ADD COLUMN IF NOT EXISTS address TEXT;
 
 -- 1a. Order Forms — the detailed print-spec form a customer fills in once a
 -- quote is placed (deceased/service details, page count, bespoke design,
@@ -99,6 +89,7 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
     category TEXT NOT NULL CHECK (category IN ('wedding', 'funeral', 'sports', 'branding', 'events')),
     tags TEXT[] NOT NULL DEFAULT '{}',
     filters JSONB NOT NULL DEFAULT '{}',
+    template_number TEXT,
     image_url TEXT NOT NULL,
     image_urls JSONB,
     description TEXT,
@@ -109,6 +100,11 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
 
 -- Add tags to an existing database without affecting current portfolio items.
 ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}';
+
+-- A plain (not unique) field for a per-item template/reference number — kept
+-- separate from the `filters` JSONB bag since it identifies the item itself
+-- rather than describing it. Not unique: some existing items share a number.
+ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS template_number TEXT;
 ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS filters JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS image_urls JSONB;
 
@@ -192,6 +188,34 @@ CREATE TABLE IF NOT EXISTS design_comments (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_design_comments_revision_id ON design_comments(revision_id);
+
+-- 9. A specific price for one actual portfolio piece, the same for every
+-- customer who doesn't have something more specific set for them.
+CREATE TABLE IF NOT EXISTS portfolio_item_prices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    portfolio_item_id UUID NOT NULL UNIQUE REFERENCES portfolio_items(id) ON DELETE CASCADE,
+    price NUMERIC(10,2) NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'GBP',
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 10. The genuinely per-customer, per-piece price — the same item can cost
+-- a different amount for different customers. Most specific price there
+-- is; wins first over portfolio_item_prices' shared baseline (see
+-- getEffectivePrice in lib/db.ts). No set_by column: admin access is a
+-- single shared password with no per-admin identity (see
+-- utils/admin-auth.ts), so there's nothing to record there.
+CREATE TABLE IF NOT EXISTS customer_item_prices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    portfolio_item_id UUID NOT NULL REFERENCES portfolio_items(id) ON DELETE CASCADE,
+    price NUMERIC(10,2) NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'GBP',
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE (user_id, portfolio_item_id)
+);
 
 -- ─── Indexes for Performance ──────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries(status, created_at DESC);

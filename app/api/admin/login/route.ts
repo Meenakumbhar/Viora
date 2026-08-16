@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { ADMIN_SESSION_COOKIE, createAdminToken } from '@/utils/admin-auth';
 import { rateLimit, getClientIp, timingSafeEqualStr } from '@/lib/rate-limit';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse } from '@/types/database';
 
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const adminLoginSchema = z.object({ password: z.string().min(1, 'Password is required.') });
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
@@ -26,10 +29,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await request.json().catch(() => ({}));
-  const password = typeof body?.password === 'string' ? body.password : '';
+  const parsed = await parseJsonBody(request, adminLoginSchema, 'admin/login');
+  if (parsed.error) return parsed.error;
+  const { password } = parsed.data;
 
-  if (!password || !timingSafeEqualStr(password, adminPassword)) {
+  if (!timingSafeEqualStr(password, adminPassword)) {
     return NextResponse.json<ApiResponse>(
       { success: false, error: 'Incorrect password.' },
       { status: 401 }

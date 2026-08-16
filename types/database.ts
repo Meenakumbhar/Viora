@@ -91,6 +91,7 @@ export interface Enquiry {
   event_date: string | null;
   quantity_estimate: string | null;
   description: string | null;
+  address: string | null;
   source: string | null;
   portfolio_items: PortfolioItemRef[] | null;
   created_at: string;
@@ -146,6 +147,7 @@ export type OrderFormInput = Partial<Omit<OrderForm, 'id' | 'enquiry_id' | 'stat
 
 export type OrderStatus = 'pending' | 'in_progress' | 'completed';
 export type PaymentStatus = 'unpaid' | 'paid' | 'failed';
+export type PaymentProvider = 'paypal' | 'stripe';
 
 export interface Order {
   id: string;
@@ -160,7 +162,9 @@ export interface Order {
   status: OrderStatus;
   payment_status: PaymentStatus;
   payment_amount: number | null;
+  payment_provider: PaymentProvider | null;
   paypal_order_id: string | null;
+  stripe_session_id: string | null;
   // Which designer the proofreader has routed this order to — null until assigned.
   assigned_designer_id: string | null;
   created_at: string;
@@ -250,20 +254,21 @@ export const USER_ROLES: UserRole[] = ['user', 'employee', 'designer', 'proofrea
 export interface User {
   id: string;
   email: string;
-  password_hash: string;
   name: string | null;
   email_verified: boolean;
-  verification_token: string | null;
-  verification_token_expires: string | null;
   role: UserRole;
   // Captured from the customer's first quote submission — lets returning
   // customers skip re-entering contact details on later orders.
   phone: string | null;
   country: string | null;
+  // Default delivery/venue address, shown like a saved Amazon address on the
+  // quick-quote form — the customer can still type a different one per order.
+  address: string | null;
   created_at: string;
 }
 
-// Safe to send to the client — never include password_hash or the raw token.
+// Same shape as User today — kept as its own type since it's the one meant
+// for client responses, in case a genuinely sensitive field is added later.
 export interface PublicUser {
   id: string;
   email: string;
@@ -272,7 +277,47 @@ export interface PublicUser {
   role: UserRole;
   phone: string | null;
   country: string | null;
+  address: string | null;
   created_at: string;
+}
+
+// A price for one specific portfolio piece, the same for every customer who
+// doesn't have something more specific set for them (see CustomerItemPrice
+// — the full lookup order is on getEffectivePrice in lib/db.ts). No row
+// means "not set" — that, combined with no CustomerItemPrice either, is
+// what "pending" means on the pricing page.
+export interface PortfolioItemPrice {
+  id: string;
+  portfolio_item_id: string;
+  price: number;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// The genuinely per-customer, per-piece price — the same item can cost a
+// different amount for different customers. Most specific price there is;
+// always wins first over PortfolioItemPrice's shared baseline.
+export interface CustomerItemPrice {
+  id: string;
+  user_id: string;
+  portfolio_item_id: string;
+  price: number;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// What a logged-in customer actually sees on the pricing page: the most
+// specific price that resolves for them (see getEffectivePrice in
+// lib/db.ts for the full order). `negotiated` distinguishes a price that's
+// personal to them (a customer-item override) from a generic item
+// baseline, so the UI can label them differently ("Your price" vs.
+// "Starting from").
+export interface EffectivePrice {
+  price: number;
+  currency: string;
+  negotiated: boolean;
 }
 
 export interface SignupPayload {
@@ -300,6 +345,7 @@ export interface PortfolioItem {
   title: string;
   category: ServiceCategory;
   filters: PortfolioFilters;
+  template_number: string | null;
   image_url: string;
   image_urls?: string[] | null;
   description: string | null;
@@ -337,13 +383,14 @@ export type BlogPost = Post;
 export interface EnquiryPayload {
   name: string;
   email: string;
-  phone?: string;
-  country?: string;
+  phone?: string | null;
+  country?: string | null;
   service_type: string;
-  event_date?: string;
-  quantity_estimate?: string;
-  description?: string;
-  source?: string;
+  event_date?: string | null;
+  quantity_estimate?: string | null;
+  description?: string | null;
+  address?: string | null;
+  source?: string | null;
   portfolio_items?: PortfolioItemRef[] | null;
 }
 

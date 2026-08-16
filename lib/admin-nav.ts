@@ -5,4 +5,5 @@ export const ADMIN_NAV_ITEMS: DashboardNavItem[] = [
   { label: 'Orders', href: '/admin/orders' },
   { label: 'Portfolio', href: '/admin/portfolio' },
   { label: 'Users', href: '/admin/users' },
+  { label: 'Pricing', href: '/admin/pricing' },
 ];

@@ -1,15 +1,10 @@
-import { NextResponse } from 'next/server';
-import { USER_SESSION_COOKIE } from '@/lib/user-session';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth, forwardSetCookie } from '@/lib/auth';
 import type { ApiResponse } from '@/types/database';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const authRes = await auth.api.signOut({ headers: request.headers, asResponse: true }).catch(() => null);
   const response = NextResponse.json<ApiResponse>({ success: true, data: null });
-  response.cookies.set(USER_SESSION_COOKIE, '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  });
+  if (authRes) forwardSetCookie(authRes, response);
   return response;
 }

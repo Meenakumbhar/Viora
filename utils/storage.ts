@@ -1,15 +1,12 @@
 /**
- * Storage URL helpers — Supporting Cloudflare R2 and Supabase Storage
- *
- * Cloudflare R2 is the primary high-performance, zero-egress file storage.
- * Supabase Storage / local assets are maintained for backwards compatibility.
+ * Storage URL helpers — Cloudflare R2 is the primary, zero-egress file
+ * storage; local /public assets are the fallback when R2 isn't configured.
  */
 
 const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || process.env.NEXT_PUBLIC_R2_URL || '';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 
 /**
- * Build a public URL for a file stored in R2 or Supabase
+ * Build a public URL for a file stored in R2
  */
 export function storageUrl(bucketOrFolder: string, path: string): string {
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
@@ -20,12 +17,7 @@ export function storageUrl(bucketOrFolder: string, path: string): string {
     return `${base}/${bucketOrFolder}/${cleanPath}`;
   }
 
-  // 2. Fallback to Supabase Storage if configured
-  if (SUPABASE_URL) {
-    return `${SUPABASE_URL}/storage/v1/object/public/${bucketOrFolder}/${cleanPath}`;
-  }
-
-  // 3. Fallback to local public static directory
+  // 2. Fallback to local public static directory
   return `/images/${bucketOrFolder}/${cleanPath}`;
 }
 
@@ -47,7 +39,7 @@ export function blogImageUrl(path: string): string {
 
 /**
  * Resolves any image URL for rendering in <img> or Next.js <Image>:
- * - Direct HTTPS URLs (R2 CDN, Supabase Storage, Cloudinary, Unsplash)
+ * - Direct HTTPS URLs (R2 CDN, Cloudinary, Unsplash)
  * - Local static paths (/images/...)
  * - Fallbacks
  */

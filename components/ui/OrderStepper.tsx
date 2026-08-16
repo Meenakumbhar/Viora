@@ -48,7 +48,7 @@ export default function OrderStepper({
               >
                 {reached ? '✓' : i + 1}
               </div>
-              <span className={`mt-2 font-mono text-[9px] uppercase tracking-widest ${reached ? 'text-accent-gold' : mutedText}`}>
+              <span className={`mt-2 font-mono text-[11px] uppercase tracking-widest ${reached ? 'text-accent-gold' : mutedText}`}>
                 {STAGE_LABELS[stage]}
               </span>
             </div>

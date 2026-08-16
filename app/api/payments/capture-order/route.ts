@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getOrderById, markOrderPaid } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
 import { getUserById } from '@/lib/db';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Order } from '@/types/database';
+
+const captureOrderSchema = z.object({
+  paypalOrderId: z.string().trim().min(1, 'paypalOrderId is required.'),
+  orderId: z.string().trim().min(1, 'orderId is required.'),
+});
 
 const PAYPAL_BASE =
   process.env.PAYPAL_MODE === 'live'
@@ -42,28 +49,20 @@ async function getPayPalAccessToken(): Promise<string> {
 export async function POST(request: NextRequest) {
   try {
     // Verify user session
-    const cookieHeader = request.headers.get('cookie') ?? '';
-    const userSessionMatch = cookieHeader.match(new RegExp(`(?:^|;\\s*)${USER_SESSION_COOKIE}=([^;]+)`));
-    const session = await verifySessionToken(userSessionMatch?.[1]);
+    const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const user = await getUserById(session.userId);
+    const user = await getUserById(session.user.id);
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const { paypalOrderId, orderId } = body;
-
-    if (typeof paypalOrderId !== 'string' || !paypalOrderId) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'paypalOrderId is required.' }, { status: 400 });
-    }
-    if (typeof orderId !== 'string' || !orderId) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'orderId is required.' }, { status: 400 });
-    }
+    const parsed = await parseJsonBody(request, captureOrderSchema, 'payments/capture-order');
+    if (parsed.error) return parsed.error;
+    const { paypalOrderId, orderId } = parsed.data;
 
     // Validate the internal order
     const order = await getOrderById(orderId);

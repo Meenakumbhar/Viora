@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getAllOrders } from '@/lib/db';
+import { getAllOrders, getAllUsers, syncOrderPricingFromCatalog } from '@/lib/db';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import OrdersAdminManager from '@/components/admin/OrdersAdminManager';
@@ -13,7 +13,17 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminOrdersPage() {
-  const orders = await getAllOrders();
+  const [rawOrders, users] = await Promise.all([getAllOrders(), getAllUsers()]);
+
+  // One email->id map instead of a per-order account lookup — this page can
+  // list every order at once. Keeps each price current with the pricing
+  // catalog (negotiated price, or the price set on the specific piece it
+  // references) instead of requiring a manual re-entry every time either
+  // changes; no-ops for orders already paid.
+  const userIdByEmail = new Map(users.map((u) => [u.email, u.id]));
+  const orders = await Promise.all(
+    rawOrders.map((order) => syncOrderPricingFromCatalog(order, userIdByEmail.get(order.customer_email) ?? null))
+  );
 
   return (
     <DashboardShell

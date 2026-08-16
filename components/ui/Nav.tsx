@@ -32,17 +32,18 @@ interface NavLink {
 }
 
 const NAV_LINKS: NavLink[] = [
-  {
-    label: 'Services',
-    href: '/services',
-    dropdown: [
-      { label: 'Wedding & Events', href: '/services/wedding-events' },
-      { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
-      { label: 'Sports & Branding', href: '/services/sports-branding' },
-      { label: 'Graphic Design', href: '/services/graphic-design' },
-      { label: 'Print & Production', href: '/services/print-production' },
-    ],
-  },
+  // Services is paused for now — see lib/active-services.ts.
+  // {
+  //   label: 'Services',
+  //   href: '/services',
+  //   dropdown: [
+  //     { label: 'Wedding & Events', href: '/services/wedding-events' },
+  //     { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
+  //     { label: 'Sports & Branding', href: '/services/sports-branding' },
+  //     { label: 'Graphic Design', href: '/services/graphic-design' },
+  //     { label: 'Print & Production', href: '/services/print-production' },
+  //   ],
+  // },
   {
     label: 'Products',
     href: '/products',
@@ -52,7 +53,7 @@ const NAV_LINKS: NavLink[] = [
     label: 'Portfolio',
     href: '/portfolio',
     dropdown: [
-      { label: 'All Work', href: '/portfolio' },
+      // "All Work" temporarily hidden — see SHOW_ALL_FILTER in PortfolioGrid.tsx.
       { label: 'Wedding', href: '/portfolio?category=wedding' },
       { label: 'Funeral', href: '/portfolio?category=funeral' },
       { label: 'Sports', href: '/portfolio?category=sports' },
@@ -78,17 +79,18 @@ interface MobileNavSection {
 }
 
 const MOBILE_NAV: MobileNavSection[] = [
-  {
-    label: 'Services',
-    href: '/services',
-    children: [
-      { label: 'Wedding & Events', href: '/services/wedding-events' },
-      { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
-      { label: 'Sports & Branding', href: '/services/sports-branding' },
-      { label: 'Graphic Design', href: '/services/graphic-design' },
-      { label: 'Print & Production', href: '/services/print-production' },
-    ],
-  },
+  // Services is paused for now — see lib/active-services.ts.
+  // {
+  //   label: 'Services',
+  //   href: '/services',
+  //   children: [
+  //     { label: 'Wedding & Events', href: '/services/wedding-events' },
+  //     { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
+  //     { label: 'Sports & Branding', href: '/services/sports-branding' },
+  //     { label: 'Graphic Design', href: '/services/graphic-design' },
+  //     { label: 'Print & Production', href: '/services/print-production' },
+  //   ],
+  // },
   {
     label: 'Products',
     href: '/products',

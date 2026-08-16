@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.85,
     }));
 
-  // ── Blog post pages (fetched from Supabase) ────────────────────────────────
+  // ── Blog post pages ─────────────────────────────────────────────────────────
   let blogRoutes: MetadataRoute.Sitemap = [];
   try {
     const posts = await getBlogPosts(100);

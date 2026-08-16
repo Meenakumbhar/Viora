@@ -6,45 +6,28 @@ import {
   proofreaderApproveRevision,
   proofreaderReturnToDesigner,
 } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
 import { sendDesignReadyEmail, sendDesignReturnedToDesignerEmail } from '@/lib/resend';
+import { designCommentsSchema, proofreadBodySchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, DesignRevision, DesignCommentInput } from '@/types/database';
 
-const MAX_COMMENT_LENGTH = 2000;
+const proofreadSchema = proofreadBodySchema(['approve', 'return_to_designer']);
 
 function sanitizeComments(input: unknown, imageCount: number): DesignCommentInput[] | null {
-  if (!Array.isArray(input)) return null;
-
-  const cleaned: DesignCommentInput[] = [];
-  for (const raw of input) {
-    if (!raw || typeof raw !== 'object') return null;
-    const { image_index, x, y, comment } = raw as Record<string, unknown>;
-
-    if (typeof image_index !== 'number' || !Number.isInteger(image_index) || image_index < 0 || image_index >= imageCount) {
-      return null;
-    }
-    if (typeof x !== 'number' || x < 0 || x > 1 || typeof y !== 'number' || y < 0 || y > 1) {
-      return null;
-    }
-    if (typeof comment !== 'string' || !comment.trim()) {
-      return null;
-    }
-
-    cleaned.push({ image_index, x, y, comment: comment.trim().slice(0, MAX_COMMENT_LENGTH) });
-  }
-
-  return cleaned;
+  const result = designCommentsSchema(imageCount).safeParse(input);
+  return result.success ? result.data : null;
 }
 
 // POST /api/staff/orders/[id]/designs/[revisionId]/proofread — approve on to the
 // customer, or return to the designer with marks. Proofreader or admin only.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string; revisionId: string }> }) {
   try {
-    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
-    const user = await getUserById(session.userId);
+    const user = await getUserById(session.user.id);
     if (!user || !['proofreader', 'admin'].includes(user.role)) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Forbidden.' }, { status: 403 });
     }
@@ -70,15 +53,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
     }
 
-    const body = await request.json().catch(() => ({}));
-    const action = body?.action;
-
-    if (action !== 'approve' && action !== 'return_to_designer') {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "Action must be 'approve' or 'return_to_designer'." },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, proofreadSchema, 'staff/.../proofread');
+    if (parsed.error) return parsed.error;
+    const { action, comments: rawComments } = parsed.data;
 
     if (action === 'approve') {
       // Approving sends this exact revision to the customer — nonsensical for one
@@ -108,8 +85,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // return_to_designer — a fresh proof needs at least one mark explaining why;
     // a customer's change request already carries its own marks, so more are optional.
     let comments: DesignCommentInput[] = [];
-    if (body?.comments !== undefined) {
-      const sanitized = sanitizeComments(body.comments, revision.image_urls.length);
+    if (rawComments !== undefined) {
+      const sanitized = sanitizeComments(rawComments, revision.image_urls.length);
       if (!sanitized) {
         return NextResponse.json<ApiResponse>({ success: false, error: 'Invalid comments.' }, { status: 400 });
       }

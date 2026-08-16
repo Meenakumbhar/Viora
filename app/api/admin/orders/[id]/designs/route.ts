@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrderById, createDesignRevision, getDesignRevisionsForOrder } from '@/lib/db';
 import { sendDesignReadyForProofreadingEmail } from '@/lib/resend';
+import { designUploadSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, DesignRevision } from '@/types/database';
 
 // GET /api/admin/orders/[id]/designs — list all revisions + comments for an order (admin only, gated in proxy.ts)
@@ -26,22 +28,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json<ApiResponse>({ success: false, error: 'Order not found.' }, { status: 404 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const imageUrls = Array.isArray(body?.imageUrls)
-      ? body.imageUrls.filter((u: unknown) => typeof u === 'string' && u.trim())
-      : [];
-    const notes = typeof body?.notes === 'string' ? body.notes : null;
-
-    if (imageUrls.length === 0) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: 'At least one image URL is required.' },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, designUploadSchema, 'admin/orders/:id/designs');
+    if (parsed.error) return parsed.error;
+    const { imageUrls, notes } = parsed.data;
 
     let revision;
     try {
-      revision = await createDesignRevision({ orderId: id, imageUrls, notes });
+      revision = await createDesignRevision({ orderId: id, imageUrls, notes: notes ?? null });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'A new upload is not allowed right now.';
       return NextResponse.json<ApiResponse>({ success: false, error: message }, { status: 409 });

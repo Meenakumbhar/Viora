@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import HeroVideo from '@/components/ui/HeroVideo';
@@ -12,10 +12,21 @@ import {
   updatePortfolioCartQuantity,
   type PortfolioCartItem,
 } from '@/utils/portfolio-cart';
+import type { EffectivePrice } from '@/types/database';
+import { formatPrice } from '@/lib/format';
 
 export default function PricingPage() {
   const [cartItems, setCartItems] = useState<PortfolioCartItem[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // A logged-in customer already has their contact details on file, so their
+  // cart should funnel into the lightweight /account/quote form rather than
+  // the full guest enquiry form.
+  const [loggedIn, setLoggedIn] = useState(false);
+  // A logged-in customer sees a price here once one exists — their own
+  // negotiated price, or the price set on the exact piece in their cart.
+  // Logged-out visitors see neither; this is unchanged for them.
+  const [effectivePrice, setEffectivePrice] = useState<EffectivePrice | null>(null);
+  const [priceLoaded, setPriceLoaded] = useState(false);
 
   useEffect(() => {
     const updateCart = () => setCartItems(readPortfolioCart());
@@ -23,6 +34,36 @@ export default function PricingPage() {
     window.addEventListener('portfolio-cart-updated', updateCart);
     return () => window.removeEventListener('portfolio-cart-updated', updateCart);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/account/me')
+      .then((res) => { if (!cancelled) setLoggedIn(res.ok); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // A specific per-piece price only makes sense to look up when the cart is
+  // exactly one real portfolio item — product cart entries use a composite
+  // `slug::size` id, not a portfolio_items id, and with several different
+  // pieces in the cart there's no single "the" item to price.
+  const singlePortfolioItemId = useMemo(() => {
+    if (cartItems.length !== 1) return null;
+    const only = cartItems[0];
+    return only.id.includes('::') ? null : only.id;
+  }, [cartItems]);
+
+  useEffect(() => {
+    if (!loggedIn) { setEffectivePrice(null); setPriceLoaded(false); return; }
+    let cancelled = false;
+    const qs = singlePortfolioItemId ? `?portfolioItemId=${encodeURIComponent(singlePortfolioItemId)}` : '';
+    fetch(`/api/account/pricing${qs}`)
+      .then((res) => (res.ok ? res.json() : { success: false }))
+      .then((json) => { if (!cancelled && json.success) setEffectivePrice(json.data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setPriceLoaded(true); });
+    return () => { cancelled = true; };
+  }, [loggedIn, singlePortfolioItemId]);
 
   return (
     <div>
@@ -171,8 +212,41 @@ export default function PricingPage() {
                   <p className="font-body text-body-base text-cat-body leading-relaxed">
                     Every project is priced individually once we&apos;ve reviewed your details — send us your selected items and we&apos;ll come back with a real quote, not an estimate.
                   </p>
+
+                  {/* Logged-in customers always see this block — their own
+                      negotiated price once one's been set, otherwise the
+                      price set on the exact piece in their cart, otherwise
+                      a plain "being prepared" message — never a blank or
+                      £0 price. Logged-out visitors see none of this. */}
+                  {loggedIn && priceLoaded && (
+                    <div className="mt-6 rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-5">
+                      {effectivePrice ? (
+                        <>
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">
+                            {effectivePrice.negotiated ? 'Your price' : 'Starting from'}
+                          </p>
+                          <p className="mt-1.5 font-display text-3xl text-cat-heading">
+                            {formatPrice(effectivePrice.price, effectivePrice.currency)}
+                          </p>
+                          <p className="mt-2 font-body text-sm text-cat-muted">
+                            {effectivePrice.negotiated
+                              ? 'This is the price we agreed for your project.'
+                              : 'A general starting estimate — your final price is confirmed once we’ve reviewed your specific request.'}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">Pricing</p>
+                          <p className="mt-1.5 font-body text-body-base text-cat-heading">
+                            Your custom pricing is being prepared — we&apos;ll let you know as soon as it&apos;s ready.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mt-8">
-                    <Button variant="primary" size="lg" href="/contact">
+                    <Button variant="primary" size="lg" href={loggedIn ? '/account/quote?cart=1' : '/contact?cart=1'}>
                       Request a final quote
                     </Button>
                   </div>

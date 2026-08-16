@@ -24,6 +24,7 @@ interface FormState {
   location: string;
   image_url: string;
   published: boolean;
+  templateNumber: string;
   filterText: Record<keyof PortfolioFilters, string>;
 }
 
@@ -36,6 +37,7 @@ function emptyForm(): FormState {
     location: '',
     image_url: '',
     published: true,
+    templateNumber: '',
     filterText: { style: '', passion: '', religion: '', colour: '', tribute: '' },
   };
 }
@@ -54,6 +56,7 @@ function toFormState(item: PortfolioItem): FormState {
     location: item.location ?? '',
     image_url: item.image_url,
     published: item.published,
+    templateNumber: item.template_number ?? '',
     filterText,
   };
 }
@@ -120,6 +123,7 @@ export default function PortfolioAdminManager({ initialItems }: { initialItems: 
       location: form.location || null,
       image_url: form.image_url,
       filters: parseFilters(form.filterText),
+      template_number: form.templateNumber.trim() || null,
       published: form.published,
     };
 
@@ -322,6 +326,19 @@ export default function PortfolioAdminManager({ initialItems }: { initialItems: 
                     className="mt-2 w-full border border-white/15 bg-transparent px-4 py-2.5 text-sm text-white outline-none focus:border-[#C6A85C]"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-mono text-[10px] uppercase tracking-widest text-white/40">
+                  Template no. <span className="normal-case text-white/25">(reference number, not required to be unique)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.templateNumber}
+                  onChange={(e) => setForm({ ...form, templateNumber: e.target.value })}
+                  placeholder="e.g. 195"
+                  className="mt-2 w-full max-w-xs border border-white/15 bg-transparent px-4 py-2.5 text-sm text-white outline-none focus:border-[#C6A85C]"
+                />
               </div>
 
               <div>

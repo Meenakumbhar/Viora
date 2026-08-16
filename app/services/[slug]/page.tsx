@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
+import ServiceVisual from '@/components/ui/three/ServiceVisual';
 import { services, getServiceBySlug, getRelatedServices } from '@/lib/data';
 import { isServiceSlugActive } from '@/lib/active-services';
 import { SITE_URL } from '@/lib/site-url';
@@ -157,6 +158,9 @@ export default async function ServicePage({ params }: PageProps) {
       <section className="relative h-[40vh] md:h-[60vh] overflow-hidden border-y border-border">
         <div className={`absolute inset-0 bg-gradient-to-tr ${gradientClass}`} />
         <div className="absolute inset-0 bg-cat-bg/30" />
+        <div className="absolute inset-0">
+          <ServiceVisual slug={service.slug} />
+        </div>
       </section>
 
       {/* Ideal Client (Who It's For) */}

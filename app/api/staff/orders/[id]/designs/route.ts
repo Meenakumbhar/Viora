@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrderById, getUserById, createDesignRevision, getDesignRevisionsForOrder } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
 import { sendDesignReadyForProofreadingEmail } from '@/lib/resend';
+import { designUploadSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, DesignRevision } from '@/types/database';
 
 // GET /api/staff/orders/[id]/designs — list all revisions + comments for an order.
 // A designer can only see orders the proofreader has routed to them.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
-    const user = await getUserById(session.userId);
+    const user = await getUserById(session.user.id);
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
@@ -42,11 +44,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // enforced here since proxy.ts only gates the namespace broadly, not per role.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
-    const user = await getUserById(session.userId);
+    const user = await getUserById(session.user.id);
     if (!user || !['designer', 'employee', 'admin'].includes(user.role)) {
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'Proofreaders cannot upload designs.' },
@@ -68,22 +70,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
     }
 
-    const body = await request.json().catch(() => ({}));
-    const imageUrls = Array.isArray(body?.imageUrls)
-      ? body.imageUrls.filter((u: unknown) => typeof u === 'string' && u.trim())
-      : [];
-    const notes = typeof body?.notes === 'string' ? body.notes : null;
-
-    if (imageUrls.length === 0) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: 'At least one image URL is required.' },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, designUploadSchema, 'staff/orders/:id/designs');
+    if (parsed.error) return parsed.error;
+    const { imageUrls, notes } = parsed.data;
 
     let revision;
     try {
-      revision = await createDesignRevision({ orderId: id, imageUrls, notes });
+      revision = await createDesignRevision({ orderId: id, imageUrls, notes: notes ?? null });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'A new upload is not allowed right now.';
       return NextResponse.json<ApiResponse>({ success: false, error: message }, { status: 409 });

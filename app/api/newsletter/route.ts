@@ -1,26 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { upsertSubscriber } from '@/lib/db';
-import type { SubscriberPayload, ApiResponse, Subscriber } from '@/types/database';
+import { emailSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
+import type { ApiResponse, Subscriber } from '@/types/database';
+
+const newsletterSchema = z.object({
+  email: emailSchema,
+  first_name: z.string().trim().max(100).optional(),
+  country: z.string().trim().max(100).optional(),
+});
 
 // POST /api/newsletter — Subscribe to newsletter
 export async function POST(request: NextRequest) {
   try {
-    const body: SubscriberPayload = await request.json();
-
-    if (!body.email?.trim()) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: 'Email address is required.' },
-        { status: 400 }
-      );
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: 'Please provide a valid email address.' },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, newsletterSchema, 'newsletter');
+    if (parsed.error) return parsed.error;
+    const body = parsed.data;
 
     const result = await upsertSubscriber(body);
 

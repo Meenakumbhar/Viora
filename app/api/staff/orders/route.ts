@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllOrders, getUserById } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
 import type { ApiResponse } from '@/types/database';
 
 // GET /api/staff/orders — order list for the staff dashboard (staff role only, gated in proxy.ts).
@@ -8,8 +8,8 @@ import type { ApiResponse } from '@/types/database';
 // A designer only ever sees orders the proofreader has assigned to them.
 export async function GET(request: NextRequest) {
   try {
-    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
-    const user = session ? await getUserById(session.userId) : null;
+    const session = await auth.api.getSession({ headers: request.headers });
+    const user = session ? await getUserById(session.user.id) : null;
 
     const orders = await getAllOrders();
     const visible = user?.role === 'designer' ? orders.filter((o) => o.assigned_designer_id === user.id) : orders;

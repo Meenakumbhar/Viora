@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 import { Cormorant_Garamond, DM_Sans, DM_Mono } from 'next/font/google';
 import Nav from '@/components/ui/Nav';
 import Footer from '@/components/ui/Footer';
@@ -122,6 +123,7 @@ export default function RootLayout({
           <PageTransition>{children}</PageTransition>
         </CategoryWrapper>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );

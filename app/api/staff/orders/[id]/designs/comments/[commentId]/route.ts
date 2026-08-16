@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { setCommentResolution, getUserById } from '@/lib/db';
-import { verifySessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
+import { auth } from '@/lib/auth';
+import { commentResolutionSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, DesignComment, CommentResolutionField } from '@/types/database';
 
 // Designer/employee can only mark their own "fixed" status; proofreader can only
@@ -17,26 +19,20 @@ function allowedField(role: string): CommentResolutionField[] {
 // resolved/unresolved, scoped to the caller's own role.
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; commentId: string }> }) {
   try {
-    const session = await verifySessionToken(request.cookies.get(USER_SESSION_COOKIE)?.value);
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
-    const user = await getUserById(session.userId);
+    const user = await getUserById(session.user.id);
     if (!user) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
     const { commentId } = await params;
-    const body = await request.json().catch(() => ({}));
-    const field = body?.field;
-    const value = Boolean(body?.value);
+    const parsed = await parseJsonBody(request, commentResolutionSchema, 'staff/.../comments/:commentId');
+    if (parsed.error) return parsed.error;
+    const { field, value } = parsed.data;
 
-    if (field !== 'designer_resolved' && field !== 'proofreader_resolved') {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "field must be 'designer_resolved' or 'proofreader_resolved'." },
-        { status: 400 }
-      );
-    }
     if (!allowedField(user.role).includes(field)) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Forbidden.' }, { status: 403 });
     }

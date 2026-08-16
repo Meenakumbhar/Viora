@@ -57,7 +57,13 @@ const CONTACTS = [
   },
 ];
 
-export default function ContactPage() {
+interface ContactPageProps {
+  searchParams: Promise<{ service?: string; details?: string; cart?: string }>;
+}
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const { service, details, cart } = await searchParams;
+
   return (
     <main id="main-content" className="bg-bg-primary min-h-screen">
       {/* ── Page header ────────────────────────────────────────────── */}
@@ -79,7 +85,7 @@ export default function ContactPage() {
 
       {/* ── Form section ───────────────────────────────────────────── */}
       <section className="container-wide py-16 max-w-2xl">
-        <QuoteForm />
+        <QuoteForm initialService={service} initialDetails={details} fromCart={cart === '1'} />
       </section>
 
       {/* ── Divider ────────────────────────────────────────────────── */}

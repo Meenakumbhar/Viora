@@ -1,4 +1,19 @@
-import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+import { eq, and, gt, asc, desc, inArray, sql as dsql } from 'drizzle-orm';
+import { getDrizzle } from '@/db/client';
+import {
+  portfolioItems as portfolioItemsTable,
+  posts as postsTable,
+  subscribers as subscribersTable,
+  enquiries as enquiriesTable,
+  orderForms as orderFormsTable,
+  orders as ordersTable,
+  orderStatusHistory as orderStatusHistoryTable,
+  designRevisions as designRevisionsTable,
+  designComments as designCommentsTable,
+  portfolioItemPrices as portfolioItemPricesTable,
+  customerItemPrices as customerItemPricesTable,
+} from '@/db/schema';
+import { user as usersTable } from '@/db/auth-schema';
 import { portfolioItems as staticPortfolio, blogPosts as staticBlog } from './data';
 import type {
   PortfolioItem,
@@ -25,25 +40,14 @@ import type {
   OrderForm,
   OrderFormInput,
   OrderFormProduct,
+  PortfolioItemPrice,
+  CustomerItemPrice,
+  EffectivePrice,
 } from '@/types/database';
 
 /**
- * Neon Serverless PostgreSQL Client & Repository Helpers
+ * Drizzle-backed Repository Helpers (Neon serverless Postgres)
  */
-
-const DATABASE_URL = process.env.DATABASE_URL;
-
-let sqlInstance: NeonQueryFunction<false, false> | null = null;
-
-export function getDb(): NeonQueryFunction<false, false> | null {
-  if (!DATABASE_URL) {
-    return null;
-  }
-  if (!sqlInstance) {
-    sqlInstance = neon(DATABASE_URL);
-  }
-  return sqlInstance;
-}
 
 // ─── Row Normalizers ─────────────────────────────────────────────────────────
 
@@ -76,15 +80,13 @@ function normalizeUser(row: any): User {
   return {
     id: String(row.id),
     email: String(row.email ?? ''),
-    password_hash: String(row.password_hash ?? ''),
     name: row.name != null ? String(row.name) : null,
-    email_verified: Boolean(row.email_verified),
-    verification_token: row.verification_token != null ? String(row.verification_token) : null,
-    verification_token_expires: row.verification_token_expires != null ? toIsoTimestampString(row.verification_token_expires) : null,
+    email_verified: Boolean(row.emailVerified),
     role,
     phone: row.phone != null ? String(row.phone) : null,
     country: row.country != null ? String(row.country) : null,
-    created_at: toIsoTimestampString(row.created_at),
+    address: row.address != null ? String(row.address) : null,
+    created_at: toIsoTimestampString(row.createdAt),
   };
 }
 
@@ -97,6 +99,7 @@ export function toPublicUser(user: User): PublicUser {
     role: user.role,
     phone: user.phone,
     country: user.country,
+    address: user.address,
     created_at: user.created_at,
   };
 }
@@ -122,6 +125,7 @@ function normalizePortfolioItem(row: any): PortfolioItem {
     title: String(row.title ?? ''),
     category: row.category as ServiceCategory,
     filters: typeof row.filters === 'object' && row.filters !== null ? row.filters : {},
+    template_number: row.template_number != null ? String(row.template_number) : null,
     image_url: String(row.image_url ?? ''),
     image_urls: Array.isArray(row.image_urls) ? row.image_urls : null,
     description: row.description != null ? String(row.description) : null,
@@ -153,6 +157,7 @@ function normalizeEnquiry(row: any): Enquiry {
     event_date: row.event_date != null ? toIsoDateString(row.event_date) : null,
     quantity_estimate: row.quantity_estimate != null ? String(row.quantity_estimate) : null,
     description: row.description != null ? String(row.description) : null,
+    address: row.address != null ? String(row.address) : null,
     source: row.source != null ? String(row.source) : null,
     portfolio_items: normalizePortfolioItemRefs(row.portfolio_items),
     created_at: toIsoTimestampString(row.created_at),
@@ -174,7 +179,9 @@ function normalizeOrder(row: any): Order {
     status: row.status,
     payment_status: (row.payment_status as string) === 'paid' ? 'paid' : row.payment_status === 'failed' ? 'failed' : 'unpaid',
     payment_amount: row.payment_amount != null ? Number(row.payment_amount) : null,
+    payment_provider: row.payment_provider === 'paypal' || row.payment_provider === 'stripe' ? row.payment_provider : null,
     paypal_order_id: row.paypal_order_id != null ? String(row.paypal_order_id) : null,
+    stripe_session_id: row.stripe_session_id != null ? String(row.stripe_session_id) : null,
     assigned_designer_id: row.assigned_designer_id != null ? String(row.assigned_designer_id) : null,
     created_at: toIsoTimestampString(row.created_at),
     updated_at: toIsoTimestampString(row.updated_at),
@@ -247,31 +254,24 @@ function normalizeSubscriber(row: any): Subscriber {
 // ─── Portfolio ────────────────────────────────────────────────────────────────
 
 export async function getPortfolioItems(category?: string): Promise<PortfolioItem[]> {
-  const sql = getDb();
+  const db = getDrizzle();
 
-  if (sql) {
+  if (db) {
     try {
-      let rows;
-      if (category && category !== 'all') {
-        rows = await sql`
-          SELECT id, title, category, filters, image_url, image_urls, description, location, published, created_at
-          FROM portfolio_items
-          WHERE published = true AND category = ${category}
-          ORDER BY created_at DESC
-        `;
-      } else {
-        rows = await sql`
-          SELECT id, title, category, filters, image_url, image_urls, description, location, published, created_at
-          FROM portfolio_items
-          WHERE published = true
-          ORDER BY created_at DESC
-        `;
-      }
+      const where =
+        category && category !== 'all'
+          ? and(eq(portfolioItemsTable.published, true), eq(portfolioItemsTable.category, category))
+          : eq(portfolioItemsTable.published, true);
 
-      if (rows && rows.length > 0) {
-        return (rows as any[]).map(normalizePortfolioItem);
-      }
+      const rows = await db
+        .select()
+        .from(portfolioItemsTable)
+        .where(where)
+        .orderBy(desc(portfolioItemsTable.created_at));
 
+      if (rows.length > 0) {
+        return rows.map(normalizePortfolioItem);
+      }
     } catch (err) {
       console.error('[db] getPortfolioItems error:', err);
     }
@@ -288,6 +288,7 @@ export async function getPortfolioItems(category?: string): Promise<PortfolioIte
     title: item.title,
     category: item.category as ServiceCategory,
     filters: item.filters,
+    template_number: null,
     image_url: `/images/portfolio/${item.category}.jpg`,
     description: item.description,
     location: item.location,
@@ -297,15 +298,14 @@ export async function getPortfolioItems(category?: string): Promise<PortfolioIte
 }
 
 export async function getPortfolioItemById(id: string): Promise<PortfolioItem | null> {
-  const sql = getDb();
-  if (sql) {
+  const db = getDrizzle();
+  if (db) {
     try {
-      const rows = await sql`
-        SELECT id, title, category, filters, image_url, image_urls, description, location, published, created_at
-        FROM portfolio_items
-        WHERE id = ${id} AND published = true
-        LIMIT 1
-      `;
+      const rows = await db
+        .select()
+        .from(portfolioItemsTable)
+        .where(and(eq(portfolioItemsTable.id, id), eq(portfolioItemsTable.published, true)))
+        .limit(1);
       if (rows.length > 0) return normalizePortfolioItem(rows[0]);
     } catch (err) {
       console.error(`[db] getPortfolioItemById(${id}) error:`, err);
@@ -320,6 +320,7 @@ export async function getPortfolioItemById(id: string): Promise<PortfolioItem | 
         title: item.title,
         category: item.category as ServiceCategory,
         filters: item.filters,
+        template_number: null,
         image_url: `/images/portfolio/${item.category}.jpg`,
         description: item.description,
         location: item.location,
@@ -333,6 +334,7 @@ export interface PortfolioItemInput {
   title: string;
   category: ServiceCategory;
   filters: PortfolioFilters;
+  template_number?: string | null;
   image_url: string;
   image_urls?: string[] | null;
   description: string | null;
@@ -342,16 +344,12 @@ export interface PortfolioItemInput {
 
 // Admin-only: every item regardless of published state
 export async function getAllPortfolioItemsForAdmin(): Promise<PortfolioItem[]> {
-  const sql = getDb();
-  if (!sql) return [];
+  const db = getDrizzle();
+  if (!db) return [];
 
   try {
-    const rows = await sql`
-      SELECT id, title, category, filters, image_url, image_urls, description, location, published, created_at
-      FROM portfolio_items
-      ORDER BY created_at DESC
-    `;
-    return (rows as any[]).map(normalizePortfolioItem);
+    const rows = await db.select().from(portfolioItemsTable).orderBy(desc(portfolioItemsTable.created_at));
+    return rows.map(normalizePortfolioItem);
   } catch (err) {
     console.error('[db] getAllPortfolioItemsForAdmin error:', err);
     return [];
@@ -359,84 +357,80 @@ export async function getAllPortfolioItemsForAdmin(): Promise<PortfolioItem[]> {
 }
 
 export async function createPortfolioItem(input: PortfolioItemInput): Promise<PortfolioItem> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
-  const imageUrlsJson = input.image_urls && input.image_urls.length > 0 ? JSON.stringify(input.image_urls) : null;
-
-  const rows = await sql`
-    INSERT INTO portfolio_items (title, category, filters, image_url, image_urls, description, location, published)
-    VALUES (
-      ${input.title.trim()},
-      ${input.category},
-      ${JSON.stringify(input.filters ?? {})}::jsonb,
-      ${input.image_url},
-      ${imageUrlsJson}::jsonb,
-      ${input.description?.trim() || null},
-      ${input.location?.trim() || null},
-      ${input.published}
-    )
-    RETURNING id, title, category, filters, image_url, image_urls, description, location, published, created_at
-  `;
+  const rows = await db
+    .insert(portfolioItemsTable)
+    .values({
+      title: input.title.trim(),
+      category: input.category,
+      filters: input.filters ?? {},
+      template_number: input.template_number?.trim() || null,
+      image_url: input.image_url,
+      image_urls: input.image_urls && input.image_urls.length > 0 ? input.image_urls : null,
+      description: input.description?.trim() || null,
+      location: input.location?.trim() || null,
+      published: input.published,
+    })
+    .returning();
 
   return normalizePortfolioItem(rows[0]);
 }
 
 export async function updatePortfolioItem(id: string, input: PortfolioItemInput): Promise<PortfolioItem | null> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
-  const imageUrlsJson = input.image_urls && input.image_urls.length > 0 ? JSON.stringify(input.image_urls) : null;
-
-  const rows = await sql`
-    UPDATE portfolio_items
-    SET
-      title = ${input.title.trim()},
-      category = ${input.category},
-      filters = ${JSON.stringify(input.filters ?? {})}::jsonb,
-      image_url = ${input.image_url},
-      image_urls = ${imageUrlsJson}::jsonb,
-      description = ${input.description?.trim() || null},
-      location = ${input.location?.trim() || null},
-      published = ${input.published}
-    WHERE id = ${id}
-    RETURNING id, title, category, filters, image_url, image_urls, description, location, published, created_at
-  `;
+  const rows = await db
+    .update(portfolioItemsTable)
+    .set({
+      title: input.title.trim(),
+      category: input.category,
+      filters: input.filters ?? {},
+      template_number: input.template_number?.trim() || null,
+      image_url: input.image_url,
+      image_urls: input.image_urls && input.image_urls.length > 0 ? input.image_urls : null,
+      description: input.description?.trim() || null,
+      location: input.location?.trim() || null,
+      published: input.published,
+    })
+    .where(eq(portfolioItemsTable.id, id))
+    .returning();
 
   return rows.length > 0 ? normalizePortfolioItem(rows[0]) : null;
 }
 
 export async function deletePortfolioItem(id: string): Promise<boolean> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
-  const rows = await sql`DELETE FROM portfolio_items WHERE id = ${id} RETURNING id`;
+  const rows = await db.delete(portfolioItemsTable).where(eq(portfolioItemsTable.id, id)).returning({ id: portfolioItemsTable.id });
   return rows.length > 0;
 }
 
 // ─── Blog Posts ───────────────────────────────────────────────────────────────
 
 export async function getBlogPosts(limit = 20): Promise<Post[]> {
-  const sql = getDb();
+  const db = getDrizzle();
 
-  if (sql) {
+  if (db) {
     try {
-      const rows = await sql`
-        SELECT id, title, slug, content, excerpt, category, image_url, published_at, published, created_at
-        FROM posts
-        WHERE published = true
-        ORDER BY published_at DESC
-        LIMIT ${limit}
-      `;
+      const rows = await db
+        .select()
+        .from(postsTable)
+        .where(eq(postsTable.published, true))
+        .orderBy(desc(postsTable.published_at))
+        .limit(limit);
 
-      if (rows && rows.length > 0) {
-        return (rows as any[]).map(normalizePost);
+      if (rows.length > 0) {
+        return rows.map(normalizePost);
       }
     } catch (err) {
       console.error('[db] getBlogPosts error:', err);
@@ -459,18 +453,17 @@ export async function getBlogPosts(limit = 20): Promise<Post[]> {
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<Post | null> {
-  const sql = getDb();
+  const db = getDrizzle();
 
-  if (sql) {
+  if (db) {
     try {
-      const rows = await sql`
-        SELECT id, title, slug, content, excerpt, category, image_url, published_at, published, created_at
-        FROM posts
-        WHERE slug = ${slug} AND published = true
-        LIMIT 1
-      `;
+      const rows = await db
+        .select()
+        .from(postsTable)
+        .where(and(eq(postsTable.slug, slug), eq(postsTable.published, true)))
+        .limit(1);
 
-      if (rows && rows.length > 0) {
+      if (rows.length > 0) {
         return normalizePost(rows[0]);
       }
     } catch (err) {
@@ -501,43 +494,28 @@ export async function getBlogPostBySlug(slug: string): Promise<Post | null> {
 // ─── Enquiries ────────────────────────────────────────────────────────────────
 
 export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
-  const portfolioItemsJson = payload.portfolio_items && payload.portfolio_items.length > 0
-    ? JSON.stringify(payload.portfolio_items)
-    : null;
-
-  const rows = await sql`
-    INSERT INTO enquiries (
-      name,
-      email,
-      phone,
-      country,
-      service_type,
-      event_date,
-      quantity_estimate,
-      description,
-      source,
-      portfolio_items,
-      status
-    ) VALUES (
-      ${payload.name.trim()},
-      ${payload.email.trim().toLowerCase()},
-      ${payload.phone?.trim() || null},
-      ${payload.country?.trim() || null},
-      ${payload.service_type},
-      ${payload.event_date || null},
-      ${payload.quantity_estimate || null},
-      ${payload.description?.trim() || null},
-      ${payload.source || 'website'},
-      ${portfolioItemsJson}::jsonb,
-      'new'
-    )
-    RETURNING id, name, email, phone, country, service_type, event_date, quantity_estimate, description, source, portfolio_items, created_at, status
-  `;
+  const rows = await db
+    .insert(enquiriesTable)
+    .values({
+      name: payload.name.trim(),
+      email: payload.email.trim().toLowerCase(),
+      phone: payload.phone?.trim() || null,
+      country: payload.country?.trim() || null,
+      service_type: payload.service_type,
+      event_date: payload.event_date || null,
+      quantity_estimate: payload.quantity_estimate || null,
+      description: payload.description?.trim() || null,
+      address: payload.address?.trim() || null,
+      source: payload.source || 'website',
+      portfolio_items: payload.portfolio_items && payload.portfolio_items.length > 0 ? payload.portfolio_items : null,
+      status: 'new',
+    })
+    .returning();
 
   return normalizeEnquiry(rows[0]);
 }
@@ -545,29 +523,23 @@ export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
 // The enquiry's own UUID doubles as the access key for its order form —
 // unguessable, no login required, matches how portfolio/product pages work.
 export async function getEnquiryById(id: string): Promise<Enquiry | null> {
-  const sql = getDb();
-  if (!sql) return null;
+  const db = getDrizzle();
+  if (!db) return null;
 
-  const rows = await sql`
-    SELECT id, name, email, phone, country, service_type, event_date, quantity_estimate, description, source, portfolio_items, created_at, status
-    FROM enquiries
-    WHERE id = ${id}
-    LIMIT 1
-  `;
+  const rows = await db.select().from(enquiriesTable).where(eq(enquiriesTable.id, id)).limit(1);
 
   return rows.length > 0 ? normalizeEnquiry(rows[0]) : null;
 }
 
 export async function getEnquiriesByEmail(email: string): Promise<Enquiry[]> {
-  const sql = getDb();
-  if (!sql) return [];
+  const db = getDrizzle();
+  if (!db) return [];
 
-  const rows = await sql`
-    SELECT id, name, email, phone, country, service_type, event_date, quantity_estimate, description, source, portfolio_items, created_at, status
-    FROM enquiries
-    WHERE email = ${email.trim().toLowerCase()}
-    ORDER BY created_at DESC
-  `;
+  const rows = await db
+    .select()
+    .from(enquiriesTable)
+    .where(eq(enquiriesTable.email, email.trim().toLowerCase()))
+    .orderBy(desc(enquiriesTable.created_at));
 
   return rows.map(normalizeEnquiry);
 }
@@ -575,12 +547,10 @@ export async function getEnquiriesByEmail(email: string): Promise<Enquiry[]> {
 // ─── Order Forms ────────────────────────────────────────────────────────────────
 
 export async function getOrderFormByEnquiryId(enquiryId: string): Promise<OrderForm | null> {
-  const sql = getDb();
-  if (!sql) return null;
+  const db = getDrizzle();
+  if (!db) return null;
 
-  const rows = await sql`
-    SELECT * FROM order_forms WHERE enquiry_id = ${enquiryId} LIMIT 1
-  `;
+  const rows = await db.select().from(orderFormsTable).where(eq(orderFormsTable.enquiry_id, enquiryId)).limit(1);
 
   return rows.length > 0 ? normalizeOrderForm(rows[0]) : null;
 }
@@ -592,145 +562,74 @@ export async function upsertOrderForm(
   input: OrderFormInput,
   submit: boolean
 ): Promise<OrderForm> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
-  const productsJson = input.additional_products && input.additional_products.length > 0
-    ? JSON.stringify(input.additional_products)
-    : null;
+  const values = {
+    deceased_name: input.deceased_name?.trim() || null,
+    funeral_date: input.funeral_date || null,
+    funeral_time: input.funeral_time?.trim() || null,
+    venue_name: input.venue_name?.trim() || null,
+    date_of_birth: input.date_of_birth || null,
+    date_of_death: input.date_of_death || null,
+    age_of_deceased: input.age_of_deceased?.trim() || null,
+    photo_option: input.photo_option || null,
+    bespoke_design: input.bespoke_design ?? false,
+    bespoke_details: input.bespoke_details?.trim() || null,
+    number_of_pages: input.number_of_pages || null,
+    inside_pages_style: input.inside_pages_style || null,
+    quantity: input.quantity?.trim() || null,
+    photo_qty: input.photo_qty ?? null,
+    photo_supplied_via: input.photo_supplied_via || null,
+    photo_instructions: input.photo_instructions?.trim() || null,
+    additional_products:
+      input.additional_products && input.additional_products.length > 0 ? input.additional_products : null,
+    callback_requested: input.callback_requested ?? false,
+    callback_phone: input.callback_phone?.trim() || null,
+    additional_notes: input.additional_notes?.trim() || null,
+    status: submit ? 'submitted' : 'draft',
+  };
 
-  const rows = await sql`
-    INSERT INTO order_forms (
-      enquiry_id, deceased_name, funeral_date, funeral_time, venue_name,
-      date_of_birth, date_of_death, age_of_deceased, photo_option,
-      bespoke_design, bespoke_details, number_of_pages, inside_pages_style,
-      quantity, photo_qty, photo_supplied_via, photo_instructions,
-      additional_products, callback_requested, callback_phone, additional_notes, status
-    ) VALUES (
-      ${enquiryId}, ${input.deceased_name?.trim() || null}, ${input.funeral_date || null}, ${input.funeral_time?.trim() || null}, ${input.venue_name?.trim() || null},
-      ${input.date_of_birth || null}, ${input.date_of_death || null}, ${input.age_of_deceased?.trim() || null}, ${input.photo_option || null},
-      ${input.bespoke_design ?? false}, ${input.bespoke_details?.trim() || null}, ${input.number_of_pages || null}, ${input.inside_pages_style || null},
-      ${input.quantity?.trim() || null}, ${input.photo_qty ?? null}, ${input.photo_supplied_via || null}, ${input.photo_instructions?.trim() || null},
-      ${productsJson}::jsonb, ${input.callback_requested ?? false}, ${input.callback_phone?.trim() || null}, ${input.additional_notes?.trim() || null},
-      ${submit ? 'submitted' : 'draft'}
-    )
-    ON CONFLICT (enquiry_id) DO UPDATE SET
-      deceased_name = EXCLUDED.deceased_name,
-      funeral_date = EXCLUDED.funeral_date,
-      funeral_time = EXCLUDED.funeral_time,
-      venue_name = EXCLUDED.venue_name,
-      date_of_birth = EXCLUDED.date_of_birth,
-      date_of_death = EXCLUDED.date_of_death,
-      age_of_deceased = EXCLUDED.age_of_deceased,
-      photo_option = EXCLUDED.photo_option,
-      bespoke_design = EXCLUDED.bespoke_design,
-      bespoke_details = EXCLUDED.bespoke_details,
-      number_of_pages = EXCLUDED.number_of_pages,
-      inside_pages_style = EXCLUDED.inside_pages_style,
-      quantity = EXCLUDED.quantity,
-      photo_qty = EXCLUDED.photo_qty,
-      photo_supplied_via = EXCLUDED.photo_supplied_via,
-      photo_instructions = EXCLUDED.photo_instructions,
-      additional_products = EXCLUDED.additional_products,
-      callback_requested = EXCLUDED.callback_requested,
-      callback_phone = EXCLUDED.callback_phone,
-      additional_notes = EXCLUDED.additional_notes,
-      status = EXCLUDED.status,
-      updated_at = NOW()
-    RETURNING *
-  `;
+  const rows = await db
+    .insert(orderFormsTable)
+    .values({ enquiry_id: enquiryId, ...values })
+    .onConflictDoUpdate({
+      target: orderFormsTable.enquiry_id,
+      set: { ...values, updated_at: new Date() },
+    })
+    .returning();
 
   return normalizeOrderForm(rows[0]);
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
-
-export async function createUser(input: {
-  email: string;
-  passwordHash: string;
-  name?: string | null;
-  verificationToken: string;
-  verificationTokenExpires: Date;
-}): Promise<User> {
-  const sql = getDb();
-  if (!sql) {
-    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
-  }
-
-  const rows = await sql`
-    INSERT INTO users (email, password_hash, name, email_verified, verification_token, verification_token_expires, role)
-    VALUES (
-      ${input.email.trim().toLowerCase()},
-      ${input.passwordHash},
-      ${input.name?.trim() || null},
-      false,
-      ${input.verificationToken},
-      ${input.verificationTokenExpires.toISOString()},
-      'user'
-    )
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
-  `;
-
-  return normalizeUser(rows[0]);
-}
+// User creation, login, and email verification are now handled by Better Auth
+// (see lib/auth.ts) — it owns the `user`/`session`/`account`/`verification`
+// tables. These helpers just read/update the profile fields the rest of the
+// app needs (role, phone, country), same as before.
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const sql = getDb();
-  if (!sql) return null;
+  const db = getDrizzle();
+  if (!db) return null;
 
-  const rows = await sql`
-    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
-    FROM users
-    WHERE email = ${email.trim().toLowerCase()}
-    LIMIT 1
-  `;
+  const rows = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email.trim().toLowerCase()))
+    .limit(1);
 
   return rows.length > 0 ? normalizeUser(rows[0]) : null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  const sql = getDb();
-  if (!sql) return null;
+  const db = getDrizzle();
+  if (!db) return null;
 
-  const rows = await sql`
-    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
-    FROM users
-    WHERE id = ${id}
-    LIMIT 1
-  `;
+  const rows = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
 
   return rows.length > 0 ? normalizeUser(rows[0]) : null;
-}
-
-// Verifies a token, atomically marking the account verified only if the token
-// matches and hasn't expired — returns null for any invalid/expired/reused token.
-export async function verifyUserByToken(token: string): Promise<User | null> {
-  const sql = getDb();
-  if (!sql) return null;
-
-  const rows = await sql`
-    UPDATE users
-    SET email_verified = true, verification_token = NULL, verification_token_expires = NULL
-    WHERE verification_token = ${token} AND verification_token_expires > NOW()
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
-  `;
-
-  return rows.length > 0 ? normalizeUser(rows[0]) : null;
-}
-
-export async function setUserVerificationToken(userId: string, token: string, expires: Date): Promise<void> {
-  const sql = getDb();
-  if (!sql) {
-    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
-  }
-
-  await sql`
-    UPDATE users
-    SET verification_token = ${token}, verification_token_expires = ${expires.toISOString()}
-    WHERE id = ${userId}
-  `;
 }
 
 // Captures contact details from a quote submission onto the user's own profile
@@ -739,20 +638,26 @@ export async function setUserVerificationToken(userId: string, token: string, ex
 // on a later order shouldn't wipe out a value saved on an earlier one.
 export async function updateUserProfile(
   userId: string,
-  input: { name?: string | null; phone?: string | null; country?: string | null }
+  input: { name?: string | null; phone?: string | null; country?: string | null; address?: string | null }
 ): Promise<User | null> {
-  const sql = getDb();
-  if (!sql) return null;
+  const db = getDrizzle();
+  if (!db) return null;
 
-  const rows = await sql`
-    UPDATE users
-    SET
-      name = COALESCE(${input.name?.trim() || null}, name),
-      phone = COALESCE(${input.phone?.trim() || null}, phone),
-      country = COALESCE(${input.country?.trim() || null}, country)
-    WHERE id = ${userId}
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
-  `;
+  const patch: Partial<typeof usersTable.$inferInsert> = {};
+  const name = input.name?.trim() || null;
+  const phone = input.phone?.trim() || null;
+  const country = input.country?.trim() || null;
+  const address = input.address?.trim() || null;
+  if (name) patch.name = name;
+  if (phone) patch.phone = phone;
+  if (country) patch.country = country;
+  if (address) patch.address = address;
+
+  if (Object.keys(patch).length === 0) {
+    return getUserById(userId);
+  }
+
+  const rows = await db.update(usersTable).set(patch).where(eq(usersTable.id, userId)).returning();
 
   return rows.length > 0 ? normalizeUser(rows[0]) : null;
 }
@@ -760,31 +665,202 @@ export async function updateUserProfile(
 // ─── Roles (admin-assigned only — never settable from public signup) ──────────
 
 export async function getAllUsers(): Promise<User[]> {
-  const sql = getDb();
-  if (!sql) return [];
+  const db = getDrizzle();
+  if (!db) return [];
 
-  const rows = await sql`
-    SELECT id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
-    FROM users
-    ORDER BY created_at DESC
-  `;
+  const rows = await db.select().from(usersTable).orderBy(desc(usersTable.createdAt));
 
   return rows.map(normalizeUser);
 }
 
+// ─── Portfolio item pricing (a specific price for one actual piece) ───────────
+
+function normalizePortfolioItemPrice(row: any): PortfolioItemPrice {
+  return {
+    id: String(row.id),
+    portfolio_item_id: String(row.portfolio_item_id),
+    price: Number(row.price),
+    currency: String(row.currency),
+    created_at: toIsoTimestampString(row.created_at),
+    updated_at: toIsoTimestampString(row.updated_at),
+  };
+}
+
+export async function getPortfolioItemPrice(portfolioItemId: string): Promise<PortfolioItemPrice | null> {
+  const db = getDrizzle();
+  if (!db) return null;
+
+  const rows = await db
+    .select()
+    .from(portfolioItemPricesTable)
+    .where(eq(portfolioItemPricesTable.portfolio_item_id, portfolioItemId))
+    .limit(1);
+
+  return rows.length > 0 ? normalizePortfolioItemPrice(rows[0]) : null;
+}
+
+// For the admin pricing table — every item price at once, joined
+// client-side against getAllPortfolioItemsForAdmin() rather than a
+// per-item round trip.
+export async function getAllPortfolioItemPrices(): Promise<PortfolioItemPrice[]> {
+  const db = getDrizzle();
+  if (!db) return [];
+
+  const rows = await db.select().from(portfolioItemPricesTable);
+
+  return rows.map(normalizePortfolioItemPrice);
+}
+
+export async function upsertPortfolioItemPrice(
+  portfolioItemId: string,
+  price: number,
+  currency: string
+): Promise<PortfolioItemPrice> {
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const rows = await db
+    .insert(portfolioItemPricesTable)
+    .values({ portfolio_item_id: portfolioItemId, price: price.toString(), currency })
+    .onConflictDoUpdate({
+      target: portfolioItemPricesTable.portfolio_item_id,
+      set: { price: price.toString(), currency, updated_at: new Date() },
+    })
+    .returning();
+
+  return normalizePortfolioItemPrice(rows[0]);
+}
+
+// ─── Customer × item pricing (the same piece, priced differently per customer) ─
+
+function normalizeCustomerItemPrice(row: any): CustomerItemPrice {
+  return {
+    id: String(row.id),
+    user_id: String(row.user_id),
+    portfolio_item_id: String(row.portfolio_item_id),
+    price: Number(row.price),
+    currency: String(row.currency),
+    created_at: toIsoTimestampString(row.created_at),
+    updated_at: toIsoTimestampString(row.updated_at),
+  };
+}
+
+export async function getCustomerItemPrice(userId: string, portfolioItemId: string): Promise<CustomerItemPrice | null> {
+  const db = getDrizzle();
+  if (!db) return null;
+
+  const rows = await db
+    .select()
+    .from(customerItemPricesTable)
+    .where(and(eq(customerItemPricesTable.user_id, userId), eq(customerItemPricesTable.portfolio_item_id, portfolioItemId)))
+    .limit(1);
+
+  return rows.length > 0 ? normalizeCustomerItemPrice(rows[0]) : null;
+}
+
+// For the admin UI — every customer/item override at once, filtered
+// client-side to whichever customer is currently selected.
+export async function getAllCustomerItemPrices(): Promise<CustomerItemPrice[]> {
+  const db = getDrizzle();
+  if (!db) return [];
+
+  const rows = await db.select().from(customerItemPricesTable);
+
+  return rows.map(normalizeCustomerItemPrice);
+}
+
+export async function upsertCustomerItemPrice(
+  userId: string,
+  portfolioItemId: string,
+  price: number,
+  currency: string
+): Promise<CustomerItemPrice> {
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const rows = await db
+    .insert(customerItemPricesTable)
+    .values({ user_id: userId, portfolio_item_id: portfolioItemId, price: price.toString(), currency })
+    .onConflictDoUpdate({
+      target: [customerItemPricesTable.user_id, customerItemPricesTable.portfolio_item_id],
+      set: { price: price.toString(), currency, updated_at: new Date() },
+    })
+    .returning();
+
+  return normalizeCustomerItemPrice(rows[0]);
+}
+
+// What the pricing page actually renders for a logged-in customer, most
+// specific first:
+// 1. Their price for this exact piece (customerItemPrices).
+// 2. This piece's shared baseline, regardless of customer (portfolioItemPrices).
+// Returns null if neither exists — the pricing page shows a "being
+// prepared" message in that case rather than a blank or zero price.
+// `userId` is nullable so this can also resolve a price for an order whose
+// customer has no account (see syncOrderPricingFromCatalog below) — that
+// just skips the customer-item step and falls straight to the item's
+// shared price.
+export async function getEffectivePrice(userId: string | null, portfolioItemId: string | null): Promise<EffectivePrice | null> {
+  if (userId && portfolioItemId) {
+    const customerItem = await getCustomerItemPrice(userId, portfolioItemId);
+    if (customerItem) {
+      return { price: customerItem.price, currency: customerItem.currency, negotiated: true };
+    }
+  }
+
+  if (portfolioItemId) {
+    const itemPrice = await getPortfolioItemPrice(portfolioItemId);
+    if (itemPrice) {
+      return { price: itemPrice.price, currency: itemPrice.currency, negotiated: false };
+    }
+  }
+
+  return null;
+}
+
+// Keeps an order's payment_amount in sync with the current pricing catalog
+// (this customer's price for the specific piece the order references, or
+// that piece's shared baseline) so nobody has to manually re-type it every
+// time either changes — which is the whole point, since both change
+// frequently. Never
+// touches an order that's already been paid (payment_amount there is a
+// historical record of what was actually charged, not a live price). Leaves
+// payment_amount untouched if nothing in the catalog resolves a price —
+// that's the manual-entry fallback for orders the catalog can't cover (e.g.
+// one spanning several different pieces, where there's no single "the"
+// item to price).
+export async function syncOrderPricingFromCatalog(order: Order, knownUserId?: string | null): Promise<Order> {
+  if (order.payment_status === 'paid') return order;
+
+  let userId = knownUserId ?? null;
+  if (!userId) {
+    const user = await getUserByEmail(order.customer_email);
+    userId = user?.id ?? null;
+  }
+
+  const items = order.portfolio_items;
+  const singleItemId = items && items.length === 1 ? items[0].id : null;
+
+  const effective = await getEffectivePrice(userId, singleItemId);
+  if (!effective) return order;
+  if (order.payment_amount === effective.price) return order;
+
+  const updated = await setOrderPaymentAmount(order.id, effective.price);
+  return updated ?? order;
+}
+
 // For the proofreader's "assign to" dropdown — just enough to identify each designer.
 export async function getDesigners(): Promise<Pick<User, 'id' | 'name' | 'email'>[]> {
-  const sql = getDb();
-  if (!sql) return [];
+  const db = getDrizzle();
+  if (!db) return [];
 
-  const rows = await sql`
-    SELECT id, name, email
-    FROM users
-    WHERE role = 'designer'
-    ORDER BY name ASC NULLS LAST, email ASC
-  `;
+  const rows = await db
+    .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email })
+    .from(usersTable)
+    .where(eq(usersTable.role, 'designer'))
+    .orderBy(asc(usersTable.name), asc(usersTable.email));
 
-  return (rows as any[]).map((row) => ({
+  return rows.map((row) => ({
     id: String(row.id),
     name: row.name != null ? String(row.name) : null,
     email: String(row.email ?? ''),
@@ -796,17 +872,12 @@ export async function updateUserRole(id: string, role: UserRole): Promise<User |
     throw new Error(`Invalid role: ${role}`);
   }
 
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
-  const rows = await sql`
-    UPDATE users
-    SET role = ${role}
-    WHERE id = ${id}
-    RETURNING id, email, password_hash, name, email_verified, verification_token, verification_token_expires, role, phone, country, created_at
-  `;
+  const rows = await db.update(usersTable).set({ role }).where(eq(usersTable.id, id)).returning();
 
   return rows.length > 0 ? normalizeUser(rows[0]) : null;
 }
@@ -814,52 +885,40 @@ export async function updateUserRole(id: string, role: UserRole): Promise<User |
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 export async function createOrder(input: OrderInput): Promise<Order> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
-  const portfolioItemsJson = input.portfolio_items && input.portfolio_items.length > 0
-    ? JSON.stringify(input.portfolio_items)
-    : null;
-
-  const rows = await sql`
-    INSERT INTO orders (enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status)
-    VALUES (
-      ${input.enquiry_id ?? null},
-      ${input.customer_name.trim()},
-      ${input.customer_email.trim().toLowerCase()},
-      ${input.service_type.trim()},
-      ${input.event_date || null},
-      ${input.quantity_estimate?.trim() || null},
-      ${input.details?.trim() || null},
-      ${portfolioItemsJson}::jsonb,
-      'pending'
-    )
-    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
-  `;
+  const rows = await db
+    .insert(ordersTable)
+    .values({
+      enquiry_id: input.enquiry_id ?? null,
+      customer_name: input.customer_name.trim(),
+      customer_email: input.customer_email.trim().toLowerCase(),
+      service_type: input.service_type.trim(),
+      event_date: input.event_date || null,
+      quantity_estimate: input.quantity_estimate?.trim() || null,
+      details: input.details?.trim() || null,
+      portfolio_items: input.portfolio_items && input.portfolio_items.length > 0 ? input.portfolio_items : null,
+      status: 'pending',
+    })
+    .returning();
 
   const order = normalizeOrder(rows[0]);
 
-  await sql`
-    INSERT INTO order_status_history (order_id, status, note)
-    VALUES (${order.id}, 'pending', NULL)
-  `;
+  await db.insert(orderStatusHistoryTable).values({ order_id: order.id, status: 'pending', note: null });
 
   return order;
 }
 
 export async function getAllOrders(): Promise<Order[]> {
-  const sql = getDb();
-  if (!sql) return [];
+  const db = getDrizzle();
+  if (!db) return [];
 
   try {
-    const rows = await sql`
-      SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
-      FROM orders
-      ORDER BY created_at DESC
-    `;
-    return (rows as any[]).map(normalizeOrder);
+    const rows = await db.select().from(ordersTable).orderBy(desc(ordersTable.created_at));
+    return rows.map(normalizeOrder);
   } catch (err) {
     console.error('[db] getAllOrders error:', err);
     return [];
@@ -870,17 +929,16 @@ export async function getAllOrders(): Promise<Order[]> {
 // before ever creating an account. Matching by email means their history
 // still shows up correctly the moment they sign up with the same address.
 export async function getOrdersByEmail(email: string): Promise<Order[]> {
-  const sql = getDb();
-  if (!sql) return [];
+  const db = getDrizzle();
+  if (!db) return [];
 
   try {
-    const rows = await sql`
-      SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
-      FROM orders
-      WHERE customer_email = ${email.trim().toLowerCase()}
-      ORDER BY created_at DESC
-    `;
-    return (rows as any[]).map(normalizeOrder);
+    const rows = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.customer_email, email.trim().toLowerCase()))
+      .orderBy(desc(ordersTable.created_at));
+    return rows.map(normalizeOrder);
   } catch (err) {
     console.error('[db] getOrdersByEmail error:', err);
     return [];
@@ -888,82 +946,108 @@ export async function getOrdersByEmail(email: string): Promise<Order[]> {
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {
-  const sql = getDb();
-  if (!sql) return null;
+  const db = getDrizzle();
+  if (!db) return null;
 
-  const rows = await sql`
-    SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
-    FROM orders
-    WHERE id = ${id}
-    LIMIT 1
-  `;
+  const rows = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
 
   return rows.length > 0 ? normalizeOrder(rows[0]) : null;
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus, note?: string | null): Promise<Order | null> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
-  const rows = await sql`
-    UPDATE orders
-    SET status = ${status}, updated_at = NOW()
-    WHERE id = ${id}
-    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
-  `;
+  const rows = await db
+    .update(ordersTable)
+    .set({ status, updated_at: new Date() })
+    .where(eq(ordersTable.id, id))
+    .returning();
 
   if (rows.length === 0) return null;
 
-  await sql`
-    INSERT INTO order_status_history (order_id, status, note)
-    VALUES (${id}, ${status}, ${note?.trim() || null})
-  `;
+  await db.insert(orderStatusHistoryTable).values({ order_id: id, status, note: note?.trim() || null });
 
   return normalizeOrder(rows[0]);
 }
 
 export async function getOrderHistory(orderId: string): Promise<OrderStatusHistoryEntry[]> {
-  const sql = getDb();
-  if (!sql) return [];
+  const db = getDrizzle();
+  if (!db) return [];
 
-  const rows = await sql`
-    SELECT id, order_id, status, note, created_at
-    FROM order_status_history
-    WHERE order_id = ${orderId}
-    ORDER BY created_at ASC
-  `;
+  const rows = await db
+    .select()
+    .from(orderStatusHistoryTable)
+    .where(eq(orderStatusHistoryTable.order_id, orderId))
+    .orderBy(asc(orderStatusHistoryTable.created_at));
 
-  return (rows as any[]).map(normalizeOrderHistoryEntry);
+  return rows.map(normalizeOrderHistoryEntry);
+}
+
+// Batched version of getOrderHistory for a whole order list (e.g. a
+// customer's account page) — one query instead of one-per-order.
+export async function getOrderHistoriesForOrders(orderIds: string[]): Promise<Map<string, OrderStatusHistoryEntry[]>> {
+  const result = new Map<string, OrderStatusHistoryEntry[]>();
+  if (orderIds.length === 0) return result;
+
+  const db = getDrizzle();
+  if (!db) return result;
+
+  const rows = await db
+    .select()
+    .from(orderStatusHistoryTable)
+    .where(inArray(orderStatusHistoryTable.order_id, orderIds))
+    .orderBy(asc(orderStatusHistoryTable.created_at));
+
+  for (const row of rows) {
+    const entry = normalizeOrderHistoryEntry(row);
+    const existing = result.get(entry.order_id);
+    if (existing) existing.push(entry);
+    else result.set(entry.order_id, [entry]);
+  }
+  return result;
 }
 
 // Set the quoted price for an order (admin sets this so customer can pay)
 export async function setOrderPaymentAmount(id: string, amount: number): Promise<Order | null> {
-  const sql = getDb();
-  if (!sql) throw new Error('Database is not configured.');
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured.');
 
-  const rows = await sql`
-    UPDATE orders
-    SET payment_amount = ${amount}, updated_at = NOW()
-    WHERE id = ${id}
-    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
-  `;
+  const rows = await db
+    .update(ordersTable)
+    .set({ payment_amount: amount.toString(), updated_at: new Date() })
+    .where(eq(ordersTable.id, id))
+    .returning();
 
   return rows.length > 0 ? normalizeOrder(rows[0]) : null;
 }
 
 // Mark order as paid after PayPal capture succeeds
 export async function markOrderPaid(id: string, paypalOrderId: string): Promise<Order | null> {
-  const sql = getDb();
-  if (!sql) throw new Error('Database is not configured.');
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured.');
 
-  const rows = await sql`
-    UPDATE orders
-    SET payment_status = 'paid', paypal_order_id = ${paypalOrderId}, updated_at = NOW()
-    WHERE id = ${id}
-    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
-  `;
+  const rows = await db
+    .update(ordersTable)
+    .set({ payment_status: 'paid', payment_provider: 'paypal', paypal_order_id: paypalOrderId, updated_at: new Date() })
+    .where(eq(ordersTable.id, id))
+    .returning();
+
+  return rows.length > 0 ? normalizeOrder(rows[0]) : null;
+}
+
+// Mark order as paid after a Stripe checkout.session.completed webhook verifies successfully
+export async function markOrderPaidStripe(id: string, stripeSessionId: string): Promise<Order | null> {
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured.');
+
+  const rows = await db
+    .update(ordersTable)
+    .set({ payment_status: 'paid', payment_provider: 'stripe', stripe_session_id: stripeSessionId, updated_at: new Date() })
+    .where(eq(ordersTable.id, id))
+    .returning();
 
   return rows.length > 0 ? normalizeOrder(rows[0]) : null;
 }
@@ -971,15 +1055,14 @@ export async function markOrderPaid(id: string, paypalOrderId: string): Promise<
 // Proofreader routes an order to a specific designer — pass null to unassign.
 // Only that designer can then see or act on the order under /staff.
 export async function assignOrderToDesigner(orderId: string, designerId: string | null): Promise<Order | null> {
-  const sql = getDb();
-  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
 
-  const rows = await sql`
-    UPDATE orders
-    SET assigned_designer_id = ${designerId}, updated_at = NOW()
-    WHERE id = ${orderId}
-    RETURNING id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at
-  `;
+  const rows = await db
+    .update(ordersTable)
+    .set({ assigned_designer_id: designerId, updated_at: new Date() })
+    .where(eq(ordersTable.id, orderId))
+    .returning();
 
   return rows.length > 0 ? normalizeOrder(rows[0]) : null;
 }
@@ -991,52 +1074,41 @@ export async function upsertSubscriber(payload: SubscriberPayload): Promise<{
   alreadySubscribed: boolean;
   resubscribed: boolean;
 }> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
   const email = payload.email.trim().toLowerCase();
 
   // Check if subscriber exists
-  const existing = await sql`
-    SELECT id, email, first_name, country, subscribed_at, active
-    FROM subscribers
-    WHERE email = ${email}
-    LIMIT 1
-  `;
+  const existing = await db.select().from(subscribersTable).where(eq(subscribersTable.email, email)).limit(1);
 
-  if (existing && existing.length > 0) {
+  if (existing.length > 0) {
     const sub = normalizeSubscriber(existing[0]);
     if (sub.active) {
       return { subscriber: sub, alreadySubscribed: true, resubscribed: false };
     }
 
     // Reactivate
-    const updated = await sql`
-      UPDATE subscribers
-      SET active = true, subscribed_at = NOW()
-      WHERE id = ${sub.id}
-      RETURNING id, email, first_name, country, subscribed_at, active
-    `;
+    const updated = await db
+      .update(subscribersTable)
+      .set({ active: true, subscribed_at: new Date() })
+      .where(eq(subscribersTable.id, sub.id))
+      .returning();
     return { subscriber: normalizeSubscriber(updated[0]), alreadySubscribed: false, resubscribed: true };
   }
 
   // Insert new subscriber
-  const inserted = await sql`
-    INSERT INTO subscribers (
+  const inserted = await db
+    .insert(subscribersTable)
+    .values({
       email,
-      first_name,
-      country,
-      active
-    ) VALUES (
-      ${email},
-      ${payload.first_name?.trim() || null},
-      ${payload.country?.trim() || null},
-      true
-    )
-    RETURNING id, email, first_name, country, subscribed_at, active
-  `;
+      first_name: payload.first_name?.trim() || null,
+      country: payload.country?.trim() || null,
+      active: true,
+    })
+    .returning();
 
   return { subscriber: normalizeSubscriber(inserted[0]), alreadySubscribed: false, resubscribed: false };
 }
@@ -1050,31 +1122,49 @@ export async function getAdminDashboardData(): Promise<{
   posts: Partial<Post>[];
   orders: Order[];
 }> {
-  const sql = getDb();
-  if (!sql) {
+  const db = getDrizzle();
+  if (!db) {
     return { enquiries: [], subscribers: [], portfolioItems: [], posts: [], orders: [] };
   }
 
   try {
     const [enquiriesRes, subscribersRes, portfolioRes, postsRes, ordersRes] = await Promise.allSettled([
-      sql`SELECT * FROM enquiries ORDER BY created_at DESC LIMIT 50`,
-      sql`SELECT * FROM subscribers ORDER BY subscribed_at DESC LIMIT 50`,
-      sql`SELECT id, title, category, published, created_at FROM portfolio_items ORDER BY created_at DESC`,
-      sql`SELECT id, title, slug, category, published, published_at FROM posts ORDER BY published_at DESC`,
-      sql`SELECT id, enquiry_id, customer_name, customer_email, service_type, event_date, quantity_estimate, details, portfolio_items, status, payment_status, payment_amount, paypal_order_id, assigned_designer_id, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT 50`,
-
+      db.select().from(enquiriesTable).orderBy(desc(enquiriesTable.created_at)).limit(50),
+      db.select().from(subscribersTable).orderBy(desc(subscribersTable.subscribed_at)).limit(50),
+      db
+        .select({
+          id: portfolioItemsTable.id,
+          title: portfolioItemsTable.title,
+          category: portfolioItemsTable.category,
+          published: portfolioItemsTable.published,
+          created_at: portfolioItemsTable.created_at,
+        })
+        .from(portfolioItemsTable)
+        .orderBy(desc(portfolioItemsTable.created_at)),
+      db
+        .select({
+          id: postsTable.id,
+          title: postsTable.title,
+          slug: postsTable.slug,
+          category: postsTable.category,
+          published: postsTable.published,
+          published_at: postsTable.published_at,
+        })
+        .from(postsTable)
+        .orderBy(desc(postsTable.published_at)),
+      db.select().from(ordersTable).orderBy(desc(ordersTable.created_at)).limit(50),
     ]);
 
     const enquiries =
-      enquiriesRes.status === 'fulfilled' ? (enquiriesRes.value as any[]).map(normalizeEnquiry) : [];
+      enquiriesRes.status === 'fulfilled' ? enquiriesRes.value.map(normalizeEnquiry) : [];
     const subscribers =
-      subscribersRes.status === 'fulfilled' ? (subscribersRes.value as any[]).map(normalizeSubscriber) : [];
+      subscribersRes.status === 'fulfilled' ? subscribersRes.value.map(normalizeSubscriber) : [];
     const portfolioItems =
       portfolioRes.status === 'fulfilled' ? (portfolioRes.value as any[]).map(normalizePortfolioItem) : [];
     const posts =
       postsRes.status === 'fulfilled' ? (postsRes.value as any[]).map(normalizePost) : [];
     const orders =
-      ordersRes.status === 'fulfilled' ? (ordersRes.value as any[]).map(normalizeOrder) : [];
+      ordersRes.status === 'fulfilled' ? ordersRes.value.map(normalizeOrder) : [];
 
     return { enquiries, subscribers, portfolioItems, posts, orders };
   } catch (err) {
@@ -1117,34 +1207,37 @@ function normalizeDesignRevision(row: any, comments: DesignComment[] = []): Desi
 
 // One order can have many rounds of revisions; each carries its own comment thread.
 export async function getDesignRevisionsForOrder(orderId: string): Promise<DesignRevision[]> {
-  const sql = getDb();
-  if (!sql) return [];
+  const db = getDrizzle();
+  if (!db) return [];
 
-  const revisionRows = await sql`
-    SELECT id, order_id, version, image_urls, notes, status, created_at
-    FROM design_revisions
-    WHERE order_id = ${orderId}
-    ORDER BY version ASC
-  `;
+  const revisionRows = await db
+    .select()
+    .from(designRevisionsTable)
+    .where(eq(designRevisionsTable.order_id, orderId))
+    .orderBy(asc(designRevisionsTable.version));
 
   if (revisionRows.length === 0) return [];
 
-  const commentRows = await sql`
-    SELECT id, revision_id, image_index, x, y, comment, designer_resolved, proofreader_resolved, author_role, created_at
-    FROM design_comments
-    WHERE revision_id = ANY(${revisionRows.map((r: any) => r.id)})
-    ORDER BY created_at ASC
-  `;
+  const commentRows = await db
+    .select()
+    .from(designCommentsTable)
+    .where(
+      inArray(
+        designCommentsTable.revision_id,
+        revisionRows.map((r) => r.id)
+      )
+    )
+    .orderBy(asc(designCommentsTable.created_at));
 
   const commentsByRevision = new Map<string, DesignComment[]>();
-  for (const row of commentRows as any[]) {
+  for (const row of commentRows) {
     const comment = normalizeDesignComment(row);
     const list = commentsByRevision.get(comment.revision_id) ?? [];
     list.push(comment);
     commentsByRevision.set(comment.revision_id, list);
   }
 
-  return (revisionRows as any[]).map((row) =>
+  return revisionRows.map((row) =>
     normalizeDesignRevision(row, commentsByRevision.get(String(row.id)) ?? [])
   );
 }
@@ -1159,26 +1252,62 @@ export async function getDesignRevisionsForCustomer(orderId: string): Promise<De
   return revisions.filter((r) => CUSTOMER_VISIBLE_STATUSES.has(r.status));
 }
 
-export async function getDesignRevisionById(id: string): Promise<DesignRevision | null> {
-  const sql = getDb();
-  if (!sql) return null;
+// Batched, customer-visible version of getDesignRevisionsForCustomer for a
+// whole order list — two queries total (revisions + their comments) instead
+// of two per order.
+export async function getDesignRevisionsForOrders(orderIds: string[]): Promise<Map<string, DesignRevision[]>> {
+  const result = new Map<string, DesignRevision[]>();
+  if (orderIds.length === 0) return result;
 
-  const rows = await sql`
-    SELECT id, order_id, version, image_urls, notes, status, created_at
-    FROM design_revisions
-    WHERE id = ${id}
-    LIMIT 1
-  `;
+  const db = getDrizzle();
+  if (!db) return result;
+
+  const revisionRows = await db
+    .select()
+    .from(designRevisionsTable)
+    .where(inArray(designRevisionsTable.order_id, orderIds))
+    .orderBy(asc(designRevisionsTable.version));
+
+  if (revisionRows.length === 0) return result;
+
+  const commentRows = await db
+    .select()
+    .from(designCommentsTable)
+    .where(inArray(designCommentsTable.revision_id, revisionRows.map((r) => r.id)))
+    .orderBy(asc(designCommentsTable.created_at));
+
+  const commentsByRevision = new Map<string, DesignComment[]>();
+  for (const row of commentRows) {
+    const comment = normalizeDesignComment(row);
+    const list = commentsByRevision.get(comment.revision_id) ?? [];
+    list.push(comment);
+    commentsByRevision.set(comment.revision_id, list);
+  }
+
+  for (const row of revisionRows) {
+    const revision = normalizeDesignRevision(row, commentsByRevision.get(String(row.id)) ?? []);
+    if (!CUSTOMER_VISIBLE_STATUSES.has(revision.status)) continue;
+    const list = result.get(revision.order_id) ?? [];
+    list.push(revision);
+    result.set(revision.order_id, list);
+  }
+  return result;
+}
+
+export async function getDesignRevisionById(id: string): Promise<DesignRevision | null> {
+  const db = getDrizzle();
+  if (!db) return null;
+
+  const rows = await db.select().from(designRevisionsTable).where(eq(designRevisionsTable.id, id)).limit(1);
   if (rows.length === 0) return null;
 
-  const commentRows = await sql`
-    SELECT id, revision_id, image_index, x, y, comment, designer_resolved, proofreader_resolved, author_role, created_at
-    FROM design_comments
-    WHERE revision_id = ${id}
-    ORDER BY created_at ASC
-  `;
+  const commentRows = await db
+    .select()
+    .from(designCommentsTable)
+    .where(eq(designCommentsTable.revision_id, id))
+    .orderBy(asc(designCommentsTable.created_at));
 
-  return normalizeDesignRevision(rows[0], (commentRows as any[]).map(normalizeDesignComment));
+  return normalizeDesignRevision(rows[0], commentRows.map(normalizeDesignComment));
 }
 
 // Designer/admin uploads a new proof — version auto-increments per order. Every
@@ -1194,15 +1323,15 @@ export async function createDesignRevision(input: {
   imageUrls: string[];
   notes?: string | null;
 }): Promise<DesignRevision> {
-  const sql = getDb();
-  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
 
-  const latest = await sql`
-    SELECT status FROM design_revisions
-    WHERE order_id = ${input.orderId}
-    ORDER BY version DESC
-    LIMIT 1
-  `;
+  const latest = await db
+    .select({ status: designRevisionsTable.status })
+    .from(designRevisionsTable)
+    .where(eq(designRevisionsTable.order_id, input.orderId))
+    .orderBy(desc(designRevisionsTable.version))
+    .limit(1);
 
   if (latest.length > 0 && latest[0].status !== 'returned_to_designer') {
     throw new Error(
@@ -1210,32 +1339,30 @@ export async function createDesignRevision(input: {
     );
   }
 
-  const rows = await sql`
-    INSERT INTO design_revisions (order_id, version, image_urls, notes, status)
-    VALUES (
-      ${input.orderId},
-      COALESCE((SELECT MAX(version) FROM design_revisions WHERE order_id = ${input.orderId}), 0) + 1,
-      ${input.imageUrls},
-      ${input.notes?.trim() || null},
-      'pending_proofreader_review'
-    )
-    RETURNING id, order_id, version, image_urls, notes, status, created_at
-  `;
+  const rows = await db
+    .insert(designRevisionsTable)
+    .values({
+      order_id: input.orderId,
+      version: dsql`COALESCE((SELECT MAX(version) FROM design_revisions WHERE order_id = ${input.orderId}), 0) + 1`,
+      image_urls: input.imageUrls,
+      notes: input.notes?.trim() || null,
+      status: 'pending_proofreader_review',
+    })
+    .returning();
 
   return normalizeDesignRevision(rows[0]);
 }
 
 // Proofreader approves a revision awaiting their review, sending it on to the customer.
 export async function proofreaderApproveRevision(revisionId: string): Promise<DesignRevision | null> {
-  const sql = getDb();
-  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
 
-  const rows = await sql`
-    UPDATE design_revisions
-    SET status = 'pending_review'
-    WHERE id = ${revisionId} AND status = 'pending_proofreader_review'
-    RETURNING id, order_id, version, image_urls, notes, status, created_at
-  `;
+  const rows = await db
+    .update(designRevisionsTable)
+    .set({ status: 'pending_review' })
+    .where(and(eq(designRevisionsTable.id, revisionId), eq(designRevisionsTable.status, 'pending_proofreader_review')))
+    .returning();
 
   return rows.length > 0 ? normalizeDesignRevision(rows[0]) : null;
 }
@@ -1250,23 +1377,33 @@ export async function proofreaderReturnToDesigner(
   revisionId: string,
   comments: DesignCommentInput[]
 ): Promise<DesignRevision | null> {
-  const sql = getDb();
-  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
 
-  const rows = await sql`
-    UPDATE design_revisions
-    SET status = 'returned_to_designer'
-    WHERE id = ${revisionId} AND status IN ('pending_proofreader_review', 'changes_requested')
-    RETURNING id, order_id, version, image_urls, notes, status, created_at
-  `;
+  const rows = await db
+    .update(designRevisionsTable)
+    .set({ status: 'returned_to_designer' })
+    .where(
+      and(
+        eq(designRevisionsTable.id, revisionId),
+        inArray(designRevisionsTable.status, ['pending_proofreader_review', 'changes_requested'])
+      )
+    )
+    .returning();
 
   if (rows.length === 0) return null;
 
-  for (const c of comments) {
-    await sql`
-      INSERT INTO design_comments (revision_id, image_index, x, y, comment, author_role)
-      VALUES (${revisionId}, ${c.image_index}, ${c.x}, ${c.y}, ${c.comment.trim()}, 'proofreader')
-    `;
+  if (comments.length > 0) {
+    await db.insert(designCommentsTable).values(
+      comments.map((c) => ({
+        revision_id: revisionId,
+        image_index: c.image_index,
+        x: c.x.toString(),
+        y: c.y.toString(),
+        comment: c.comment.trim(),
+        author_role: 'proofreader',
+      }))
+    );
   }
 
   return getDesignRevisionById(revisionId);
@@ -1280,27 +1417,29 @@ export async function submitDesignReview(
   action: 'approve' | 'request_changes',
   comments: DesignCommentInput[]
 ): Promise<DesignRevision | null> {
-  const sql = getDb();
-  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
 
   const newStatus: DesignRevisionStatus = action === 'approve' ? 'approved' : 'changes_requested';
 
-  const rows = await sql`
-    UPDATE design_revisions
-    SET status = ${newStatus}
-    WHERE id = ${revisionId} AND status = 'pending_review'
-    RETURNING id, order_id, version, image_urls, notes, status, created_at
-  `;
+  const rows = await db
+    .update(designRevisionsTable)
+    .set({ status: newStatus })
+    .where(and(eq(designRevisionsTable.id, revisionId), eq(designRevisionsTable.status, 'pending_review')))
+    .returning();
 
   if (rows.length === 0) return null;
 
-  if (action === 'request_changes') {
-    for (const c of comments) {
-      await sql`
-        INSERT INTO design_comments (revision_id, image_index, x, y, comment)
-        VALUES (${revisionId}, ${c.image_index}, ${c.x}, ${c.y}, ${c.comment.trim()})
-      `;
-    }
+  if (action === 'request_changes' && comments.length > 0) {
+    await db.insert(designCommentsTable).values(
+      comments.map((c) => ({
+        revision_id: revisionId,
+        image_index: c.image_index,
+        x: c.x.toString(),
+        y: c.y.toString(),
+        comment: c.comment.trim(),
+      }))
+    );
   }
 
   return getDesignRevisionById(revisionId);
@@ -1313,23 +1452,14 @@ export async function setCommentResolution(
   field: CommentResolutionField,
   value: boolean
 ): Promise<DesignComment | null> {
-  const sql = getDb();
-  if (!sql) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
 
-  const rows =
-    field === 'designer_resolved'
-      ? await sql`
-          UPDATE design_comments
-          SET designer_resolved = ${value}
-          WHERE id = ${commentId}
-          RETURNING id, revision_id, image_index, x, y, comment, designer_resolved, proofreader_resolved, author_role, created_at
-        `
-      : await sql`
-          UPDATE design_comments
-          SET proofreader_resolved = ${value}
-          WHERE id = ${commentId}
-          RETURNING id, revision_id, image_index, x, y, comment, designer_resolved, proofreader_resolved, author_role, created_at
-        `;
+  const rows = await db
+    .update(designCommentsTable)
+    .set(field === 'designer_resolved' ? { designer_resolved: value } : { proofreader_resolved: value })
+    .where(eq(designCommentsTable.id, commentId))
+    .returning();
 
   return rows.length > 0 ? normalizeDesignComment(rows[0]) : null;
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { setCommentResolution } from '@/lib/db';
+import { commentResolutionSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, DesignComment } from '@/types/database';
 
 // PATCH /api/admin/orders/[id]/designs/comments/[commentId] — mark a comment
@@ -8,16 +10,9 @@ import type { ApiResponse, DesignComment } from '@/types/database';
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; commentId: string }> }) {
   try {
     const { commentId } = await params;
-    const body = await request.json().catch(() => ({}));
-    const field = body?.field;
-    const value = Boolean(body?.value);
-
-    if (field !== 'designer_resolved' && field !== 'proofreader_resolved') {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: "field must be 'designer_resolved' or 'proofreader_resolved'." },
-        { status: 400 }
-      );
-    }
+    const parsed = await parseJsonBody(request, commentResolutionSchema, 'admin/.../comments/:commentId');
+    if (parsed.error) return parsed.error;
+    const { field, value } = parsed.data;
 
     const updated = await setCommentResolution(commentId, field, value);
 

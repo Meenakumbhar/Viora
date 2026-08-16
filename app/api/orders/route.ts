@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getAllOrders, createOrder } from '@/lib/db';
 import { sendOrderPlacedEmail } from '@/lib/resend';
-import type { ApiResponse, Order, PortfolioItemRef } from '@/types/database';
+import { emailSchema, portfolioItemRefsSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
+import type { ApiResponse, Order } from '@/types/database';
 
-function sanitizePortfolioItems(value: unknown): PortfolioItemRef[] | null {
-  if (!Array.isArray(value)) return null;
-  const items = value
-    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
-    .slice(0, 20)
-    .map((item) => ({
-      id: typeof item.id === 'string' ? item.id.slice(0, 100) : '',
-      title: typeof item.title === 'string' ? item.title.slice(0, 200) : '',
-      category: typeof item.category === 'string' ? item.category.slice(0, 50) : '',
-    }))
-    .filter((item) => item.id && item.title);
-  return items.length > 0 ? items : null;
-}
+const createOrderSchema = z.object({
+  customer_name: z.string().trim().min(1, 'Customer name is required.').max(200),
+  customer_email: emailSchema,
+  service_type: z.string().trim().min(1, 'Service type is required.').max(100),
+  event_date: z.string().trim().max(50).nullish(),
+  quantity_estimate: z.string().trim().max(50).nullish(),
+  details: z.string().trim().max(5000).nullish(),
+  enquiry_id: z.string().trim().max(100).nullish(),
+  portfolio_items: portfolioItemRefsSchema,
+});
 
 // GET /api/orders — List all orders (admin only, gated in middleware.ts)
 export async function GET() {
@@ -31,29 +31,19 @@ export async function GET() {
 // POST /api/orders — Manually create an order (admin only, gated in middleware.ts)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
-    const { customer_name, customer_email, service_type, event_date, quantity_estimate, details, enquiry_id, portfolio_items } = body;
-
-    if (typeof customer_name !== 'string' || !customer_name.trim()) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'Customer name is required.' }, { status: 400 });
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (typeof customer_email !== 'string' || !emailRegex.test(customer_email)) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'A valid customer email is required.' }, { status: 400 });
-    }
-    if (typeof service_type !== 'string' || !service_type.trim()) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'Service type is required.' }, { status: 400 });
-    }
+    const parsed = await parseJsonBody(request, createOrderSchema, 'orders');
+    if (parsed.error) return parsed.error;
+    const { customer_name, customer_email, service_type, event_date, quantity_estimate, details, enquiry_id, portfolio_items } = parsed.data;
 
     const order = await createOrder({
       customer_name,
       customer_email,
       service_type,
-      event_date: typeof event_date === 'string' && event_date ? event_date : null,
-      quantity_estimate: typeof quantity_estimate === 'string' ? quantity_estimate : null,
-      details: typeof details === 'string' ? details : null,
-      enquiry_id: typeof enquiry_id === 'string' ? enquiry_id : null,
-      portfolio_items: sanitizePortfolioItems(portfolio_items),
+      event_date: event_date || null,
+      quantity_estimate: quantity_estimate ?? null,
+      details: details ?? null,
+      enquiry_id: enquiry_id ?? null,
+      portfolio_items: portfolio_items ?? null,
     });
 
     try {

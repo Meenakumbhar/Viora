@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { auth, forwardSetCookie } from '@/lib/auth';
 import { getUserByEmail, toPublicUser } from '@/lib/db';
-import { verifyPassword } from '@/lib/password';
-import { createSessionToken, USER_SESSION_COOKIE } from '@/lib/user-session';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { emailSchema } from '@/lib/schemas';
+import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse } from '@/types/database';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RATE_LIMIT = 10;
 const RATE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+// Password just needs to be present here — it's checked against the stored
+// hash, not re-validated for strength (that's signup's job).
+const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'Password is required.'),
+});
 
 // POST /api/auth/login
 export async function POST(request: NextRequest) {
@@ -22,40 +30,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json().catch(() => ({}));
-    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
-    const password = typeof body.password === 'string' ? body.password : '';
+    const parsed = await parseJsonBody(request, loginSchema, 'auth/login');
+    if (parsed.error) return parsed.error;
+    const { email, password } = parsed.data;
 
-    if (!EMAIL_REGEX.test(email) || !password) {
-      return NextResponse.json<ApiResponse>({ success: false, error: 'Please enter your email and password.' }, { status: 400 });
-    }
+    const authRes = await auth.api.signInEmail({ body: { email, password }, asResponse: true });
 
-    const user = await getUserByEmail(email);
-    const passwordOk = user ? await verifyPassword(password, user.password_hash) : false;
-
-    if (!user || !passwordOk) {
+    if (!authRes.ok) {
+      const body = await authRes.json().catch(() => ({}));
+      if (body?.code === 'EMAIL_NOT_VERIFIED') {
+        return NextResponse.json<ApiResponse>(
+          { success: false, error: 'Please verify your email before logging in. Check your inbox, or request a new link.' },
+          { status: 403 }
+        );
+      }
       return NextResponse.json<ApiResponse>({ success: false, error: 'Incorrect email or password.' }, { status: 401 });
     }
 
-    if (!user.email_verified) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: 'Please verify your email before logging in. Check your inbox, or request a new link.' },
-        { status: 403 }
-      );
-    }
-
-    const token = await createSessionToken(user.id);
+    const user = await getUserByEmail(email);
     const response = NextResponse.json<ApiResponse<{ user: ReturnType<typeof toPublicUser> }>>({
       success: true,
-      data: { user: toPublicUser(user) },
+      data: { user: toPublicUser(user!) },
     });
-    response.cookies.set(USER_SESSION_COOKIE, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
+    forwardSetCookie(authRes, response);
     return response;
   } catch (err) {
     console.error('[auth/login] error:', err);
