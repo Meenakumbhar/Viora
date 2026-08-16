@@ -430,14 +430,26 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
   // The Continue/Submit button occupies the same spot across a step change —
   // a stray double-click (common on trackpads/touch) can land its second
   // click on the button that just replaced it, submitting the form before
-  // the customer ever saw step 3. This briefly ignores clicks right after
-  // any step change so that can't happen.
+  // the customer ever saw step 3. Locking here, synchronously inside the
+  // same handler that changes the step, means the replacement button is
+  // already disabled on its very first paint. A `useEffect` keyed on
+  // `step` instead only disables it a tick *after* that first paint —
+  // React runs passive effects after the browser paints, not before —
+  // leaving a real window where the new button is live and un-disabled.
   const [navLocked, setNavLocked] = useState(false);
-  useEffect(() => {
+  const navLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function lockNav() {
     setNavLocked(true);
-    const timer = setTimeout(() => setNavLocked(false), 400);
-    return () => clearTimeout(timer);
-  }, [step]);
+    if (navLockTimerRef.current) clearTimeout(navLockTimerRef.current);
+    navLockTimerRef.current = setTimeout(() => setNavLocked(false), 400);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (navLockTimerRef.current) clearTimeout(navLockTimerRef.current);
+    };
+  }, []);
 
   /* ── Portfolio cart context — so a quote raised from "Buy" on a portfolio
      item stays linked to that item, instead of arriving as a generic request.
@@ -547,11 +559,13 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
     const err = step === 1 ? validateStep1() : step === 2 ? validateStep2() : null;
     if (err) { setErrorMessage(err); setState('error'); return; }
     setState('idle'); setErrorMessage('');
+    lockNav();
     setStep((s) => Math.min(s + 1, 3) as Step);
   }
 
   function goBack() {
     setState('idle'); setErrorMessage('');
+    lockNav();
     setStep((s) => Math.max(s - 1, 1) as Step);
   }
 
