@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { Order } from '@/types/database';
-import StripeCheckoutButton from '@/components/ui/StripeCheckoutButton';
+import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
 
 const PayPalButton = dynamic(() => import('@/components/ui/PayPalButton'), { ssr: false });
+const RazorpayButton = dynamic(() => import('@/components/ui/RazorpayButton'), { ssr: false });
 
 const PAYMENT_STATUS_LABELS = {
   unpaid: 'Awaiting payment',
@@ -36,10 +37,10 @@ export default function OrderPaymentSection({ order: initialOrder }: OrderPaymen
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* Payment status badge */}
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-text-muted">Payment</p>
+          <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">Payment</p>
           <div className="mt-1.5 flex items-center gap-3">
             <span
-              className={`inline-flex items-center border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest ${PAYMENT_STATUS_COLORS[order.payment_status]}`}
+              className={`inline-flex items-center border px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-widest ${PAYMENT_STATUS_COLORS[order.payment_status]}`}
             >
               {PAYMENT_STATUS_LABELS[order.payment_status]}
             </span>
@@ -50,7 +51,7 @@ export default function OrderPaymentSection({ order: initialOrder }: OrderPaymen
             )}
           </div>
           {!hasAmount && !isPaid && (
-            <p className="mt-1 font-mono text-[10px] text-text-muted">
+            <p className="mt-1 font-mono text-[11px] text-text-muted">
               Your quote amount will appear here once confirmed.
             </p>
           )}
@@ -63,11 +64,12 @@ export default function OrderPaymentSection({ order: initialOrder }: OrderPaymen
               type="button"
               id={`pay-now-${order.id}`}
               onClick={() => setShowPayPal(true)}
-              className="border border-accent-gold bg-accent-gold px-5 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90"
+              className="flex items-center gap-2 border border-accent-gold bg-accent-gold px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90"
             >
+              <PaymentProviderIcon provider="paypal" />
               Pay via PayPal
             </button>
-            <StripeCheckoutButton order={order} />
+            <RazorpayButton order={order} onSuccess={(updated) => setOrder(updated)} />
           </div>
         )}
       </div>
@@ -75,14 +77,14 @@ export default function OrderPaymentSection({ order: initialOrder }: OrderPaymen
       {/* PayPal button (lazy-loaded after click) */}
       {canPay && showPayPal && (
         <div className="mt-4">
-          <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-text-muted">
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-text-muted">
             Complete your payment via PayPal
           </p>
           <PayPalButton order={order} onSuccess={(updated) => setOrder(updated)} />
           <button
             type="button"
             onClick={() => setShowPayPal(false)}
-            className="mt-3 font-mono text-[10px] text-text-muted hover:text-text-heading"
+            className="mt-3 font-mono text-[11px] text-text-muted hover:text-text-heading"
           >
             ← Cancel
           </button>
@@ -90,9 +92,10 @@ export default function OrderPaymentSection({ order: initialOrder }: OrderPaymen
       )}
 
       {/* Paid confirmation */}
-      {isPaid && (order.paypal_order_id || order.stripe_session_id) && (
-        <p className="mt-2 font-mono text-[10px] text-text-muted">
-          Ref: {(order.paypal_order_id ?? order.stripe_session_id!).slice(0, 16).toUpperCase()}
+      {isPaid && order.payment_provider && (order.paypal_order_id || order.razorpay_payment_id) && (
+        <p className="mt-2 flex items-center gap-2 font-mono text-[11px] text-text-muted">
+          <PaymentProviderIcon provider={order.payment_provider} />
+          Ref: {(order.paypal_order_id ?? order.razorpay_payment_id!).slice(0, 16).toUpperCase()}
         </p>
       )}
     </div>

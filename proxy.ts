@@ -12,8 +12,6 @@ const PUBLIC_ADMIN_PATHS = new Set(["/admin/login"]);
 const USER_PROTECTED_PREFIXES = ["/account"];
 const STAFF_PROTECTED_PREFIXES = ["/staff"];
 const STAFF_ROLES = new Set(["designer", "employee", "proofreader", "admin"]);
-// Proofreader can view everything staff can but never uploads a design file.
-const UPLOAD_ROLES = new Set(["designer", "employee", "admin"]);
 
 async function getSessionUser(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -41,11 +39,6 @@ function isProtectedApiRoute(pathname: string, method: string): boolean {
 async function isStaffAuthorized(request: NextRequest): Promise<boolean> {
   const user = await getSessionUser(request);
   return Boolean(user && STAFF_ROLES.has(user.role));
-}
-
-async function isUploadAuthorized(request: NextRequest): Promise<boolean> {
-  const user = await getSessionUser(request);
-  return Boolean(user && UPLOAD_ROLES.has(user.role));
 }
 
 async function isAdminAuthorized(request: NextRequest): Promise<boolean> {
@@ -92,13 +85,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
   }
 
-  // ── Uploads — admin OR staff (never proofreader — they review, they don't upload) ──
-  if (pathname === "/api/upload") {
-    if ((await isAdminAuthorized(request)) || (await isUploadAuthorized(request))) {
-      return NextResponse.next();
-    }
-    return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
-  }
+  // ── Uploads ── /api/upload is deliberately NOT gated here: the customer
+  // order form (public, no login — see app/order-form/[enquiryId]) uploads
+  // attachments through it too. It enforces admin-or-staff auth itself,
+  // scoped to every folder except the order-form-attachments one.
 
   // ── Admin dashboard + admin-only API routes ─────────────────────────────────
   const isAdminPage = pathname.startsWith("/admin") && !PUBLIC_ADMIN_PATHS.has(pathname);

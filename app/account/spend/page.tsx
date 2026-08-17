@@ -85,8 +85,9 @@ export default async function SpendPage() {
     existing.amount += order.payment_amount ?? 0;
     providerTotals.set(order.payment_provider, existing);
   }
-  const PROVIDER_LABELS: Record<string, string> = { paypal: 'PayPal', stripe: 'Card (Stripe)' };
+  const PROVIDER_LABELS: Record<string, string> = { paypal: 'PayPal', razorpay: 'Razorpay' };
   const byProvider: ProviderSpend[] = Array.from(providerTotals.entries()).map(([provider, data]) => ({
+    provider: provider === 'paypal' || provider === 'razorpay' ? provider : null,
     label: PROVIDER_LABELS[provider] ?? provider,
     count: data.count,
     amount: data.amount,

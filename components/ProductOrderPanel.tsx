@@ -33,7 +33,7 @@ export default function ProductOrderPanel({ product }: { product: ProductData })
     <div>
       {hasMultipleSizes && (
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-cat-muted">Choose a size</p>
+          <p className="font-mono text-[11px] uppercase tracking-widest text-cat-muted">Choose a size</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {product.sizes.map((size) => (
               <button
@@ -56,7 +56,7 @@ export default function ProductOrderPanel({ product }: { product: ProductData })
       )}
 
       <div className={hasMultipleSizes ? 'mt-6 border-t border-border pt-6' : ''}>
-        <p className="font-mono text-[10px] uppercase tracking-widest text-cat-muted">Size</p>
+        <p className="font-mono text-[11px] uppercase tracking-widest text-cat-muted">Size</p>
         <p className="mt-2 font-body text-cat-body">{selected.dimensions}</p>
         {selected.description && (
           <p className="mt-3 font-body text-sm leading-relaxed text-cat-body">{selected.description}</p>
@@ -76,19 +76,19 @@ export default function ProductOrderPanel({ product }: { product: ProductData })
         <button
           type="button"
           onClick={addItem}
-          className="flex-1 border border-cat-accent bg-cat-accent px-6 py-3 font-mono text-[10px] uppercase tracking-widest text-cat-bg hover:bg-cat-accent-dark"
+          className="flex-1 border border-cat-accent bg-cat-accent px-6 py-3 font-mono text-[11px] uppercase tracking-widest text-cat-bg hover:bg-cat-accent-dark"
         >
           {added ? 'Added ✓' : 'Add to cart'}
         </button>
         <Link
           href="/pricing"
           onClick={addItem}
-          className="flex-1 border border-cat-heading px-6 py-3 text-center font-mono text-[10px] uppercase tracking-widest text-cat-heading hover:bg-cat-heading hover:text-cat-bg"
+          className="flex-1 border border-cat-heading px-6 py-3 text-center font-mono text-[11px] uppercase tracking-widest text-cat-heading hover:bg-cat-heading hover:text-cat-bg"
         >
           Checkout
         </Link>
       </div>
-      <p className="mt-3 font-mono text-[10px] text-cat-muted">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
+      <p className="mt-3 font-mono text-[11px] text-cat-muted">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
     </div>
   );
 }

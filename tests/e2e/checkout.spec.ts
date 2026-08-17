@@ -7,8 +7,8 @@ const AMOUNT = 45;
 
 // Scoped to the boundary this app owns: does the UI offer both payment
 // methods, and does each one kick off the right request? Actually completing
-// a checkout on PayPal's or Stripe's hosted pages is out of scope for this
-// suite — those are third-party surfaces this app doesn't control.
+// a checkout in PayPal's or Razorpay's hosted widgets is out of scope for
+// this suite — those are third-party surfaces this app doesn't control.
 test.describe('payment method choice on an order', () => {
   let orderId: string;
 
@@ -48,22 +48,25 @@ test.describe('payment method choice on an order', () => {
     await expect(page.locator(`#paypal-btn-${orderId}`)).toBeAttached();
   });
 
-  test('choosing card checkout hits the Stripe boundary correctly', async ({ page }) => {
+  test('choosing card checkout hits the Razorpay boundary correctly', async ({ page }) => {
     const [response] = await Promise.all([
-      page.waitForResponse((res) => res.url().includes('/api/payments/stripe/create-session')),
+      page.waitForResponse((res) => res.url().includes('/api/payments/razorpay/create-order')),
       page.getByRole('button', { name: /Pay £45\.00 by card/ }).click(),
     ]);
 
     if (response.status() === 503) {
-      // Expected in an environment with no Stripe keys configured — verify the
+      // Expected in an environment with no Razorpay keys configured — verify the
       // graceful failure surfaces to the customer instead of a silent/broken button.
       await expect(page.getByText('Card payments are not configured.')).toBeVisible();
     } else {
-      // Real keys are configured — the API returned a Stripe-hosted checkout URL
-      // and the browser should be mid-redirect there.
+      // Real keys are configured — the API returned a Razorpay order to open
+      // Checkout.js with. Actually rendering/completing that modal is out of
+      // scope here (it's a third-party iframe), so this only asserts our own
+      // create-order call succeeded with the shape RazorpayButton expects.
       expect(response.ok()).toBe(true);
       const body = await response.json();
-      expect(body.data.url).toContain('stripe.com');
+      expect(body.data.razorpayOrderId).toBeTruthy();
+      expect(body.data.currency).toBe('GBP');
     }
   });
 });

@@ -4,17 +4,17 @@ import { getOrderById } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { getUserById } from '@/lib/db';
 import { parseJsonBody } from '@/lib/validation';
-import { stripe } from '@/lib/stripe';
+import { RAZORPAY_API_BASE, isRazorpayConfigured, razorpayAuthHeader } from '@/lib/razorpay';
 import type { ApiResponse } from '@/types/database';
 
-const createSessionSchema = z.object({ orderId: z.string().trim().min(1, 'orderId is required.') });
+const createOrderSchema = z.object({ orderId: z.string().trim().min(1, 'orderId is required.') });
 
-// POST /api/payments/stripe/create-session
-// Creates a Stripe Checkout Session for a given internal order ID.
+// POST /api/payments/razorpay/create-order
+// Creates a Razorpay order for a given internal order ID.
 // Only the logged-in user who owns the order can call this.
 export async function POST(request: NextRequest) {
   try {
-    if (!stripe) {
+    if (!isRazorpayConfigured()) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Card payments are not configured.' }, { status: 503 });
     }
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const parsed = await parseJsonBody(request, createSessionSchema, 'payments/stripe/create-session');
+    const parsed = await parseJsonBody(request, createOrderSchema, 'payments/razorpay/create-order');
     if (parsed.error) return parsed.error;
     const { orderId } = parsed.data;
 
@@ -49,38 +49,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'No payment amount set for this order yet.' }, { status: 400 });
     }
 
-    const origin = request.nextUrl.origin;
-
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      customer_email: user.email,
-      line_items: [
-        {
-          price_data: {
-            currency: 'gbp',
-            product_data: { name: `${order.service_type} — Memories in Prints` },
-            unit_amount: Math.round(order.payment_amount * 100),
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: { orderId: order.id },
-      success_url: `${origin}/account?stripe=success&order=${order.id}`,
-      cancel_url: `${origin}/account?stripe=cancelled&order=${order.id}`,
+    const razorpayResponse = await fetch(`${RAZORPAY_API_BASE}/orders`, {
+      method: 'POST',
+      headers: {
+        Authorization: razorpayAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        // Razorpay orders are denominated in the smallest currency unit (pence, not pounds).
+        amount: Math.round(order.payment_amount * 100),
+        currency: 'GBP',
+        receipt: order.id,
+        notes: { orderId: order.id, service_type: order.service_type },
+      }),
     });
 
-    if (!checkoutSession.url) {
-      console.error('[payments] Stripe session created without a url:', checkoutSession.id);
-      return NextResponse.json<ApiResponse>({ success: false, error: 'Failed to start checkout.' }, { status: 500 });
+    if (!razorpayResponse.ok) {
+      const errorData = await razorpayResponse.json().catch(() => ({}));
+      console.error('[payments] Razorpay create-order error:', errorData);
+      return NextResponse.json<ApiResponse>({ success: false, error: 'Failed to create Razorpay order.' }, { status: 500 });
     }
 
-    return NextResponse.json<ApiResponse<{ url: string }>>({
+    const razorpayOrder = await razorpayResponse.json();
+
+    return NextResponse.json<ApiResponse<{ razorpayOrderId: string; amount: number; currency: string }>>({
       success: true,
-      data: { url: checkoutSession.url },
+      data: { razorpayOrderId: razorpayOrder.id, amount: razorpayOrder.amount, currency: razorpayOrder.currency },
     });
   } catch (err) {
-    console.error('[payments] stripe create-session error:', err);
+    console.error('[payments] razorpay create-order error:', err);
     return NextResponse.json<ApiResponse>({ success: false, error: 'Internal server error.' }, { status: 500 });
   }
 }

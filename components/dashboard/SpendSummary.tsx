@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import RegistrationBar from './RegistrationBar';
+import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/order-status';
 import type { DisplayStage } from '@/components/ui/OrderStepper';
+import type { PaymentProvider } from '@/types/database';
 
 export interface MonthlySpend {
   /** Short label, e.g. "Jan" */
@@ -20,6 +22,7 @@ export interface CategorySpend {
 }
 
 export interface ProviderSpend {
+  provider: PaymentProvider | null;
   label: string;
   count: number;
   amount: number;
@@ -96,7 +99,7 @@ export default function SpendSummary({
               <button
                 type="button"
                 onClick={() => setTableView((v) => !v)}
-                className="font-mono text-[10px] uppercase tracking-widest text-text-muted underline hover:text-accent-gold"
+                className="font-mono text-[11px] uppercase tracking-widest text-text-muted underline hover:text-accent-gold"
               >
                 {tableView ? 'Chart' : 'Table'}
               </button>
@@ -225,7 +228,10 @@ export default function SpendSummary({
             <ul className="mt-4 divide-y divide-dashed divide-border">
               {byProvider.map((p) => (
                 <li key={p.label} className="flex items-center justify-between py-2 first:pt-0">
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-text-heading">{p.label}</span>
+                  <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-text-heading">
+                    {p.provider && <PaymentProviderIcon provider={p.provider} />}
+                    {p.label}
+                  </span>
                   <span className="font-mono text-[11px] text-text-muted">
                     {p.count} job{p.count === 1 ? '' : 's'} · {formatGBP(p.amount)}
                   </span>

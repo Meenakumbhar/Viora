@@ -79,7 +79,7 @@ export default async function ReviewDesignPage({ params }: { params: Promise<{ i
             {sorted.map((r) => (
               <li key={r.id} className="flex items-center justify-between border border-border px-4 py-3">
                 <span className="font-mono text-xs text-text-heading">Proof v{r.version}</span>
-                <span className="font-mono text-[10px] uppercase tracking-widest text-text-muted">{STATUS_LABELS[r.status]}</span>
+                <span className="font-mono text-[11px] uppercase tracking-widest text-text-muted">{STATUS_LABELS[r.status]}</span>
               </li>
             ))}
           </ul>

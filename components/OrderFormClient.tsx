@@ -371,7 +371,7 @@ export default function OrderFormClient({
               aria-label="Quantity"
               className="w-full accent-accent-gold"
             />
-            <div className="flex justify-between font-mono text-[10px] text-text-muted">
+            <div className="flex justify-between font-mono text-[11px] text-text-muted">
               <span>{QUANTITY_MIN}</span>
               <span>{QUANTITY_MAX}+</span>
             </div>
@@ -418,7 +418,7 @@ export default function OrderFormClient({
                           <div key={size.label} className="flex items-center justify-between gap-4">
                             <span className="font-body text-sm text-cat-body">
                               {size.label !== 'Standard' ? size.label : product.title}
-                              <span className="ml-2 font-mono text-[10px] text-text-muted">{size.dimensions}</span>
+                              <span className="ml-2 font-mono text-[11px] text-text-muted">{size.dimensions}</span>
                             </span>
                             <input
                               type="number"
@@ -515,7 +515,7 @@ export default function OrderFormClient({
             folder="order-form-attachments"
             filenamePrefix={enquiry.id.slice(0, 8).toUpperCase()}
             label="Attach a file"
-            helperText="PNG, JPG, WebP, AVIF, GIF, or PDF up to 10MB"
+            helperText="PNG, JPG, WebP, AVIF, GIF, HEIC, or PDF up to 25MB"
           />
         </SectionCard>
 
@@ -543,7 +543,7 @@ export default function OrderFormClient({
           </button>
         </div>
 
-        <p className="font-mono text-[10px] text-text-muted">
+        <p className="font-mono text-[11px] text-text-muted">
           Questions about your order?{' '}
           <Link href="/contact" className="text-accent-gold link-underline">Contact us</Link>.
         </p>

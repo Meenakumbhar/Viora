@@ -2,11 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { uploadToR2, deleteFromR2 } from '@/utils/r2';
 import { parseJsonBody } from '@/lib/validation';
+import { auth } from '@/lib/auth';
+import { getUserById } from '@/lib/db';
+import { ADMIN_SESSION_COOKIE, verifyAdminToken } from '@/utils/admin-auth';
 import type { ApiResponse } from '@/types/database';
 
 const deleteSchema = z.object({ key: z.string().trim().min(1, 'File key is required for deletion.').max(500) });
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+// The one folder a signed-out visitor is allowed to upload into — the
+// customer order form (app/order-form/[enquiryId]) has no login of its own,
+// matching the trust model of the enquiry-id link it's reached through.
+// Everything else (portfolio images, etc.) stays admin/staff only.
+const PUBLIC_UPLOAD_FOLDERS = new Set(['order-form-attachments']);
+const UPLOAD_ROLES = new Set(['designer', 'employee', 'admin']);
+
+async function isUploadRequestAuthorized(request: NextRequest): Promise<boolean> {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const cookieToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+  if (await verifyAdminToken(cookieToken, adminPassword)) return true;
+
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) return false;
+  const user = await getUserById(session.user.id);
+  return Boolean(user && UPLOAD_ROLES.has(user.role));
+}
+
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -14,6 +35,10 @@ const ALLOWED_MIME_TYPES = [
   'image/webp',
   'image/avif',
   'image/gif',
+  // iPhones capture photos as HEIC/HEIF by default — without these, a photo
+  // picked straight from an iOS camera roll fails to upload.
+  'image/heic',
+  'image/heif',
   'application/pdf',
 ];
 
@@ -34,6 +59,13 @@ export async function POST(request: NextRequest) {
       .replace(/[^a-zA-Z0-9_-]/g, '')
       .toLowerCase();
 
+    if (!PUBLIC_UPLOAD_FOLDERS.has(folder) && !(await isUploadRequestAuthorized(request))) {
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: 'Unauthorized.' },
+        { status: 401 }
+      );
+    }
+
     if (!file) {
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'No file provided.' },
@@ -43,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json<ApiResponse>(
-        { success: false, error: 'File size exceeds maximum allowed limit of 10MB.' },
+        { success: false, error: 'File size exceeds maximum allowed limit of 25MB.' },
         { status: 400 }
       );
     }
@@ -53,7 +85,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
-          error: `Unsupported file type (${contentType}). Allowed types: JPG, PNG, WebP, AVIF, GIF, PDF.`,
+          error: `Unsupported file type (${contentType}). Allowed types: JPG, PNG, WebP, AVIF, GIF, HEIC, PDF.`,
         },
         { status: 400 }
       );

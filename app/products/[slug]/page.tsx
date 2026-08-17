@@ -63,7 +63,7 @@ export default async function ProductPage({ params }: PageProps) {
     <div data-category="funeral">
       <main className="bg-[#FDFCFA] pb-24 pt-28 text-[#1C2530]">
         <div className="container-wide">
-          <Link href="/products" className="font-mono text-[10px] uppercase tracking-widest text-[#5B6470] hover:text-[#1C2530]">
+          <Link href="/products" className="font-mono text-[11px] uppercase tracking-widest text-[#5B6470] hover:text-[#1C2530]">
             ← Back to products
           </Link>
 
@@ -88,7 +88,7 @@ export default async function ProductPage({ params }: PageProps) {
             </section>
 
             <section>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-[#6B5420]">Product</span>
+              <span className="font-mono text-[11px] uppercase tracking-widest text-[#6B5420]">Product</span>
               <h1 className="mt-4 font-display text-5xl leading-none text-[#1C2530] md:text-6xl">{product.title}</h1>
               <p className="mt-4 font-display text-xl italic text-accent-gold">{product.subtitle}</p>
               <p className="mt-6 font-body text-body-lg leading-relaxed text-[#374151]">{product.description}</p>

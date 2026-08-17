@@ -61,7 +61,7 @@ export default function DesignReviewSubmit({ orderId, revisionId, images, versio
 
   return (
     <div>
-      <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-text-muted">Proof v{version}</p>
+      <p className="mb-4 font-mono text-[11px] uppercase tracking-widest text-text-muted">Proof v{version}</p>
       {error && (
         <p className="mb-4 font-mono text-xs text-red-500" role="alert">
           {error}

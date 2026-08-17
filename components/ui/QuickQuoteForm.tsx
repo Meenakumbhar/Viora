@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useMemo, type ChangeEvent, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { readPortfolioCart, clearPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
 import type { PublicUser } from '@/types/database';
 import {
@@ -53,6 +54,7 @@ interface QuickQuoteFormProps {
 }
 
 export default function QuickQuoteForm({ user, initialService, initialDetails, fromCart }: QuickQuoteFormProps) {
+  const router = useRouter();
   const [data, setData] = useState<QuickFormData>(() => {
     const matchedService = initialService
       ? SERVICE_TYPES.find((s) => s.label.toLowerCase() === initialService.toLowerCase())?.label
@@ -65,6 +67,14 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
   });
   const [state, setState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Give them a moment to read the confirmation, then take them straight to
+  // their orders — that's where this request now lives.
+  useEffect(() => {
+    if (state !== 'success') return;
+    const timer = setTimeout(() => router.push('/account'), 3000);
+    return () => clearTimeout(timer);
+  }, [state, router]);
 
   /* ── Portfolio cart context — so a quote raised from "Buy" on a portfolio
      item stays linked to that item, instead of arriving as a generic request.
@@ -174,14 +184,17 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
           Thank you, {(user.name || user.email).split(' ')[0]}
         </h3>
         <p className="mt-4 max-w-md font-body text-body-base text-text-muted">
-          Your request is with us. We&apos;ll be in touch within 24 hours.
+          Your request is with us. We&apos;ll be in touch within 24 hours. Head to your orders to track it.
         </p>
         <Link
           href="/account"
           className="mt-8 inline-flex items-center gap-2 font-body text-label uppercase tracking-wider text-accent-gold link-underline"
         >
-          Back to your orders &rarr;
+          Go to your orders now &rarr;
         </Link>
+        <p className="mt-3 font-mono text-[11px] uppercase tracking-wider text-text-muted">
+          Taking you there automatically&hellip;
+        </p>
       </div>
     );
   }
@@ -198,7 +211,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
         </p>
         <Link
           href="/account/profile"
-          className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+          className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
         >
           Edit details
         </Link>
@@ -208,7 +221,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
       {cartItems.length > 0 && includeCartItems && (
         <div className="flex items-start justify-between gap-4 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
               Requesting a quote for {cartItems.length} item{cartItems.length === 1 ? '' : 's'} from your cart
             </p>
             <p className="mt-1.5 font-body text-sm text-text-muted">
@@ -221,7 +234,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
               setIncludeCartItems(false);
               if (derivedServiceType) setField('serviceType', '');
             }}
-            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
+            className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
           >
             Not about this
           </button>
@@ -233,13 +246,13 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
         {derivedServiceType && !serviceOverride ? (
           <div className="flex items-center justify-between gap-4 border border-border bg-cat-surface px-4 py-3">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-text-muted">Service</p>
+              <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">Service</p>
               <p className="mt-1 font-body text-cat-heading">{derivedServiceType}</p>
             </div>
             <button
               type="button"
               onClick={() => setServiceOverride(true)}
-              className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+              className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
             >
               Change
             </button>
@@ -305,7 +318,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
             <button
               type="button"
               onClick={() => setUseDifferentAddress(true)}
-              className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+              className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
             >
               Use a different address
             </button>
@@ -325,7 +338,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
               <button
                 type="button"
                 onClick={() => { setUseDifferentAddress(false); setField('address', ''); }}
-                className="mt-2 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+                className="mt-2 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
               >
                 Use my saved address instead
               </button>

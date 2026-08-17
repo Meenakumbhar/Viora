@@ -105,7 +105,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="mt-2 w-full border border-border bg-bg-primary px-4 py-3 font-body text-text-heading outline-none transition-colors focus:border-accent-gold"
             />
-            <p className="mt-1.5 font-mono text-[10px] text-text-muted">At least 8 characters.</p>
+            <p className="mt-1.5 font-mono text-[11px] text-text-muted">At least 8 characters.</p>
           </div>
 
           {error && (

@@ -21,10 +21,14 @@ export default function FileUpload({
   onChange,
   folder = 'portfolio',
   filenamePrefix,
-  accept = 'image/jpeg,image/png,image/webp,image/avif,image/svg+xml,application/pdf',
-  maxSizeMB = 10,
+  // Includes HEIC/HEIF (and their .heic/.heif extensions aren't in the
+  // display regex below) since that's the default capture format on modern
+  // iPhones — without it, uploading a photo straight from an iOS camera roll
+  // fails with "unsupported file type".
+  accept = 'image/jpeg,image/png,image/webp,image/avif,image/svg+xml,image/heic,image/heif,application/pdf',
+  maxSizeMB = 25,
   label = 'Upload Media',
-  helperText = 'PNG, JPG, WebP, AVIF, SVG or PDF up to 10MB',
+  helperText = 'PNG, JPG, WebP, AVIF, SVG, HEIC or PDF up to 25MB',
   disabled = false,
 }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -33,12 +37,11 @@ export default function FileUpload({
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isImage =
-    value &&
-    (value.match(/\.(jpeg|jpg|png|webp|avif|gif|svg)(\?.*)?$/i) ||
-      !value.endsWith('.pdf'));
-
-  const isPdf = value && value.toLowerCase().includes('.pdf');
+  // An explicit allowlist, not "anything that isn't a PDF" — browsers can't
+  // decode HEIC/HEIF (or other unknown types) in an <img>, so those need the
+  // generic file icon below rather than a silently-broken <Image>.
+  const isImage = Boolean(value && value.match(/\.(jpeg|jpg|png|webp|avif|gif|svg)(\?.*)?$/i));
+  const isPdf = Boolean(value && value.toLowerCase().includes('.pdf'));
 
   async function uploadFile(file: File) {
     if (disabled || isUploading) return;
@@ -74,9 +77,17 @@ export default function FileUpload({
       clearInterval(interval);
       setProgress(100);
 
-      const json = await response.json();
+      // A non-JSON body here means the server never reached our route handler
+      // at all (a dev-mode compile hiccup, a proxy timeout, a stale bundle) —
+      // surface a plain retry message instead of the raw parser error.
+      let json: { success: boolean; error?: string; data?: { url: string; key: string } };
+      try {
+        json = await response.json();
+      } catch {
+        throw new Error(`Upload failed (server returned an unexpected response, status ${response.status}). Please try again.`);
+      }
 
-      if (!response.ok || !json.success) {
+      if (!response.ok || !json.success || !json.data) {
         throw new Error(json.error || 'Upload failed. Please try again.');
       }
 

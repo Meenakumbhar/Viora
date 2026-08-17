@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
@@ -41,13 +42,18 @@ export default function AboutPage() {
                     Memories in Prints is a full-service design and print studio serving a global client base from our remote setup. We believe that physical prints carry a special weight in a digital world.
                   </p>
                   <p>
-                    Whether it is a custom wedding suite, a memorial keepsake, or a matchday programme for your sports club, every project is handled with precision and quiet confidence.
+                    Whether it is a custom wedding suite, a memorial keepsake every project is handled with precision and quiet confidence.
                   </p>
                 </div>
               </div>
-              <div className="lg:col-span-6 relative aspect-square border border-border overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-tr from-accent-gold/20 via-bg-surface to-accent-blush/20" />
-                <div className="absolute inset-0 bg-bg-primary/10" />
+              <div className="lg:col-span-6 relative aspect-[3000/1928] border border-border overflow-hidden">
+                <Image
+                  src="/images/products/our-story.jpeg"
+                  alt="Our story — Memories in Prints"
+                  fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-cover"
+                />
               </div>
             </div>
           </SectionReveal>
@@ -58,38 +64,39 @@ export default function AboutPage() {
       <section className="bg-bg-alternate py-24 md:py-36 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              <div className="lg:col-span-5 relative aspect-[3/4] border border-border overflow-hidden lg:order-2">
-                <div className="absolute inset-0 bg-gradient-to-tr from-bg-surface via-bg-secondary to-border" />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03]">
-                  <span className="font-display text-[8rem] font-bold text-text-primary">
-                    M
-                  </span>
-                </div>
+            <div className="mx-auto max-w-5xl">
+              <span className="block text-center font-mono text-label uppercase text-accent-gold tracking-wider">
+                The Founder
+              </span>
+              <h2 className="mt-4 text-center font-display text-display-lg text-text-primary">
+                A note from the <em className="italic text-accent-gold">founder</em>
+              </h2>
+
+              <div className="relative mt-12 aspect-[5463/3875] border border-border overflow-hidden">
+                <Image
+                  src="/images/products/Founders-note.jpeg"
+                  alt="Aboli, Founder & Creative Director — a handwritten note"
+                  fill
+                  sizes="(min-width: 1024px) 1024px, 100vw"
+                  className="object-contain bg-bg-primary"
+                  priority
+                />
               </div>
 
-              <div className="lg:col-span-7 lg:order-1 lg:pr-12">
-                <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-                  The Founder
-                </span>
-                <h2 className="mt-4 font-display text-display-lg text-text-primary">
-                  A note from the <em className="italic text-accent-gold">founder</em>
-                </h2>
-                <div className="mt-6 space-y-6 font-body text-body-lg text-text-muted leading-relaxed">
-                  <p>
-                    Our studio started with a simple belief: that print during life&apos;s key passages should feel considered. We began by designing memorial booklets. In that space, there is no room for errors, delays, or clinical templates.
-                  </p>
-                  <p>
-                    That background shapes how we design everything today. We treat every wedding suite, branding brief, and sports card with the exact same level of thoroughness and respect.
-                  </p>
-                  <div className="pt-6 border-t border-border">
-                    <span className="block font-display text-xl text-text-primary italic">
-                      Aboli
-                    </span>
-                    <span className="block font-mono text-xs text-text-muted uppercase tracking-wider mt-1">
-                      Founder & Creative Director
-                    </span>
-                  </div>
+              <div className="mx-auto mt-12 max-w-2xl space-y-6 font-body text-body-lg text-text-muted leading-relaxed">
+                <p>
+                  Our studio started with a simple belief: that print during life&apos;s key passages should feel considered. We began by designing memorial booklets. In that space, there is no room for errors, delays, or clinical templates.
+                </p>
+                <p>
+                  That background shapes how we design everything today. We treat every wedding suite, branding brief, and sports card with the exact same level of thoroughness and respect.
+                </p>
+                <div className="pt-6 border-t border-border">
+                  <span className="block font-display text-xl text-text-primary italic">
+                    Aboli
+                  </span>
+                  <span className="block font-mono text-xs text-text-muted uppercase tracking-wider mt-1">
+                    Founder & Creative Director
+                  </span>
                 </div>
               </div>
             </div>
@@ -160,7 +167,7 @@ export default function AboutPage() {
               <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pl-10 md:pl-0">
                 <div className="absolute left-3.5 md:left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent-gold z-10" />
                 <div className="w-full md:w-[45%] text-left md:text-right">
-                  <span className="font-mono text-accent-gold font-bold">2021</span>
+                  <span className="font-mono text-accent-gold font-bold">October 2025</span>
                   <h3 className="font-display text-xl text-text-primary mt-1">Studio Founded</h3>
                   <p className="mt-2 font-body text-body-base text-text-muted">
                     Launched with a focus on custom celebration of life print, establishing our core design philosophy.
@@ -174,10 +181,10 @@ export default function AboutPage() {
                 <div className="absolute left-3.5 md:left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent-gold z-10" />
                 <div className="hidden md:block w-[45%]" />
                 <div className="w-full md:w-[45%]">
-                  <span className="font-mono text-accent-gold font-bold">2022</span>
-                  <h3 className="font-display text-xl text-text-primary mt-1">Expanding Services</h3>
+                  <span className="font-mono text-accent-gold font-bold">December 2025</span>
+                  <h3 className="font-display text-xl text-text-primary mt-1">Networking</h3>
                   <p className="mt-2 font-body text-body-base text-text-muted">
-                    Began designing premium wedding suites and graphic design services for local clients.
+                    Built relationships with funeral directors and celebrants, laying the groundwork for trusted referral partnerships.
                   </p>
                 </div>
               </div>
@@ -186,10 +193,10 @@ export default function AboutPage() {
               <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pl-10 md:pl-0">
                 <div className="absolute left-3.5 md:left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent-gold z-10" />
                 <div className="w-full md:w-[45%] text-left md:text-right">
-                  <span className="font-mono text-accent-gold font-bold">2023</span>
-                  <h3 className="font-display text-xl text-text-primary mt-1">Going Global</h3>
+                  <span className="font-mono text-accent-gold font-bold">February 2026</span>
+                  <h3 className="font-display text-xl text-text-primary mt-1">Branding</h3>
                   <p className="mt-2 font-body text-body-base text-text-muted">
-                    Partnered with premium logistics providers to launch tracked shipping to the US, EU, and Australia.
+                    Introduced organisation branding packages, extending our design work beyond print alone.
                   </p>
                 </div>
                 <div className="hidden md:block w-[45%]" />
@@ -200,12 +207,25 @@ export default function AboutPage() {
                 <div className="absolute left-3.5 md:left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent-gold z-10" />
                 <div className="hidden md:block w-[45%]" />
                 <div className="w-full md:w-[45%]">
-                  <span className="font-mono text-accent-gold font-bold">2025</span>
-                  <h3 className="font-display text-xl text-text-primary mt-1">Sports & Branding</h3>
+                  <span className="font-mono text-accent-gold font-bold">April 2026</span>
+                  <h3 className="font-display text-xl text-text-primary mt-1">Going Global</h3>
                   <p className="mt-2 font-body text-body-base text-text-muted">
-                    Introduced club branding packages and regular season programmes for athletic clubs globally.
+                    Created a portal that tracks all shipping details all over the world.
                   </p>
                 </div>
+              </div>
+
+              {/* Event 5 */}
+              <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pl-10 md:pl-0">
+                <div className="absolute left-3.5 md:left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent-gold z-10" />
+                <div className="w-full md:w-[45%] text-left md:text-right">
+                  <span className="font-mono text-accent-gold font-bold">June 2026</span>
+                  <h3 className="font-display text-xl text-text-primary mt-1">Growing</h3>
+                  <p className="mt-2 font-body text-body-base text-text-muted">
+                    Grew our design team and production capacity to keep pace with a steadily expanding global client base.
+                  </p>
+                </div>
+                <div className="hidden md:block w-[45%]" />
               </div>
             </div>
           </SectionReveal>

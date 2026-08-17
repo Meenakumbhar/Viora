@@ -60,12 +60,12 @@ export default function ProductsPage() {
                     <p className="mt-2 font-body text-sm text-cat-body leading-relaxed line-clamp-3">
                       {product.subtitle}
                     </p>
-                    <p className="mt-4 font-mono text-[10px] uppercase tracking-widest text-cat-muted">
+                    <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-cat-muted">
                       {product.sizes.length > 1
                         ? `${product.sizes.length} sizes available`
                         : product.sizes[0]?.dimensions}
                     </p>
-                    <span className="mt-auto pt-6 font-mono text-[10px] uppercase tracking-wider text-cat-accent-dark">
+                    <span className="mt-auto pt-6 font-mono text-[11px] uppercase tracking-wider text-cat-accent-dark">
                       View details &rarr;
                     </span>
                   </div>

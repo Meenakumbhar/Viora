@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import OrderStepper, { type DisplayStage } from '@/components/ui/OrderStepper';
 import OrderPaymentSection from '@/components/ui/OrderPaymentSection';
+import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
 import { accentForServiceType } from '@/lib/order-category';
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/order-status';
 import type { Order, OrderStatusHistoryEntry, DesignRevision, Enquiry } from '@/types/database';
@@ -26,11 +27,6 @@ interface OrderRowData {
 
 export type AccountRow = PlacedRow | OrderRowData;
 
-interface StripeReturn {
-  status: 'success' | 'cancelled';
-  orderId: string | null;
-}
-
 function JobNumber({ id }: { id: string }) {
   return <p className="font-mono text-xs text-text-muted">JOB #{id.slice(0, 8).toUpperCase()}</p>;
 }
@@ -47,28 +43,11 @@ function StatusTag({ status }: { status: DisplayStage }) {
   );
 }
 
-export default function CustomerOrderList({ rows, stripeReturn }: { rows: AccountRow[]; stripeReturn?: StripeReturn }) {
-  const [expandedId, setExpandedId] = useState<string | null>(
-    stripeReturn?.orderId ?? (rows.length === 1 ? rows[0].id : null)
-  );
+export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(rows.length === 1 ? rows[0].id : null);
 
   return (
     <div>
-      {stripeReturn?.status === 'success' && (
-        <div className="mb-4 border border-emerald-500/30 bg-emerald-500/5 px-5 py-4">
-          <p className="font-mono text-sm uppercase tracking-widest text-emerald-600">Payment received</p>
-          <p className="mt-1 font-body text-base text-text-muted">
-            We&apos;re finalizing your payment now — this may take a few seconds to reflect below.
-          </p>
-        </div>
-      )}
-      {stripeReturn?.status === 'cancelled' && (
-        <div className="mb-4 border border-amber-500/30 bg-amber-500/5 px-5 py-4">
-          <p className="font-mono text-sm uppercase tracking-widest text-amber-600">Checkout cancelled</p>
-          <p className="mt-1 font-body text-base text-text-muted">No payment was taken — you can try again below.</p>
-        </div>
-      )}
-
       <div className="space-y-3">
         {rows.map((row) => {
           const isOpen = expandedId === row.id;
@@ -169,7 +148,10 @@ export default function CustomerOrderList({ rows, stripeReturn }: { rows: Accoun
                   <span className="hidden font-mono text-xs text-text-muted sm:inline">
                     {new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
                   </span>
-                  <span className="hidden font-mono text-sm text-text-heading sm:inline">
+                  <span className="hidden items-center gap-2 font-mono text-sm text-text-heading sm:flex">
+                    {order.payment_status === 'paid' && order.payment_provider && (
+                      <PaymentProviderIcon provider={order.payment_provider} />
+                    )}
                     {order.payment_amount !== null ? `£${order.payment_amount.toFixed(2)}` : '—'}
                   </span>
                   <StatusTag status={order.status} />

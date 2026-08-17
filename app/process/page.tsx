@@ -62,7 +62,7 @@ export default function ProcessPage() {
                         <h2 className="font-display text-3xl text-text-primary">
                           {step.title}
                         </h2>
-                        <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest border border-border px-2 py-0.5 bg-bg-secondary">
+                        <span className="font-mono text-[11px] text-text-muted uppercase tracking-widest border border-border px-2 py-0.5 bg-bg-secondary">
                           {step.timeframe}
                         </span>
                       </div>

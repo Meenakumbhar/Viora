@@ -179,9 +179,10 @@ function normalizeOrder(row: any): Order {
     status: row.status,
     payment_status: (row.payment_status as string) === 'paid' ? 'paid' : row.payment_status === 'failed' ? 'failed' : 'unpaid',
     payment_amount: row.payment_amount != null ? Number(row.payment_amount) : null,
-    payment_provider: row.payment_provider === 'paypal' || row.payment_provider === 'stripe' ? row.payment_provider : null,
+    payment_provider: row.payment_provider === 'paypal' || row.payment_provider === 'razorpay' ? row.payment_provider : null,
     paypal_order_id: row.paypal_order_id != null ? String(row.paypal_order_id) : null,
-    stripe_session_id: row.stripe_session_id != null ? String(row.stripe_session_id) : null,
+    razorpay_order_id: row.razorpay_order_id != null ? String(row.razorpay_order_id) : null,
+    razorpay_payment_id: row.razorpay_payment_id != null ? String(row.razorpay_payment_id) : null,
     assigned_designer_id: row.assigned_designer_id != null ? String(row.assigned_designer_id) : null,
     created_at: toIsoTimestampString(row.created_at),
     updated_at: toIsoTimestampString(row.updated_at),
@@ -929,6 +930,19 @@ export async function getAllOrders(): Promise<Order[]> {
   }
 }
 
+export async function getAllEnquiries(): Promise<Enquiry[]> {
+  const db = getDrizzle();
+  if (!db) return [];
+
+  try {
+    const rows = await db.select().from(enquiriesTable).orderBy(desc(enquiriesTable.created_at));
+    return rows.map(normalizeEnquiry);
+  } catch (err) {
+    console.error('[db] getAllEnquiries error:', err);
+    return [];
+  }
+}
+
 // Orders aren't tied to a user_id — a customer can place a quote as a guest
 // before ever creating an account. Matching by email means their history
 // still shows up correctly the moment they sign up with the same address.
@@ -1042,14 +1056,21 @@ export async function markOrderPaid(id: string, paypalOrderId: string): Promise<
   return rows.length > 0 ? normalizeOrder(rows[0]) : null;
 }
 
-// Mark order as paid after a Stripe checkout.session.completed webhook verifies successfully
-export async function markOrderPaidStripe(id: string, stripeSessionId: string): Promise<Order | null> {
+// Mark order as paid after a Razorpay payment signature verifies successfully
+// (or the payment.captured webhook confirms it, whichever lands first).
+export async function markOrderPaidRazorpay(id: string, razorpayOrderId: string, razorpayPaymentId: string): Promise<Order | null> {
   const db = getDrizzle();
   if (!db) throw new Error('Database is not configured.');
 
   const rows = await db
     .update(ordersTable)
-    .set({ payment_status: 'paid', payment_provider: 'stripe', stripe_session_id: stripeSessionId, updated_at: new Date() })
+    .set({
+      payment_status: 'paid',
+      payment_provider: 'razorpay',
+      razorpay_order_id: razorpayOrderId,
+      razorpay_payment_id: razorpayPaymentId,
+      updated_at: new Date(),
+    })
     .where(eq(ordersTable.id, id))
     .returning();
 

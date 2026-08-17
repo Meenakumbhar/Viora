@@ -269,7 +269,7 @@ export default async function Home() {
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between">
-                      <span className="font-mono text-[10px] text-cat-muted uppercase tracking-wider">
+                      <span className="font-mono text-[11px] text-cat-muted uppercase tracking-wider">
                         {item.location || 'Worldwide'}
                       </span>
                       <Link
