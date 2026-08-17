@@ -156,7 +156,7 @@ export default function PayPalButton({ order, onSuccess }: PayPalButtonProps) {
 
   if (!clientId) {
     return (
-      <p className="font-mono text-[10px] text-red-500">
+      <p className="font-mono text-[11px] text-red-500">
         PayPal is not configured. Please contact us to arrange payment.
       </p>
     );
@@ -166,7 +166,7 @@ export default function PayPalButton({ order, onSuccess }: PayPalButtonProps) {
     return (
       <div className="flex items-center gap-2">
         <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-        <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-600">
+        <p className="font-mono text-[11px] uppercase tracking-widest text-emerald-600">
           Payment successful — thank you!
         </p>
       </div>
@@ -176,12 +176,12 @@ export default function PayPalButton({ order, onSuccess }: PayPalButtonProps) {
   return (
     <div>
       {status === 'loading' && (
-        <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-text-muted">
+        <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-text-muted">
           Processing…
         </p>
       )}
       {status === 'error' && errorMessage && (
-        <p className="mb-2 font-mono text-[10px] text-red-500" role="alert">
+        <p className="mb-2 font-mono text-[11px] text-red-500" role="alert">
           {errorMessage}
         </p>
       )}

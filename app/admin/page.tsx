@@ -5,7 +5,7 @@ import DashboardShell from '@/components/dashboard/DashboardShell';
 import StatCard from '@/components/dashboard/StatCard';
 import AnalyticsSidebar from '@/components/dashboard/AnalyticsSidebar';
 import LogoutButton from '@/components/admin/LogoutButton';
-import EnquiryOrderAction from '@/components/admin/EnquiryOrderAction';
+import StatusBadge from '@/components/admin/StatusBadge';
 import { ADMIN_NAV_ITEMS } from '@/lib/admin-nav';
 
 export const dynamic = 'force-dynamic';
@@ -14,28 +14,6 @@ export const metadata: Metadata = {
   title: 'Admin Dashboard | Memories in Prints',
   robots: { index: false, follow: false },
 };
-
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    new: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-    read: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    replied: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-    converted: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-    pending: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-    in_progress: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    completed: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  };
-  return (
-    <span
-      className={`inline-flex items-center border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded-sm ${map[status] ?? 'bg-white/10 text-white/50 border-white/20'
-        }`}
-    >
-      {status.replace(/_/g, ' ')}
-    </span>
-  );
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -63,8 +41,6 @@ export default async function AdminPage() {
     in_progress: orders.filter((o) => o.status === 'in_progress').length,
     completed: orders.filter((o) => o.status === 'completed').length,
   };
-
-  const orderByEnquiryId = new Map(orders.filter((o) => o.enquiry_id).map((o) => [o.enquiry_id as string, o]));
 
   return (
     <DashboardShell
@@ -162,13 +138,15 @@ export default async function AdminPage() {
       {/* ── Two-column layout ── */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
 
-        {/* ── Enquiries Table (2/3 width) ── */}
+        {/* ── Enquiries (2/3 width) — condensed; full management lives on its own tab ── */}
         <div className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-mono text-xs uppercase tracking-widest text-white/50">
               Recent Enquiries
             </h2>
-            <span className="font-mono text-xs text-white/30">{enquiries.length} records</span>
+            <Link href="/admin/enquiries" className="font-mono text-xs text-white/30 hover:text-[#C6A85C] transition-colors">
+              Manage enquiries →
+            </Link>
           </div>
           <div className="border border-white/10 overflow-hidden">
             {enquiries.length === 0 ? (
@@ -182,14 +160,8 @@ export default async function AdminPage() {
                     <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
                       Name
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
-                      Item ordered
-                    </th>
                     <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40 hidden md:table-cell">
-                      Service
-                    </th>
-                    <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40 hidden lg:table-cell">
-                      Country
+                      Item ordered
                     </th>
                     <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
                       Date
@@ -197,13 +169,10 @@ export default async function AdminPage() {
                     <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">
-                      Order
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {enquiries.slice(0, 20).map((e, i) => (
+                  {enquiries.slice(0, 8).map((e, i) => (
                     <tr
                       key={e.id}
                       className={`border-b border-white/5 transition-colors hover:bg-white/5 ${i % 2 === 0 ? 'bg-transparent' : 'bg-white/2'
@@ -213,7 +182,7 @@ export default async function AdminPage() {
                         <p className="font-body text-sm text-white/80">{e.name}</p>
                         <p className="font-mono text-[10px] text-white/30">{e.email}</p>
                       </td>
-                      <td className="px-4 py-3 max-w-[220px]">
+                      <td className="px-4 py-3 max-w-[220px] hidden md:table-cell">
                         {e.portfolio_items && e.portfolio_items.length > 0 ? (
                           <p
                             className="truncate font-body text-sm text-[#C6A85C]"
@@ -224,14 +193,6 @@ export default async function AdminPage() {
                         ) : (
                           <span className="font-mono text-xs text-white/25">— general enquiry —</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
-                        <span className="font-mono text-xs text-white/50">{e.service_type}</span>
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <span className="font-mono text-xs text-white/40">
-                          {e.country ?? '—'}
-                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-[10px] text-white/30">
@@ -244,14 +205,6 @@ export default async function AdminPage() {
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={e.status} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <EnquiryOrderAction enquiry={e} existingOrder={orderByEnquiryId.get(e.id)} />
-                          <Link href={`/admin/order-form/${e.id}`} className="font-mono text-[10px] uppercase tracking-wider text-white/30 hover:text-[#C6A85C] transition-colors">
-                            Order form
-                          </Link>
-                        </div>
                       </td>
                     </tr>
                   ))}

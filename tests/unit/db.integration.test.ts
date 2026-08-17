@@ -10,7 +10,7 @@ import {
   getOrderById,
   setOrderPaymentAmount,
   markOrderPaid,
-  markOrderPaidStripe,
+  markOrderPaidRazorpay,
   getOrderHistory,
   upsertSubscriber,
 } from '@/lib/db';
@@ -96,18 +96,19 @@ describe('orders — payment lifecycle', () => {
     expect(history.some((h) => h.status === 'pending')).toBe(true);
   });
 
-  it('reconciles a Stripe payment onto the same schema', async () => {
+  it('reconciles a Razorpay payment onto the same schema', async () => {
     const order = await createOrder({
       customer_name: 'Vitest Runner',
       customer_email: TEST_EMAIL,
-      service_type: 'Integration test order (stripe)',
+      service_type: 'Integration test order (razorpay)',
     });
     createdOrderIds.push(order.id);
 
-    const paid = await markOrderPaidStripe(order.id, 'cs_test_vitest_session');
+    const paid = await markOrderPaidRazorpay(order.id, 'order_vitest_test', 'pay_vitest_test');
     expect(paid?.payment_status).toBe('paid');
-    expect(paid?.payment_provider).toBe('stripe');
-    expect(paid?.stripe_session_id).toBe('cs_test_vitest_session');
+    expect(paid?.payment_provider).toBe('razorpay');
+    expect(paid?.razorpay_order_id).toBe('order_vitest_test');
+    expect(paid?.razorpay_payment_id).toBe('pay_vitest_test');
   });
 
   it('returns null when reading a nonexistent order', async () => {

@@ -5,11 +5,6 @@ import CustomerOrderList, { type AccountRow } from './CustomerOrderList';
 
 type Filter = 'all' | 'placed' | 'pending' | 'in_progress' | 'proof_due' | 'payment_due' | 'completed';
 
-interface StripeReturn {
-  status: 'success' | 'cancelled';
-  orderId: string | null;
-}
-
 function matchesFilter(row: AccountRow, filter: Filter): boolean {
   if (filter === 'all') return true;
   if (filter === 'placed') return row.kind === 'placed';
@@ -27,7 +22,7 @@ function matchesSearch(row: AccountRow, query: string): boolean {
   return id.includes(q) || service.toLowerCase().includes(q);
 }
 
-export default function OrdersView({ rows, stripeReturn }: { rows: AccountRow[]; stripeReturn?: StripeReturn }) {
+export default function OrdersView({ rows }: { rows: AccountRow[] }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
 
@@ -104,7 +99,7 @@ export default function OrdersView({ rows, stripeReturn }: { rows: AccountRow[];
             No jobs match this view.
           </p>
         ) : (
-          <CustomerOrderList rows={filtered} stripeReturn={stripeReturn} />
+          <CustomerOrderList rows={filtered} />
         )}
       </div>
     </div>

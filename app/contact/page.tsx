@@ -93,7 +93,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
 
       {/* ── Contact strip ──────────────────────────────────────────── */}
       <section className="container-wide py-10" aria-label="Contact channels">
-        <p className="mb-6 font-mono text-[10px] uppercase tracking-widest text-text-muted">
+        <p className="mb-6 font-mono text-[11px] uppercase tracking-widest text-text-muted">
           Other ways to reach us
         </p>
         <div className="flex flex-wrap gap-x-8 gap-y-5">
@@ -111,7 +111,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               </span>
               {/* Text */}
               <span className="flex flex-col">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
+                <span className="font-mono text-[11px] uppercase tracking-wider text-text-muted">
                   {c.label}
                 </span>
                 <span className="font-body text-body-base leading-tight">

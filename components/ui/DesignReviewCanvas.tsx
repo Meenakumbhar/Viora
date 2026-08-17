@@ -122,7 +122,7 @@ export default function DesignReviewCanvas({
               key={i}
               type="button"
               onClick={() => setActiveImage(i)}
-              className={`border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors ${
+              className={`border px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest transition-colors ${
                 i === activeImage ? t.tabActive : t.tab
               }`}
             >
@@ -158,7 +158,7 @@ export default function DesignReviewCanvas({
                 e.stopPropagation();
                 setOpenPinId(openPinId === c.id ? null : c.id);
               }}
-              className={`absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 font-mono text-[10px] font-bold shadow-lg ${
+              className={`absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 font-mono text-[11px] font-bold shadow-lg ${
                 fullyResolved
                   ? 'border-emerald-400 bg-emerald-500/90 text-white'
                   : 'border-[#C6A85C] bg-[#C6A85C] text-[#0E1117]'
@@ -174,7 +174,7 @@ export default function DesignReviewCanvas({
         {draftsForImage.map((d, i) => (
           <div
             key={d.tempId}
-            className="absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-red-400 bg-red-500 font-mono text-[10px] font-bold text-white shadow-lg"
+            className="absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-red-400 bg-red-500 font-mono text-[11px] font-bold text-white shadow-lg"
             style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%` }}
           >
             {i + 1}
@@ -197,14 +197,14 @@ export default function DesignReviewCanvas({
               className="w-full resize-none border border-gray-300 p-1.5 font-body text-xs text-gray-900 outline-none"
             />
             <div className="mt-1.5 flex justify-end gap-2">
-              <button type="button" onClick={() => setPendingPin(null)} className="font-mono text-[10px] text-gray-400 hover:text-gray-700">
+              <button type="button" onClick={() => setPendingPin(null)} className="font-mono text-[11px] text-gray-400 hover:text-gray-700">
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={saveDraft}
                 disabled={!draftText.trim()}
-                className="bg-red-500 px-2 py-1 font-mono text-[10px] uppercase text-white disabled:opacity-40"
+                className="bg-red-500 px-2 py-1 font-mono text-[11px] uppercase text-white disabled:opacity-40"
               >
                 Pin it
               </button>
@@ -214,7 +214,7 @@ export default function DesignReviewCanvas({
       </div>
 
       {canAddPins && (
-        <p className={`mt-2 font-mono text-[10px] uppercase tracking-widest ${t.muted}`}>
+        <p className={`mt-2 font-mono text-[11px] uppercase tracking-widest ${t.muted}`}>
           Click anywhere on the image to leave a comment
         </p>
       )}
@@ -227,11 +227,11 @@ export default function DesignReviewCanvas({
             return (
               <li key={c.id} className={`flex items-start justify-between gap-3 border-b pb-2 ${theme === 'dark' ? 'border-white/5' : 'border-border'}`}>
                 <div className="flex gap-2">
-                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold ${fullyResolved ? 'bg-emerald-500 text-white' : 'bg-[#C6A85C] text-[#0E1117]'}`}>
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold ${fullyResolved ? 'bg-emerald-500 text-white' : 'bg-[#C6A85C] text-[#0E1117]'}`}>
                     {i + 1}
                   </span>
                   <div>
-                    <span className={`font-mono text-[9px] uppercase tracking-widest ${c.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
+                    <span className={`font-mono text-[10px] uppercase tracking-widest ${c.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
                       {c.author_role === 'proofreader' ? 'Proofreader' : 'Customer'}
                     </span>
                     <p className={`font-body text-sm ${t.heading} ${fullyResolved ? 'line-through opacity-50' : ''}`}>{c.comment}</p>
@@ -243,7 +243,7 @@ export default function DesignReviewCanvas({
                       type="button"
                       disabled={!canToggleDesigner}
                       onClick={() => onToggleResolved(c.id, 'designer_resolved', !c.designer_resolved)}
-                      className={`font-mono text-[9px] uppercase tracking-widest ${canToggleDesigner ? 'cursor-pointer' : 'cursor-default opacity-60'} ${c.designer_resolved ? 'text-emerald-500' : t.muted}`}
+                      className={`font-mono text-[10px] uppercase tracking-widest ${canToggleDesigner ? 'cursor-pointer' : 'cursor-default opacity-60'} ${c.designer_resolved ? 'text-emerald-500' : t.muted}`}
                     >
                       Designer: {c.designer_resolved ? 'Fixed' : 'Pending'}
                     </button>
@@ -251,7 +251,7 @@ export default function DesignReviewCanvas({
                       type="button"
                       disabled={!canToggleProofreader}
                       onClick={() => onToggleResolved(c.id, 'proofreader_resolved', !c.proofreader_resolved)}
-                      className={`font-mono text-[9px] uppercase tracking-widest ${canToggleProofreader ? 'cursor-pointer' : 'cursor-default opacity-60'} ${c.proofreader_resolved ? 'text-emerald-500' : t.muted}`}
+                      className={`font-mono text-[10px] uppercase tracking-widest ${canToggleProofreader ? 'cursor-pointer' : 'cursor-default opacity-60'} ${c.proofreader_resolved ? 'text-emerald-500' : t.muted}`}
                     >
                       Proofreader: {c.proofreader_resolved ? 'Confirmed' : 'Pending'}
                     </button>
@@ -263,12 +263,12 @@ export default function DesignReviewCanvas({
           {draftsForImage.map((d, i) => (
             <li key={d.tempId} className="flex items-start justify-between gap-3 border-b border-red-500/20 pb-2">
               <div className="flex gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 font-mono text-[10px] font-bold text-white">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 font-mono text-[11px] font-bold text-white">
                   {i + 1}
                 </span>
                 <p className={`font-body text-sm ${t.heading}`}>{d.comment}</p>
               </div>
-              <button type="button" onClick={() => removeDraft(d.tempId)} className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-red-400 hover:text-red-500">
+              <button type="button" onClick={() => removeDraft(d.tempId)} className="shrink-0 font-mono text-[11px] uppercase tracking-widest text-red-400 hover:text-red-500">
                 Remove
               </button>
             </li>
@@ -283,7 +283,7 @@ export default function DesignReviewCanvas({
               type="button"
               onClick={handleApprove}
               disabled={submitting}
-              className={`px-5 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-widest transition-opacity disabled:opacity-40 ${t.button}`}
+              className={`px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest transition-opacity disabled:opacity-40 ${t.button}`}
             >
               {mode === 'proofread' ? 'Approve — send to client' : 'Approve design'}
             </button>
@@ -292,7 +292,7 @@ export default function DesignReviewCanvas({
             type="button"
             onClick={handleRequestChanges}
             disabled={submitting || (requireMarksForSecondaryAction && drafts.length === 0)}
-            className={`px-5 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-widest transition-colors disabled:opacity-40 ${
+            className={`px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest transition-colors disabled:opacity-40 ${
               allowApprove ? t.buttonOutline : t.button
             }`}
           >

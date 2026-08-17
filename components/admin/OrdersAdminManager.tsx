@@ -4,6 +4,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import OrderStepper from '@/components/ui/OrderStepper';
+import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
 import type { Order, OrderStatus, OrderWithHistory } from '@/types/database';
 
 const STATUSES: OrderStatus[] = ['pending', 'in_progress', 'completed'];
@@ -388,7 +389,10 @@ export default function OrdersAdminManager({ initialOrders }: { initialOrders: O
                                         />
                                       </div>
                                       {detailOrder.payment_status === 'paid' && (
-                                        <span className="font-mono text-[10px] text-emerald-400 uppercase tracking-widest">✓ Paid by customer</span>
+                                        <span className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-400 uppercase tracking-widest">
+                                          ✓ Paid by customer
+                                          {detailOrder.payment_provider && <PaymentProviderIcon provider={detailOrder.payment_provider} />}
+                                        </span>
                                       )}
                                       {detailOrder.payment_status !== 'paid' && detailOrder.payment_amount !== null && (
                                         <span className="font-mono text-[10px] text-amber-400">

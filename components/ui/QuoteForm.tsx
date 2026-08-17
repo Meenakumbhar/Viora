@@ -94,7 +94,7 @@ function StepDots({ current, total }: { current: Step; total: number }) {
           <div key={step} className="flex items-center gap-2">
             <div
               className={[
-                'flex items-center justify-center rounded-full text-[10px] font-mono font-semibold transition-all duration-300',
+                'flex items-center justify-center rounded-full text-[11px] font-mono font-semibold transition-all duration-300',
                 active
                   ? 'w-7 h-7 bg-accent-gold text-bg-primary scale-110'
                   : done
@@ -112,7 +112,7 @@ function StepDots({ current, total }: { current: Step; total: number }) {
           </div>
         );
       })}
-      <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-text-muted">
+      <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-text-muted">
         {current === 1 ? 'Who you are' : current === 2 ? 'Your project' : 'Extra details'}
       </span>
     </div>
@@ -167,7 +167,7 @@ function FloatingInput({
         htmlFor={id}
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-1.5 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         {label}
@@ -256,7 +256,7 @@ function CountryCombobox({
         htmlFor="quote-country"
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-1.5 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         Country (optional)
@@ -368,7 +368,7 @@ function EmailInput({
         htmlFor="quote-email"
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-1.5 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         Email<span className="text-accent-gold ml-0.5">*</span>
@@ -679,7 +679,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
           <button
             type="button"
             onClick={() => setStep(1)}
-            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+            className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
           >
             Change details
           </button>
@@ -690,7 +690,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
       {cartItems.length > 0 && includeCartItems && (
         <div className="mb-8 flex items-start justify-between gap-4 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
               Requesting a quote for {cartItems.length} item{cartItems.length === 1 ? '' : 's'} from your cart
             </p>
             <p className="mt-1.5 font-body text-sm text-text-muted">
@@ -705,7 +705,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
               // applies either — back to asking, like a guest enquiry.
               if (derivedServiceType) setField('serviceType', '');
             }}
-            className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
+            className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
           >
             Not about this
           </button>
@@ -763,13 +763,13 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
             {derivedServiceType && !serviceOverride ? (
               <div className="flex items-center justify-between gap-4 border border-border bg-cat-surface px-4 py-3">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-text-muted">Service</p>
+                  <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">Service</p>
                   <p className="mt-1 font-body text-cat-heading">{derivedServiceType}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setServiceOverride(true)}
-                  className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+                  className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
                 >
                   Change
                 </button>

@@ -26,9 +26,9 @@ export const metadata: Metadata = {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ verified?: string; stripe?: string; order?: string }>;
+  searchParams: Promise<{ verified?: string }>;
 }) {
-  const { verified, stripe, order: stripeOrderId } = await searchParams;
+  const { verified } = await searchParams;
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
@@ -116,14 +116,7 @@ export default async function AccountPage({
         </p>
       ) : (
         <div className="mt-6">
-          <OrdersView
-            rows={rows}
-            stripeReturn={
-              stripe === 'success' || stripe === 'cancelled'
-                ? { status: stripe, orderId: stripeOrderId ?? null }
-                : undefined
-            }
-          />
+          <OrdersView rows={rows} />
         </div>
       )}
     </AccountShell>

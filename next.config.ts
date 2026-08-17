@@ -19,7 +19,7 @@ const CSP = [
   // React dev mode needs eval() for its debugging/stack-trace features — never used in production builds.
   // va.vercel-scripts.com is Vercel Analytics — served same-origin (/_vercel/insights/script.js)
   // once deployed on Vercel, but its dev-mode debug script loads directly from there.
-  `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ''}https://*.paypal.com https://*.paypalobjects.com https://va.vercel-scripts.com`,
+  `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ''}https://*.paypal.com https://*.paypalobjects.com https://*.razorpay.com https://va.vercel-scripts.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
@@ -29,8 +29,8 @@ const CSP = [
   `media-src 'self' https://*.r2.dev${r2Hostname && !r2Hostname.endsWith('.r2.dev') ? ` https://${r2Hostname}` : ''}`,
   // *.sentry.io covers Sentry's ingest endpoints across regions/orgs — narrow
   // this to the exact ingest host once a real DSN confirms it.
-  "connect-src 'self' https://*.paypal.com https://*.paypalobjects.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
-  "frame-src https://*.paypal.com",
+  "connect-src 'self' https://*.paypal.com https://*.paypalobjects.com https://*.razorpay.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+  "frame-src https://*.paypal.com https://*.razorpay.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

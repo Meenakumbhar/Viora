@@ -2,7 +2,7 @@ import type { Instrumentation } from 'next';
 
 export async function register() {
   const dsn = process.env.SENTRY_DSN;
-  if (!dsn) return; // no-op until a real DSN is set, same as Stripe/Resend/PayPal
+  if (!dsn) return; // no-op until a real DSN is set, same as Razorpay/Resend/PayPal
 
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const Sentry = await import('@sentry/nextjs');

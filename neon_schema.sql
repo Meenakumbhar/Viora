@@ -155,6 +155,14 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS portfolio_items JSONB;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS assigned_designer_id UUID REFERENCES users(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS idx_orders_assigned_designer_id ON orders(assigned_designer_id);
 
+-- Payment tracking — PayPal and Razorpay are the two supported checkout methods.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'unpaid';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_amount NUMERIC(10,2);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_provider TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS paypal_order_id TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_order_id TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_payment_id TEXT;
+
 -- 6. Create Order Status History Table (the visual tracker's timeline data)
 CREATE TABLE IF NOT EXISTS order_status_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

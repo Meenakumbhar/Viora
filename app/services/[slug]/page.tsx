@@ -209,7 +209,7 @@ export default async function ServicePage({ params }: PageProps) {
                   }`}
                 >
                   {tier.highlighted && (
-                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-cat-pill-bg text-cat-pill-text font-mono text-[10px] uppercase tracking-widest px-3 py-1 font-semibold">
+                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-cat-pill-bg text-cat-pill-text font-mono text-[11px] uppercase tracking-widest px-3 py-1 font-semibold">
                       Recommended
                     </span>
                   )}

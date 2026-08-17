@@ -145,7 +145,7 @@ export default function NotFound() {
 
         {/* Studio label */}
         <p
-          className="fade-up relative z-10 font-mono text-[10px] uppercase tracking-[0.25em] text-white/30"
+          className="fade-up relative z-10 font-mono text-[11px] uppercase tracking-[0.25em] text-white/30"
           style={{ animationDelay: '0ms' }}
         >
           Memories in Prints · Error
@@ -226,7 +226,7 @@ export default function NotFound() {
 
         {/* Footer note */}
         <p
-          className="fade-up absolute bottom-8 z-10 font-mono text-[10px] uppercase tracking-widest text-white/15"
+          className="fade-up absolute bottom-8 z-10 font-mono text-[11px] uppercase tracking-widest text-white/15"
           style={{ animationDelay: '1100ms', opacity: 0 }}
         >
           Error 404 · Page not found · memoriesinprints.com

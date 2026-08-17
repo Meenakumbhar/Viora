@@ -149,7 +149,7 @@ export type OrderFormInput = Partial<Omit<OrderForm, 'id' | 'enquiry_id' | 'stat
 
 export type OrderStatus = 'pending' | 'in_progress' | 'completed';
 export type PaymentStatus = 'unpaid' | 'paid' | 'failed';
-export type PaymentProvider = 'paypal' | 'stripe';
+export type PaymentProvider = 'paypal' | 'razorpay';
 
 export interface Order {
   id: string;
@@ -166,7 +166,8 @@ export interface Order {
   payment_amount: number | null;
   payment_provider: PaymentProvider | null;
   paypal_order_id: string | null;
-  stripe_session_id: string | null;
+  razorpay_order_id: string | null;
+  razorpay_payment_id: string | null;
   // Which designer the proofreader has routed this order to — null until assigned.
   assigned_designer_id: string | null;
   created_at: string;
@@ -362,6 +363,10 @@ export interface PortfolioFilters {
   religion?: string[];
   colour?: string[];
   tribute?: string[];
+  // A dedicated axis for child/children memorials — deliberately separate
+  // from `tribute` (where "baby"/infant tags already live) since a customer
+  // looking for one isn't necessarily looking for the other.
+  children?: string[];
 }
 
 export interface Post {

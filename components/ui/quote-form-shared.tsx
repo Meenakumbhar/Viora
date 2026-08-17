@@ -323,7 +323,7 @@ export function DateField({
         htmlFor="quote-date-btn"
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-1.5 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-1.5 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         {label}
@@ -555,14 +555,14 @@ export function AutoTextarea({
         htmlFor={id}
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-2 text-[10px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-2 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         {label} {optional && <span className="normal-case text-text-muted">(optional)</span>}
       </label>
       {/* Character counter */}
       {(focused || value.length > 0) && (
-        <p className={`mt-1 text-right font-mono text-[10px] transition-colors ${
+        <p className={`mt-1 text-right font-mono text-[11px] transition-colors ${
           nearLimit ? 'text-accent-blush' : 'text-text-muted'
         }`}>
           {value.length} / {maxLength}

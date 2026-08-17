@@ -92,7 +92,7 @@ export default function SecurityCard() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="mt-1.5 w-full border border-border bg-bg-primary px-3 py-2.5 font-body text-base text-text-heading outline-none transition-colors focus:border-accent-gold"
               />
-              <p className="mt-1.5 font-mono text-[10px] text-text-muted">At least 8 characters.</p>
+              <p className="mt-1.5 font-mono text-[11px] text-text-muted">At least 8 characters.</p>
             </div>
             <div>
               <label htmlFor="confirm-new-password" className="block font-mono text-[11px] uppercase tracking-widest text-text-muted">

@@ -14,6 +14,7 @@ const FILTER_GROUPS: { key: keyof PortfolioFilters; label: string }[] = [
   { key: 'religion', label: 'Religion' },
   { key: 'colour', label: 'Colour' },
   { key: 'tribute', label: 'Tribute' },
+  { key: 'children', label: 'Children' },
 ];
 
 interface FormState {
@@ -38,12 +39,12 @@ function emptyForm(): FormState {
     image_url: '',
     published: true,
     templateNumber: '',
-    filterText: { style: '', passion: '', religion: '', colour: '', tribute: '' },
+    filterText: { style: '', passion: '', religion: '', colour: '', tribute: '', children: '' },
   };
 }
 
 function toFormState(item: PortfolioItem): FormState {
-  const filterText: Record<keyof PortfolioFilters, string> = { style: '', passion: '', religion: '', colour: '', tribute: '' };
+  const filterText: Record<keyof PortfolioFilters, string> = { style: '', passion: '', religion: '', colour: '', tribute: '', children: '' };
   (Object.keys(filterText) as (keyof PortfolioFilters)[]).forEach((key) => {
     filterText[key] = (item.filters?.[key] ?? []).join(', ');
   });

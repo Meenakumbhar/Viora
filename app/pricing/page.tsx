@@ -53,6 +53,11 @@ export default function PricingPage() {
     return only.id.includes('::') ? null : only.id;
   }, [cartItems]);
 
+  // The price lookup is per unit — the summary must multiply by how many of
+  // that single item are in the cart, or the total never moves when the
+  // quantity stepper is used.
+  const cartQuantity = cartItems.length === 1 ? cartItems[0].quantity : 1;
+
   useEffect(() => {
     if (!loggedIn) { setEffectivePrice(null); setPriceLoaded(false); return; }
     let cancelled = false;
@@ -163,7 +168,7 @@ export default function PricingPage() {
                           </div>
                           <Link
                             href={reviewHref}
-                            className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
+                            className="rounded-full border border-border px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
                           >
                             Review
                           </Link>
@@ -171,7 +176,7 @@ export default function PricingPage() {
                             type="button"
                             onClick={() => setCartItems(removeFromPortfolioCart(item.id))}
                             aria-label={`Remove ${item.title} from cart`}
-                            className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted transition-colors hover:border-[#7A4A44] hover:text-[#7A4A44]"
+                            className="rounded-full border border-border px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-text-muted transition-colors hover:border-[#7A4A44] hover:text-[#7A4A44]"
                           >
                             Remove
                           </button>
@@ -192,7 +197,7 @@ export default function PricingPage() {
                               </div>
                             )}
                           </div>
-                          <span className="font-mono text-[10px] uppercase tracking-widest text-cat-accent-dark group-hover:text-accent-gold">
+                          <span className="font-mono text-[11px] uppercase tracking-widest text-cat-accent-dark group-hover:text-accent-gold">
                             View product &rarr;
                           </span>
                         </Link>
@@ -222,12 +227,18 @@ export default function PricingPage() {
                     <div className="mt-6 rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-5">
                       {effectivePrice ? (
                         <>
-                          <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">
+                          <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
                             {effectivePrice.negotiated ? 'Your price' : 'Starting from'}
+                            {cartQuantity > 1 ? ` · × ${cartQuantity}` : ''}
                           </p>
                           <p className="mt-1.5 font-display text-3xl text-cat-heading">
-                            {formatPrice(effectivePrice.price, effectivePrice.currency)}
+                            {formatPrice(effectivePrice.price * cartQuantity, effectivePrice.currency)}
                           </p>
+                          {cartQuantity > 1 && (
+                            <p className="mt-1 font-mono text-[11px] text-cat-muted">
+                              {formatPrice(effectivePrice.price, effectivePrice.currency)} each
+                            </p>
+                          )}
                           <p className="mt-2 font-body text-sm text-cat-muted">
                             {effectivePrice.negotiated
                               ? 'This is the price we agreed for your project.'
@@ -236,7 +247,7 @@ export default function PricingPage() {
                         </>
                       ) : (
                         <>
-                          <p className="font-mono text-[10px] uppercase tracking-widest text-accent-gold">Pricing</p>
+                          <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">Pricing</p>
                           <p className="mt-1.5 font-body text-body-base text-cat-heading">
                             Your custom pricing is being prepared — we&apos;ll let you know as soon as it&apos;s ready.
                           </p>
