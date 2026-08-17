@@ -69,6 +69,8 @@ export interface ProductData {
   description: string;
   category: ServiceCategory;
   image: string | null;
+  /** Extra gallery photos beyond `image` (e.g. one per size/style option) — shown as a carousel when present. */
+  image_urls?: string[];
   sizes: ProductSize[];
   relatedSlugs: string[];
 }

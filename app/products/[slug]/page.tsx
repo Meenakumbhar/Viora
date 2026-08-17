@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SectionReveal from '@/components/ui/SectionReveal';
 import ProductOrderPanel from '@/components/ProductOrderPanel';
+import ProductGallery from '@/components/ProductGallery';
 import { products, getProductBySlug, getRelatedProducts } from '@/lib/data';
 import { SITE_URL } from '@/lib/site-url';
 
@@ -68,24 +69,10 @@ export default async function ProductPage({ params }: PageProps) {
           </Link>
 
           <div className="mt-10 grid gap-12 lg:grid-cols-[1.15fr_0.85fr]">
-            <section className="relative aspect-[4/3] w-full overflow-hidden border border-border bg-cat-surface">
-              {product.image ? (
-                <Image
-                  src={product.image}
-                  alt={product.title}
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 60vw, 100vw"
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <span className="font-display text-8xl font-bold text-cat-heading opacity-[0.06]">
-                    {product.title.charAt(0)}
-                  </span>
-                </div>
-              )}
-            </section>
+            <ProductGallery
+              images={product.image_urls?.length ? product.image_urls : product.image ? [product.image] : []}
+              title={product.title}
+            />
 
             <section>
               <span className="font-mono text-[11px] uppercase tracking-widest text-[#6B5420]">Product</span>

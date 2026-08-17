@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import HeroPrintStack from '@/components/ui/HeroPrintStack';
+import Image from 'next/image';
 import HeroScrollEffect from '@/components/ui/HeroScrollEffect';
 import Button from '@/components/ui/Button';
 import SectionReveal from '@/components/ui/SectionReveal';
@@ -12,24 +12,22 @@ import { ACTIVE_CATEGORIES } from '@/lib/active-services';
 import { getPortfolioItems } from '@/lib/db';
 import type { PortfolioItem } from '@/types/database';
 
-// Real studio work, shared across the hero print stack, the About grid, and
-// the Featured Work strip — pulled live from the portfolio so the homepage
-// always reflects what's actually been made, never seed/placeholder data.
-// Interleaved across active categories (rather than one big recency-sorted
-// pull) so the mix doesn't get swamped by whichever category has more items.
+// Real studio work, shared across the About grid and the Featured Work strip
+// — pulled live from the portfolio so the homepage always reflects what's
+// actually been made, never seed/placeholder data. Interleaved across active
+// categories (rather than one big recency-sorted pull) so the mix doesn't
+// get swamped by whichever category has more items.
 async function getHomepagePortfolioData() {
   const perCategory = await Promise.all(
     ACTIVE_CATEGORIES.map((category) => getPortfolioItems(category))
   );
   const maxLen = Math.max(0, ...perCategory.map((items) => items.length));
 
-  const heroImages: string[] = [];
   const featured: PortfolioItem[] = [];
-  for (let i = 0; i < maxLen && (heroImages.length < 10 || featured.length < 8); i++) {
+  for (let i = 0; i < maxLen && featured.length < 8; i++) {
     for (const items of perCategory) {
       const item = items[i];
       if (!item) continue;
-      if (heroImages.length < 10 && item.image_url) heroImages.push(item.image_url);
       if (featured.length < 8) featured.push(item);
     }
   }
@@ -38,7 +36,7 @@ async function getHomepagePortfolioData() {
     .map((items) => items[0])
     .filter((item): item is PortfolioItem => Boolean(item));
 
-  return { heroImages, featured, aboutItems };
+  return { featured, aboutItems };
 }
 
 
@@ -78,7 +76,7 @@ const blogGradients: Record<string, string> = {
    HOME PAGE — Server Component
    ═══════════════════════════════════════════════════════════════════════════ */
 export default async function Home() {
-  const { heroImages, featured, aboutItems } = await getHomepagePortfolioData();
+  const { featured, aboutItems } = await getHomepagePortfolioData();
 
   return (
     <main>
@@ -88,43 +86,50 @@ export default async function Home() {
         id="hero"
         className="hero-section relative min-h-svh overflow-hidden bg-bg-primary flex items-center py-32 lg:py-24"
       >
+        {/* Banner photo — heavily veiled so the existing hero text stays fully readable over it */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/Home-Banner.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-bg-primary/90" />
+        </div>
+
         <div className="container-wide relative z-10 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-16 lg:gap-8 items-center">
-            <div className="hero-content">
-              <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-                Global Design &amp; Print Studio
-              </span>
+          <div className="hero-content">
+            <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
+              Global Design &amp; Print Studio
+            </span>
 
-              <AnimatedHeadline
-                text="Made for every moment"
-                accentWord="moment"
-                className="font-display text-display-xl text-text-heading max-w-xl mt-4"
-              />
+            <AnimatedHeadline
+              text="Made for every moment"
+              accentWord="moment"
+              className="font-display text-display-xl text-text-heading max-w-xl mt-4"
+            />
 
-              <p className="font-body text-body-lg text-text-muted max-w-lg mt-6">
-                Funerals and Weddings.
-                <br />
-                Design and print that honours what matters.
-              </p>
+            <p className="font-body text-body-lg text-text-muted max-w-lg mt-6">
+              Funerals and Weddings.
+              <br />
+              Design and print that honours what matters.
+            </p>
 
-              <div className="flex gap-4 mt-8">
-                <Button variant="primary" size="lg" href="/portfolio">
-                  View Our Work
-                </Button>
-                <Button variant="ghost" size="lg" href="/contact">
-                  Start a Project →
-                </Button>
-              </div>
-            </div>
-
-            <div className="hero-visual">
-              <HeroPrintStack images={heroImages} />
+            <div className="flex gap-4 mt-8">
+              <Button variant="primary" size="lg" href="/portfolio">
+                View Our Work
+              </Button>
+              <Button variant="ghost" size="lg" href="/contact">
+                Start a Project →
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
           <svg
             width="24"
             height="24"

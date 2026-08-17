@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 
 // Only the funeral portfolio gets a background video — every other category
 // keeps its animated gradient. Swap or add a category key here to extend it.
@@ -8,6 +9,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 // .mp4 first, then update NEXT_PUBLIC_FUNERAL_HERO_VIDEO_URL in .env.local.
 const CATEGORY_VIDEOS: Partial<Record<string, string>> = {
   funeral: process.env.NEXT_PUBLIC_FUNERAL_HERO_VIDEO_URL,
+};
+
+// A static background photo per category — used whenever that category has
+// no video (or the video fails to load). Falls back to the animated gradient
+// for any category without one configured here.
+const CATEGORY_IMAGES: Partial<Record<string, string>> = {
+  wedding: '/images/Wedding-Background.jpg',
+  funeral: '/images/Portfolio-funeral-Image.jpg',
 };
 
 interface CategoryContent {
@@ -120,6 +129,14 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
   const videoSrc = CATEGORY_VIDEOS[key];
   const showVideo = Boolean(videoSrc) && !videoFailed && !reducedMotion;
 
+  const imageSrc = CATEGORY_IMAGES[key];
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = !showVideo && Boolean(imageSrc) && !imageFailed;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [key]);
+
   // Same missed-event race as HeroVideo: a fast 404 can fire the native
   // error event before React attaches onError, so check directly too.
   useEffect(() => {
@@ -139,7 +156,7 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
       data-category={activeCategory.toLowerCase()}
       className="relative min-h-[70vh] overflow-hidden transition-colors duration-700"
     >
-      {/* Background — video for funeral (once added), animated gradient everywhere else */}
+      {/* Background — video for funeral (once added), a static photo for categories that have one, animated gradient otherwise */}
       {showVideo ? (
         <video
           ref={videoRef}
@@ -151,6 +168,17 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
           loop
           playsInline
           onError={() => setVideoFailed(true)}
+        />
+      ) : showImage ? (
+        <Image
+          key={imageSrc}
+          src={imageSrc!}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+          onError={() => setImageFailed(true)}
         />
       ) : (
         <div
