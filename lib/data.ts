@@ -339,7 +339,14 @@ export const products: ProductData[] = [
     subtitle: 'Beautiful Memorial Portraits to Treasure Forever',
     description: 'Honour the memory of your loved one with high-quality portraits designed to look beautiful during the ceremony — and continue to be cherished for years to come. Each style is carefully selected for exceptional quality at an affordable price.',
     category: 'funeral',
-    image: '/images/products/bookmarks.jpg',
+    image: '/images/products/classic Memorial Portraits.jpg.jpeg',
+    // One photo per style below, in the same order — The Classic, The Contemporary, The Reflection, The Traditional.
+    image_urls: [
+      '/images/products/classic Memorial Portraits.jpg.jpeg',
+      '/images/products/contempory Memorial Portraits2.jpg.jpeg',
+      '/images/products/Reflection Memorial Portraits3.jpg.jpeg',
+      '/images/products/Traditional Memorial Portraits4.jpg.jpeg',
+    ],
     sizes: [
       { label: 'The Classic', dimensions: '229 × 305 mm', description: 'A timeless A4 portrait mounted in durable, drop-resistant tempered glass with its own stand. Perfect for display on a shelf, desk, or wall.' },
       { label: 'The Contemporary', dimensions: '305 × 305 × 38 mm or 305 × 406 × 38 mm', description: 'A lightweight, premium canvas print stretched over a sturdy frame and fitted with hanging eyes. Optional black wooden float frame available.' },
