@@ -12,11 +12,11 @@ import { ACTIVE_CATEGORIES } from '@/lib/active-services';
 import { getPortfolioItems } from '@/lib/db';
 import type { PortfolioItem } from '@/types/database';
 
-// Real studio work, shared across the About grid and the Featured Work strip
-// — pulled live from the portfolio so the homepage always reflects what's
-// actually been made, never seed/placeholder data. Interleaved across active
-// categories (rather than one big recency-sorted pull) so the mix doesn't
-// get swamped by whichever category has more items.
+// Real studio work for the Featured Work strip — pulled live from the
+// portfolio so the homepage always reflects what's actually been made, never
+// seed/placeholder data. Interleaved across active categories (rather than
+// one big recency-sorted pull) so the mix doesn't get swamped by whichever
+// category has more items.
 async function getHomepagePortfolioData() {
   const perCategory = await Promise.all(
     ACTIVE_CATEGORIES.map((category) => getPortfolioItems(category))
@@ -32,11 +32,7 @@ async function getHomepagePortfolioData() {
     }
   }
 
-  const aboutItems = perCategory
-    .map((items) => items[0])
-    .filter((item): item is PortfolioItem => Boolean(item));
-
-  return { featured, aboutItems };
+  return { featured };
 }
 
 
@@ -76,7 +72,7 @@ const blogGradients: Record<string, string> = {
    HOME PAGE — Server Component
    ═══════════════════════════════════════════════════════════════════════════ */
 export default async function Home() {
-  const { featured, aboutItems } = await getHomepagePortfolioData();
+  const { featured } = await getHomepagePortfolioData();
 
   return (
     <main>
@@ -86,17 +82,20 @@ export default async function Home() {
         id="hero"
         className="hero-section relative min-h-svh overflow-hidden bg-bg-primary flex items-center py-32 lg:py-24"
       >
-        {/* Banner photo — heavily veiled so the existing hero text stays fully readable over it */}
-        <div className="absolute inset-0 z-0">
+        {/* Banner photo — starts below the fixed nav's height (h-20) plus a
+            little breathing room, so the nav always sits on the section's
+            plain bg-bg-primary with no photo behind it at all. */}
+        <div className="absolute inset-x-0 top-24 bottom-0 z-0">
           <Image
             src="/images/Home-Banner.jpg"
             alt=""
             fill
             priority
+            quality={90}
             sizes="100vw"
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-bg-primary/90" />
+          <div className="absolute inset-0 bg-bg-primary/35" />
         </div>
 
         <div className="container-wide relative z-10 w-full">
@@ -154,7 +153,10 @@ export default async function Home() {
       <section id="about" className="py-24 md:py-36 lg:py-48 bg-bg-primary">
         <SectionReveal>
           <div className="container-wide">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              {/* Divider line — centered in the gap between the two columns */}
+              <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px -translate-x-1/2 bg-border lg:block" />
+
               {/* Left column — copy */}
               <div>
                 <span
@@ -196,21 +198,18 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Right column — real studio work, one per active category */}
-              <div className="grid grid-cols-2 gap-4" data-delay="3">
-                {aboutItems.map((item, i) => (
-                  <ImageRevealCard
-                    key={item.id}
-                    src={item.image_url}
-                    alt={item.title}
-                    label={item.category.charAt(0).toUpperCase() + item.category.slice(1)}
-                    delay={0.1 + i * 0.1}
-                    className="aspect-square"
-                    fallbackGradient={portfolioGradients[item.category]}
-                    sizes="(min-width: 1024px) 22vw, 45vw"
-                    priority={i === 0}
-                  />
-                ))}
+              {/* Right column — a single studio-made photo matching the headline,
+                  kept at its own true proportions rather than stretched/cropped
+                  to match the taller text column beside it */}
+              <div data-delay="3">
+                <ImageRevealCard
+                  src="/images/design_with_intention.jpeg"
+                  alt="Designed with Intention"
+                  delay={0.1}
+                  className="aspect-[1408/768]"
+                  sizes="(min-width: 1024px) 45vw, 90vw"
+                  priority
+                />
               </div>
             </div>
           </div>
