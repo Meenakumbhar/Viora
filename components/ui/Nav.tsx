@@ -269,9 +269,9 @@ export default function Nav() {
           <Link href="/" className="flex items-center">
             <Logo
               wordmark="Memories in Prints"
-              containerWidth={72}
-              containerHeight={72}
-              textClassName="font-display font-light text-xl tracking-wide text-text-heading"
+              containerWidth={240}
+              containerHeight={60}
+              textClassName="font-display font-light text-2xl tracking-wide text-text-heading"
             />
           </Link>
 

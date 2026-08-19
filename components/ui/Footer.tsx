@@ -137,9 +137,9 @@ export default function Footer() {
             <Link href="/" className="flex items-center">
               <Logo
                 wordmark="Memories in Prints"
-                containerWidth={80}
-                containerHeight={80}
-                textClassName="font-display font-light text-xl text-dark-text-primary"
+                containerWidth={240}
+                containerHeight={60}
+                textClassName="font-display font-light text-2xl text-dark-text-primary"
               />
             </Link>
             <p className="font-body text-body-base text-dark-text-muted mt-4">
