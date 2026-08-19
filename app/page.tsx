@@ -87,7 +87,7 @@ export default async function Home() {
             plain bg-bg-primary with no photo behind it at all. */}
         <div className="absolute inset-x-0 top-24 bottom-0 z-0">
           <Image
-            src="/images/Home-Banner.jpeg"
+            src="/images/Home-Banner.jpg"
             alt=""
             fill
             priority
