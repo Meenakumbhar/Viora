@@ -87,7 +87,7 @@ export default async function Home() {
             plain bg-bg-primary with no photo behind it at all. */}
         <div className="absolute inset-x-0 top-24 bottom-0 z-0">
           <Image
-            src="/images/Home-Banner.jpg"
+            src="/images/Home-Banner.jpeg"
             alt=""
             fill
             priority
@@ -95,14 +95,11 @@ export default async function Home() {
             sizes="100vw"
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-bg-primary/35" />
+
         </div>
 
         <div className="container-wide relative z-10 w-full">
           <div className="hero-content">
-            <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-              Global Design &amp; Print Studio
-            </span>
 
             <AnimatedHeadline
               text="Made for every moment"
