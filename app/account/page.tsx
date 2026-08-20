@@ -1,20 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
-import {
-  getUserById,
-  getOrdersByEmail,
-  getOrderHistoriesForOrders,
-  getDesignRevisionsForOrders,
-  getEnquiriesByEmail,
-  syncOrderPricingFromCatalog,
-} from '@/lib/db';
-import { auth } from '@/lib/auth';
+import { loadAccountOrders, isCompletedRow } from '@/lib/account-orders';
 import UserLogoutButton from '@/components/ui/UserLogoutButton';
 import AccountShell from '@/components/dashboard/AccountShell';
 import OrdersView from '@/components/dashboard/OrdersView';
-import type { AccountRow } from '@/components/dashboard/CustomerOrderList';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,58 +18,11 @@ export default async function AccountPage({
   searchParams: Promise<{ verified?: string }>;
 }) {
   const { verified } = await searchParams;
-  const session = await auth.api.getSession({ headers: await headers() });
-
-  if (!session) {
-    redirect('/login');
-  }
-
-  const user = await getUserById(session.user.id);
-
-  if (!user) {
-    redirect('/login');
-  }
-
-  const [rawOrders, enquiries] = await Promise.all([
-    getOrdersByEmail(user.email),
-    getEnquiriesByEmail(user.email),
-  ]);
-
-  // Keeps each order's price current with the pricing catalog (negotiated
-  // price, or the price set on the specific piece it references) instead of
-  // showing a stale figure someone would otherwise have to re-enter by hand
-  // every time either changes. No-ops for orders already paid.
-  const orders = await Promise.all(rawOrders.map((order) => syncOrderPricingFromCatalog(order, user.id)));
-
-  const orderIds = orders.map((o) => o.id);
-  // Two batched queries covering every order at once, instead of one
-  // getOrderHistory + one getDesignRevisionsForCustomer call per order.
-  const [historyMap, revisionMap] = await Promise.all([
-    getOrderHistoriesForOrders(orderIds),
-    getDesignRevisionsForOrders(orderIds),
-  ]);
-
-  const orderRows: AccountRow[] = orders.map((order) => ({
-    kind: 'order',
-    id: order.id,
-    order,
-    history: historyMap.get(order.id) ?? [],
-    latestRevision: [...(revisionMap.get(order.id) ?? [])].sort((a, b) => b.version - a.version)[0],
-  }));
-
-  // A quote only shows as its own "Placed" row until an admin turns it into
-  // an order — once that happens it's represented by the order row above,
-  // not duplicated here.
-  const convertedEnquiryIds = new Set(orders.filter((o) => o.enquiry_id).map((o) => o.enquiry_id as string));
-  const placedRows: AccountRow[] = enquiries
-    .filter((enquiry) => !convertedEnquiryIds.has(enquiry.id))
-    .map((enquiry) => ({ kind: 'placed', id: enquiry.id, enquiry }));
-
-  const rows: AccountRow[] = [...orderRows, ...placedRows].sort((a, b) => {
-    const aDate = a.kind === 'order' ? a.order.created_at : a.enquiry.created_at;
-    const bDate = b.kind === 'order' ? b.order.created_at : b.enquiry.created_at;
-    return new Date(bDate).getTime() - new Date(aDate).getTime();
-  });
+  const { user, rows: allRows } = await loadAccountOrders();
+  // Completed jobs live on their own page (see the "Completed" link in the
+  // left account nav) so this list never grows long with jobs the customer
+  // no longer needs to act on.
+  const rows = allRows.filter((row) => !isCompletedRow(row));
 
   return (
     <AccountShell
@@ -112,7 +54,11 @@ export default async function AccountPage({
 
       {rows.length === 0 ? (
         <p className="mt-6 border border-dashed border-border px-5 py-8 text-center font-body text-body-base text-text-muted">
-          No orders yet — <Link href="/account/quote" className="text-accent-gold underline hover:text-accent-gold-dark">request a quote</Link> to get started.
+          {allRows.length === 0 ? (
+            <>No orders yet — <Link href="/account/quote" className="text-accent-gold underline hover:text-accent-gold-dark">request a quote</Link> to get started.</>
+          ) : (
+            <>Nothing active right now — see <Link href="/account/completed" className="text-accent-gold underline hover:text-accent-gold-dark">Completed</Link> for past jobs.</>
+          )}
         </p>
       ) : (
         <div className="mt-6">

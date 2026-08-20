@@ -7,7 +7,7 @@ import TestimonialSlider from '@/components/ui/TestimonialSlider';
 import AnimatedHeadline from '@/components/ui/AnimatedHeadline';
 import ImageRevealCard from '@/components/ui/ImageRevealCard';
 import { PANEL_TONES } from '@/components/ui/SplitHero';
-import { processSteps, blogPosts } from '@/lib/data';
+import { blogPosts } from '@/lib/data';
 import { ACTIVE_CATEGORIES } from '@/lib/active-services';
 import { getPortfolioItems } from '@/lib/db';
 import type { PortfolioItem } from '@/types/database';
@@ -104,13 +104,15 @@ export default async function Home() {
             <AnimatedHeadline
               text="Made for every moment"
               accentWord="moment"
-              className="font-display text-display-xl text-text-heading max-w-xl mt-4"
+              className="font-display text-display-lg text-text-heading max-w-lg mt-5"
             />
 
             <p className="font-body text-body-lg text-text-muted max-w-lg mt-6">
               Funerals and Weddings.
               <br />
-              Design and print that honours what matters.
+              Beautiful design and printing for life’s important moments from funeral stationery and keepsakes to wedding invitations.
+              <br />
+              Created with care to reflect your story and the people who matter most.
             </p>
 
             <div className="flex gap-4 mt-8">
@@ -243,13 +245,13 @@ export default async function Home() {
                   <div
                     key={item.id}
                     data-category={item.category}
-                    className="group border border-border bg-cat-surface p-6 flex flex-col justify-between h-[450px] w-[320px] flex-shrink-0 transition-[transform,border-color] duration-300 hover:border-cat-accent hover:-translate-y-1"
+                    className="group border border-border bg-cat-surface p-6 flex flex-col justify-between h-[620px] w-[320px] flex-shrink-0 transition-[transform,border-color] duration-300 hover:border-cat-accent hover:-translate-y-1"
                   >
                     <ImageRevealCard
                       src={item.image_url}
                       alt={item.title}
                       delay={0.1}
-                      className="aspect-[4/3] w-full mb-6"
+                      className="aspect-[3/4] w-full mb-6"
                       fallbackGradient={portfolioGradients[item.category] || 'linear-gradient(160deg, #FAF8F5, #F7F4EF)'}
                       sizes="320px"
                     />
@@ -424,57 +426,63 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ──────────────────── SECTION 6 — PROCESS STEPS ──────────────────── */}
-      <section id="process" className="bg-bg-secondary py-24 md:py-36 lg:py-48">
+      {/* ──────────────────── SECTION 6 — CELEBRATION OF LIFE ──────────────────── */}
+      <section id="celebration-of-life" className="relative overflow-hidden bg-bg-secondary py-24 md:py-36 lg:py-48">
         <SectionReveal>
-          <div className="container-wide">
-            <h2 className="font-display text-display-lg text-text-heading text-center">
-              Simple from start to{' '}
-              <em className="italic text-accent-gold">delivery</em>
+          <div className="container-wide max-w-3xl text-center relative z-10">
+            <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
+              Gather &amp; Remember
+            </span>
+            <h2 className="font-display text-display-lg text-text-heading mt-4">
+              Celebration of <em className="italic text-accent-gold">Life</em>
             </h2>
-
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-0 mt-16">
-              {processSteps.map((step, i) => (
-                <div
-                  key={step.number}
-                  className="flex-1 relative"
-                  data-delay={String(Math.min(i + 1, 5))}
-                >
-                  {/* Connecting line (desktop only) */}
-                  {i < processSteps.length - 1 && (
-                    <div className="hidden lg:block absolute top-5 left-[calc(50%+1rem)] right-0 h-[2px] bg-accent-gold/30" />
-                  )}
-
-                  <div className="lg:pr-8">
-                    <span className="font-mono text-display-md text-accent-gold">
-                      {String(step.number).padStart(2, '0')}
-                    </span>
-                    <h3 className="font-display text-xl text-text-heading mt-2">
-                      {step.title}
-                    </h3>
-                    <p className="font-body text-body-base text-text-muted mt-3">
-                      {step.description}
-                    </p>
-                    <span className="font-mono text-label text-text-muted mt-4 block">
-                      {step.timeframe}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="mt-6 font-body text-body-lg text-text-muted leading-relaxed">
+              Some moments deserve to be gathered around, shared, and remembered. Whether you&apos;re celebrating a new beginning, honoring a loved one, or marking a special milestone, we help you create a gathering that feels personal, warm, and true to your story.
+            </p>
+            <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed">
+              From flowers, music, food, and décor to photographs and those little details that mean the most, we&apos;ll help bring everything together with care. So you can spend less time worrying about the details and more time being present with the people who matter most.
+            </p>
           </div>
         </SectionReveal>
+
+        {/* Doodle strip — decorative, sits along the bottom edge */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-20 opacity-70 md:h-28 lg:h-32"
+          style={{
+            backgroundImage: 'url(/images/doodle.png)',
+            backgroundRepeat: '',
+            backgroundPosition: 'bottom center',
+            backgroundSize: 'auto 100%',
+          }}
+        />
       </section>
 
       {/* ──────────────────── SECTION 7 — TESTIMONIALS ──────────────────── */}
-      <section id="testimonials" className="bg-bg-primary py-24 md:py-36 lg:py-48">
-        <div className="container-wide text-center">
-          <h2 className="font-display text-display-lg text-text-heading">
-            Heard from our <em className="italic text-accent-gold">clients</em>
+      <section
+        id="testimonials"
+        className="relative overflow-hidden py-20 md:py-28"
+      >
+        {/* Background image — swap the src to any image path you provide */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/Review_BG.jpg"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+          {/* Dark overlay so text stays legible */}
+          <div className="absolute inset-0 bg-black/10" />
+        </div>
+
+        <div className="relative z-10 container-wide max-w-4xl text-center">
+          <h2 className="font-display text-display-lg text-white">
+            Heard from our clients
           </h2>
 
-          <div className="mt-16">
-            <TestimonialSlider />
+          <div className="mt-12">
+            <TestimonialSlider dark />
           </div>
         </div>
       </section>

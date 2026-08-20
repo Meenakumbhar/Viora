@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import CustomerOrderList, { type AccountRow } from './CustomerOrderList';
 
-type Filter = 'all' | 'placed' | 'pending' | 'in_progress' | 'proof_due' | 'payment_due' | 'completed';
+type Filter = 'all' | 'placed' | 'pending' | 'in_progress' | 'proof_due' | 'payment_due';
 
 function matchesFilter(row: AccountRow, filter: Filter): boolean {
   if (filter === 'all') return true;
@@ -22,6 +22,9 @@ function matchesSearch(row: AccountRow, query: string): boolean {
   return id.includes(q) || service.toLowerCase().includes(q);
 }
 
+// Expects `rows` to already exclude completed jobs — those live on their own
+// page (see the "Completed" link in the left account nav), so this view and
+// its filters only ever deal with what still needs attention.
 export default function OrdersView({ rows }: { rows: AccountRow[] }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
@@ -34,14 +37,15 @@ export default function OrdersView({ rows }: { rows: AccountRow[] }) {
       in_progress: 0,
       proof_due: 0,
       payment_due: 0,
-      completed: 0,
     };
     for (const row of rows) {
       if (row.kind === 'placed') {
         c.placed += 1;
         continue;
       }
-      c[row.order.status] += 1;
+      if (row.order.status === 'pending' || row.order.status === 'in_progress') {
+        c[row.order.status] += 1;
+      }
       if (row.latestRevision?.status === 'pending_review') c.proof_due += 1;
       if (row.order.payment_status !== 'paid' && (row.order.payment_amount ?? 0) > 0) c.payment_due += 1;
     }
@@ -55,7 +59,6 @@ export default function OrdersView({ rows }: { rows: AccountRow[] }) {
     { value: 'in_progress', label: 'In production' },
     { value: 'proof_due', label: 'Proof due' },
     { value: 'payment_due', label: 'Payment due' },
-    { value: 'completed', label: 'Completed' },
   ];
   const chips = allChips.filter((chip) => chip.value === 'all' || counts[chip.value] > 0);
 

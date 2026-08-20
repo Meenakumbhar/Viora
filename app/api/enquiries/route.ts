@@ -32,10 +32,17 @@ export async function POST(request: NextRequest) {
     if (parsed.error) return parsed.error;
     const body = parsed.data;
 
-    const enquiry = await insertEnquiry({
-      ...body,
-      portfolio_items: body.portfolio_items ?? null,
-    });
+    // Checked before inserting so the enquiry is linked to the account from
+    // the moment it's created, not backfilled after the fact.
+    const session = await auth.api.getSession({ headers: request.headers });
+
+    const enquiry = await insertEnquiry(
+      {
+        ...body,
+        portfolio_items: body.portfolio_items ?? null,
+      },
+      session?.user.id
+    );
 
     // The order-form link is the main thing this email needs to deliver —
     // failing to send it shouldn't fail the enquiry submission itself.
@@ -45,7 +52,6 @@ export async function POST(request: NextRequest) {
 
     // If this came from a logged-in customer, capture their contact details
     // onto their profile so their next quote can skip re-entering them.
-    const session = await auth.api.getSession({ headers: request.headers });
     if (session) {
       await updateUserProfile(session.user.id, {
         name: body.name,

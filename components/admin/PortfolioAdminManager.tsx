@@ -9,11 +9,11 @@ import type { PortfolioItem, PortfolioFilters, ServiceCategory } from '@/types/d
 const CATEGORIES: ServiceCategory[] = ['wedding', 'funeral', 'sports', 'branding', 'events'];
 
 const FILTER_GROUPS: { key: keyof PortfolioFilters; label: string }[] = [
+  { key: 'tribute', label: 'Tribute' },
   { key: 'style', label: 'Style' },
   { key: 'passion', label: 'Passion' },
   { key: 'religion', label: 'Religion' },
   { key: 'colour', label: 'Colour' },
-  { key: 'tribute', label: 'Tribute' },
   { key: 'children', label: 'Children' },
 ];
 

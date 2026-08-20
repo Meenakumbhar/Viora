@@ -28,7 +28,7 @@ interface OrderRowData {
 export type AccountRow = PlacedRow | OrderRowData;
 
 function JobNumber({ id }: { id: string }) {
-  return <p className="font-mono text-xs text-text-muted">JOB #{id.slice(0, 8).toUpperCase()}</p>;
+  return <p className="font-mono text-xs text-text-muted">Order #{id.slice(0, 8).toUpperCase()}</p>;
 }
 
 function StatusTag({ status }: { status: DisplayStage }) {
