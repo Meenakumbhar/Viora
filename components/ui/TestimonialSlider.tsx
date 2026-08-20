@@ -95,7 +95,7 @@ export default function TestimonialSlider() {
         <button
           onClick={prev}
           aria-label="Previous testimonial"
-          className="flex h-10 w-10 items-center justify-center border border-accent-gold text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-accent-gold text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
         >
           <svg
             width="16"
@@ -135,7 +135,7 @@ export default function TestimonialSlider() {
         <button
           onClick={next}
           aria-label="Next testimonial"
-          className="flex h-10 w-10 items-center justify-center border border-accent-gold text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-accent-gold text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
         >
           <svg
             width="16"

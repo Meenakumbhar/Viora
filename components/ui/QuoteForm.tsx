@@ -25,7 +25,6 @@ import {
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
 type FormState = 'idle' | 'loading' | 'success' | 'error';
-type Step = 1 | 2 | 3;
 
 interface FormData {
   name: string;
@@ -56,12 +55,12 @@ const INITIAL_DATA: FormData = {
 };
 
 const COUNTRIES = [
-  'United Kingdom','United States','Canada','Australia','New Zealand',
-  'Ireland','Germany','France','Spain','Italy','Netherlands','Belgium',
-  'Switzerland','Austria','Portugal','Sweden','Norway','Denmark','Finland',
-  'South Africa','Nigeria','Kenya','India','Pakistan','Japan','Singapore',
-  'Hong Kong','United Arab Emirates','Saudi Arabia','Brazil','Mexico',
-  'Argentina','Colombia','Philippines','Malaysia',
+  'United Kingdom', 'United States', 'Canada', 'Australia', 'New Zealand',
+  'Ireland', 'Germany', 'France', 'Spain', 'Italy', 'Netherlands', 'Belgium',
+  'Switzerland', 'Austria', 'Portugal', 'Sweden', 'Norway', 'Denmark', 'Finland',
+  'South Africa', 'Nigeria', 'Kenya', 'India', 'Pakistan', 'Japan', 'Singapore',
+  'Hong Kong', 'United Arab Emirates', 'Saudi Arabia', 'Brazil', 'Mexico',
+  'Argentina', 'Colombia', 'Philippines', 'Malaysia',
 ];
 
 const SOURCES = [
@@ -73,50 +72,12 @@ const SOURCES = [
   { label: 'Other', emoji: '✨' },
 ];
 
-const EMAIL_DOMAINS = ['gmail.com','outlook.com','yahoo.com','icloud.com','hotmail.com','me.com','live.com'];
+const EMAIL_DOMAINS = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'hotmail.com', 'me.com', 'live.com'];
 
 /* ── Helpers ───────────────────────────────────────────────────────────── */
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-/* ── Step indicator ────────────────────────────────────────────────────── */
-
-function StepDots({ current, total }: { current: Step; total: number }) {
-  return (
-    <div className="flex items-center gap-2 mb-8" aria-label={`Step ${current} of ${total}`}>
-      {Array.from({ length: total }, (_, i) => {
-        const step = (i + 1) as Step;
-        const active = step === current;
-        const done = step < current;
-        return (
-          <div key={step} className="flex items-center gap-2">
-            <div
-              className={[
-                'flex items-center justify-center rounded-full text-[11px] font-mono font-semibold transition-all duration-300',
-                active
-                  ? 'w-7 h-7 bg-accent-gold text-bg-primary scale-110'
-                  : done
-                  ? 'w-6 h-6 bg-accent-gold/30 text-accent-gold border border-accent-gold/50'
-                  : 'w-6 h-6 border border-border text-text-muted',
-              ].join(' ')}
-            >
-              {done ? '✓' : step}
-            </div>
-            {i < total - 1 && (
-              <div
-                className={`h-[1px] w-8 transition-all duration-500 ${done || active ? 'bg-accent-gold/40' : 'bg-border'}`}
-              />
-            )}
-          </div>
-        );
-      })}
-      <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-text-muted">
-        {current === 1 ? 'Who you are' : current === 2 ? 'Your project' : 'Extra details'}
-      </span>
-    </div>
-  );
 }
 
 /* ── Floating label input ──────────────────────────────────────────────── */
@@ -158,7 +119,7 @@ function FloatingInput({
         onFocus={() => setFocused(true)}
         onBlur={(e) => { setFocused(false); onBlur?.(e); }}
         className={[
-          'w-full border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none',
+          'w-full rounded-2xl border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none',
           'focus:border-accent-gold focus:ring-1 focus:ring-accent-gold',
           lifted ? 'border-border' : 'border-border',
         ].join(' ')}
@@ -247,7 +208,7 @@ function CountryCombobox({
         onBlur={() => setFocused(false)}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); setHighlighted(0); }}
         onKeyDown={handleKey}
-        className="w-full border border-border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+        className="w-full rounded-2xl border border-border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
         aria-autocomplete="list"
         aria-expanded={open}
         aria-haspopup="listbox"
@@ -272,7 +233,7 @@ function CountryCombobox({
       {open && filtered.length > 0 && (
         <ul
           role="listbox"
-          className="absolute z-50 left-0 right-0 top-full mt-1 max-h-52 overflow-y-auto border border-border bg-bg-primary shadow-lg"
+          className="absolute z-50 left-0 right-0 top-full mt-1 max-h-52 overflow-y-auto rounded-2xl border border-border bg-bg-primary shadow-lg"
         >
           {filtered.map((c, i) => (
             <li
@@ -362,7 +323,7 @@ function EmailInput({
         onBlur={() => setFocused(false)}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKey}
-        className="w-full border border-border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+        className="w-full rounded-2xl border border-border bg-cat-surface px-4 pt-6 pb-2 text-cat-heading transition-all duration-200 outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
       />
       <label
         htmlFor="quote-email"
@@ -375,7 +336,7 @@ function EmailInput({
       </label>
 
       {open && (
-        <ul className="absolute z-50 left-0 right-0 top-full mt-1 border border-border bg-bg-primary shadow-lg">
+        <ul className="absolute z-50 left-0 right-0 top-full mt-1 rounded-2xl border border-border bg-bg-primary shadow-lg">
           {suggestions.map((d, i) => {
             const atIdx = value.indexOf('@');
             const base = atIdx !== -1 ? value.slice(0, atIdx + 1) : value + '@';
@@ -400,11 +361,13 @@ function EmailInput({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   MAIN COMPONENT
+   MAIN COMPONENT — a single continuous form (no step wizard). Everything a
+   customer might need to tell us lives on one page, grouped into three
+   labelled sections purely for scannability.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 interface QuoteFormProps {
-  /** Prefills the service-type step — only applied if it exactly matches a known service label. */
+  /** Prefills the service-type field — only applied if it exactly matches a known service label. */
   initialService?: string;
   /** Prefills the brief-description field, e.g. from a "Request similar" reorder link. */
   initialDetails?: string;
@@ -423,33 +386,8 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
       description: initialDetails ?? INITIAL_DATA.description,
     };
   });
-  const [step, setStep] = useState<Step>(1);
   const [state, setState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-
-  // The Continue/Submit button occupies the same spot across a step change —
-  // a stray double-click (common on trackpads/touch) can land its second
-  // click on the button that just replaced it, submitting the form before
-  // the customer ever saw step 3. Locking here, synchronously inside the
-  // same handler that changes the step, means the replacement button is
-  // already disabled on its very first paint. A `useEffect` keyed on
-  // `step` instead only disables it a tick *after* that first paint —
-  // React runs passive effects after the browser paints, not before —
-  // leaving a real window where the new button is live and un-disabled.
-  const [navLocked, setNavLocked] = useState(false);
-  const navLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function lockNav() {
-    setNavLocked(true);
-    if (navLockTimerRef.current) clearTimeout(navLockTimerRef.current);
-    navLockTimerRef.current = setTimeout(() => setNavLocked(false), 400);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (navLockTimerRef.current) clearTimeout(navLockTimerRef.current);
-    };
-  }, []);
 
   /* ── Portfolio cart context — so a quote raised from "Buy" on a portfolio
      item stays linked to that item, instead of arriving as a generic request.
@@ -480,8 +418,9 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
   }, [derivedServiceType]);
 
   /* ── Returning-customer prefill — a logged-in user who already has saved
-     contact details shouldn't have to retype them on every order; only what
-     changes per order (service, quantity, description) still needs filling in. ── */
+     contact details shouldn't have to retype them; the fields below just
+     arrive pre-filled (and still editable) rather than needing a separate
+     "skip this step" affordance now that there's only one step. ─────────── */
   const [profile, setProfile] = useState<PublicUser | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
 
@@ -492,7 +431,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
       .then((json) => {
         if (!cancelled && json.success) setProfile(json.data);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         if (!cancelled) setProfileLoaded(true);
       });
@@ -508,13 +447,6 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
       phone: prev.phone || profile.phone || '',
       country: prev.country || profile.country || '',
     }));
-    // A profile only counts as "complete" once we already have what step 1
-    // asks for — otherwise this is their first order and they still need it.
-    // Only advance from step 1 — never jump the user *back* if they are
-    // already on step 2 or 3 (avoids resetting progress on re-renders).
-    if (profile.name && profile.phone) {
-      setStep((current) => current === 1 ? 2 : current);
-    }
   }, [profileLoaded, profile]);
 
   /* ── Field handlers ───────────────────────────────────────────────────── */
@@ -532,54 +464,21 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
     if (state === 'error') { setState('idle'); setErrorMessage(''); }
   }
 
-  /* ── Step validation ─────────────────────────────────────────────────── */
+  /* ── Validation ──────────────────────────────────────────────────────── */
 
-  function validateStep1(): string | null {
+  function validateAll(): string | null {
     if (!data.name.trim()) return 'Please enter your name.';
     if (!data.email.trim()) return 'Please enter your email address.';
     if (!isValidEmail(data.email)) return 'Please enter a valid email address.';
-    return null;
-  }
-
-  function validateStep2(): string | null {
     if (!data.serviceType) return 'Please select a service type.';
     if ((!data.quantity || !data.quantity.trim()) && !data.quantityUndecided) return 'Please select an estimated quantity.';
     return null;
-  }
-
-  function validateAll(): string | null {
-    const s1 = validateStep1();
-    if (s1) return s1;
-    const s2 = validateStep2();
-    if (s2) return s2;
-    return null;
-  }
-
-  function goNext() {
-    const err = step === 1 ? validateStep1() : step === 2 ? validateStep2() : null;
-    if (err) { setErrorMessage(err); setState('error'); return; }
-    setState('idle'); setErrorMessage('');
-    lockNav();
-    setStep((s) => Math.min(s + 1, 3) as Step);
-  }
-
-  function goBack() {
-    setState('idle'); setErrorMessage('');
-    lockNav();
-    setStep((s) => Math.max(s - 1, 1) as Step);
   }
 
   /* ── Submit ──────────────────────────────────────────────────────────── */
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // A stray Enter keypress in an earlier step's field can trigger the
-    // browser's native implicit form submission even though the visible
-    // "Continue" button there is type="button" — validateAll() alone can't
-    // catch this since steps 1+2 may already be individually valid before
-    // the customer has ever seen step 3. Guard on the step itself so an
-    // early submit is a no-op instead of silently sending the request.
-    if (step !== 3) return;
     const validationError = validateAll();
     if (validationError) { setErrorMessage(validationError); setState('error'); return; }
 
@@ -655,40 +554,10 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
   /* ── Form ────────────────────────────────────────────────────────────── */
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      noValidate
-      onKeyDown={(e) => {
-        // Stop Enter from implicitly submitting the form while on an earlier
-        // step — only the step-3 submit button should be able to do that.
-        if (e.key === 'Enter' && step < 3 && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
-          e.preventDefault();
-        }
-      }}
-    >
-      {/* Step dots */}
-      <StepDots current={step} total={3} />
-
-      {/* ── Returning-customer summary — lets them skip straight past contact details ── */}
-      {step > 1 && profile && profile.name && profile.phone && (
-        <div className="mb-6 flex items-center justify-between gap-4 border border-border bg-cat-surface px-5 py-3 animate-fadeIn">
-          <p className="font-body text-sm text-text-muted">
-            Ordering as <span className="text-text-heading">{data.name || profile.name}</span>
-            <span className="text-text-muted"> &middot; {data.email || profile.email}</span>
-          </p>
-          <button
-            type="button"
-            onClick={() => setStep(1)}
-            className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
-          >
-            Change details
-          </button>
-        </div>
-      )}
-
+    <form onSubmit={handleSubmit} noValidate>
       {/* ── Portfolio cart context banner ───────────────────────────────── */}
       {cartItems.length > 0 && includeCartItems && (
-        <div className="mb-8 flex items-start justify-between gap-4 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
+        <div className="mb-8 flex items-start justify-between gap-4 rounded-2xl border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
               Requesting a quote for {cartItems.length} item{cartItems.length === 1 ? '' : 's'} from your cart
@@ -712,155 +581,121 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
         </div>
       )}
 
-      {/* ── STEP 1: Who you are ───────────────────────────────────────── */}
-      {step === 1 && (
-        <div className="space-y-5 animate-fadeIn">
-          <h2 className="font-display text-xl text-text-heading mb-6">Tell us who you are</h2>
+      {/* ── Who you are ──────────────────────────────────────────────── */}
+      <div className="space-y-5">
+        <h2 className="font-display text-xl text-text-heading">Who you are</h2>
 
-          {/* Name */}
-          <FloatingInput
-            id="quote-name"
-            label="Your full name"
-            required
-            value={data.name}
-            onChange={(e) => {
-              setField('name', e.target.value);
-            }}
-            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-              setField(
-                'name',
-                e.target.value.replace(/\b\w/g, (c) => c.toUpperCase())
-              );
-            }}
-            autoComplete="name"
-          />
+        {/* Name */}
+        <FloatingInput
+          id="quote-name"
+          label="Your full name"
+          required
+          value={data.name}
+          onChange={(e) => {
+            setField('name', e.target.value);
+          }}
+          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+            setField(
+              'name',
+              e.target.value.replace(/\b\w/g, (c) => c.toUpperCase())
+            );
+          }}
+          autoComplete="name"
+        />
 
-          {/* Email */}
-          <EmailInput value={data.email} onChange={(v) => setField('email', v)} />
+        {/* Email */}
+        <EmailInput value={data.email} onChange={(v) => setField('email', v)} />
 
-          {/* Phone — optional */}
-          <FloatingInput
-            id="quote-phone"
-            label="Phone number (optional)"
-            type="tel"
-            value={data.phone}
-            onChange={handleChange}
-            autoComplete="tel"
-          />
+        {/* Phone — optional */}
+        <FloatingInput
+          id="quote-phone"
+          label="Phone number (optional)"
+          type="tel"
+          value={data.phone}
+          onChange={handleChange}
+          autoComplete="tel"
+        />
 
-          {/* Country */}
-          <CountryCombobox value={data.country} onChange={(v) => setField('country', v)} />
-        </div>
-      )}
+        {/* Country */}
+        <CountryCombobox value={data.country} onChange={(v) => setField('country', v)} />
+      </div>
 
-      {/* ── STEP 2: Your project ─────────────────────────────────────── */}
-      {step === 2 && (
-        <div className="space-y-8 animate-fadeIn">
-          <h2 className="font-display text-xl text-text-heading mb-6">About your project</h2>
+      {/* ── Your project ─────────────────────────────────────────────── */}
+      <div className="mt-08 space-y-4 border-t border-border pt-8">
+        <h2 className="font-display text-xl text-text-heading">About your project</h2>
 
-          {/* Service type — derived from the cart when every item agrees, otherwise pill chips */}
-          <div>
-            {derivedServiceType && !serviceOverride ? (
-              <div className="flex items-center justify-between gap-4 border border-border bg-cat-surface px-4 py-3">
-                <div>
-                  <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">Service</p>
-                  <p className="mt-1 font-body text-cat-heading">{derivedServiceType}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setServiceOverride(true)}
-                  className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
-                >
-                  Change
-                </button>
+        {/* Service type — derived from the cart when every item agrees, otherwise pill chips */}
+        <div>
+          {derivedServiceType && !serviceOverride ? (
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-cat-surface px-4 py-3">
+              <div>
+                <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">Service</p>
+                <p className="mt-1 font-body text-cat-heading">{derivedServiceType}</p>
               </div>
-            ) : (
-              <>
-                <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
-                  Service type<span className="text-accent-gold ml-0.5">*</span>
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {SERVICE_TYPES.map((s) => (
-                    <PillChip
-                      key={s.label}
-                      selected={data.serviceType === s.label}
-                      onClick={() => setField('serviceType', s.label)}
-                    >
-                      <span className="mr-1.5">{s.emoji}</span>
-                      {s.label}
-                    </PillChip>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Date */}
-          <div>
-            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
-              Event or delivery date
-            </p>
-            <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
-          </div>
-
-          {/* Quantity — combobox: type a number, pick from scrollable dropdown */}
-          <div>
-            <p className="mb-1.5 font-body text-sm text-text-muted uppercase tracking-wider">
-              Estimated quantity<span className="text-accent-gold ml-0.5">*</span>
-            </p>
-            <QuantityCombobox
-              value={data.quantity}
-              disabled={data.quantityUndecided}
-              onChange={(v) => setField('quantity', v)}
-            />
-            <label className="mt-3 flex items-center gap-2 font-body text-xs text-text-muted">
-              <input
-                type="checkbox"
-                checked={data.quantityUndecided}
-                onChange={(e) => setField('quantityUndecided', e.target.checked)}
-                className="h-3.5 w-3.5 accent-accent-gold"
-              />
-              I haven&apos;t decided yet
-            </label>
-          </div>
-        </div>
-      )}
-
-      {/* ── STEP 3: Details ──────────────────────────────────────────── */}
-      {step === 3 && (
-        <div className="space-y-8 animate-fadeIn">
-          <h2 className="font-display text-xl text-text-heading mb-6">Final details</h2>
-
-          {/* Description */}
-          <AutoTextarea
-            id="quote-description"
-            name="description"
-            label="Brief description"
-            value={data.description}
-            onChange={handleChange}
-            placeholder={descPlaceholder}
-          />
-
-          {/* How did you hear — pill chips */}
-          <div>
-            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
-              How did you hear about us?
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {SOURCES.map((s) => (
-                <PillChip
-                  key={s.label}
-                  selected={data.source === s.label}
-                  onClick={() => setField('source', s.label)}
-                >
-                  <span className="mr-1.5">{s.emoji}</span>
-                  {s.label}
-                </PillChip>
-              ))}
+              <button
+                type="button"
+                onClick={() => setServiceOverride(true)}
+                className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+              >
+                Change
+              </button>
             </div>
-          </div>
+          ) : (
+            <>
+              <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+                Service type<span className="text-accent-gold ml-0.5">*</span>
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {SERVICE_TYPES.map((s) => (
+                  <PillChip
+                    key={s.label}
+                    selected={data.serviceType === s.label}
+                    onClick={() => setField('serviceType', s.label)}
+                  >
+                    <span className="mr-1.5">{s.emoji}</span>
+                    {s.label}
+                  </PillChip>
+                ))}
+              </div>
+            </>
+          )}
         </div>
-      )}
+
+        {/* Date */}
+        <div>
+          <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+            Delivery Date
+          </p>
+          <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
+        </div>
+
+        {/* Quantity — combobox: type a number, pick from scrollable dropdown */}
+        <div>
+          <p className="mb-1.5 font-body text-sm text-text-muted uppercase tracking-wider">
+            Estimated quantity<span className="text-accent-gold ml-0.5">*</span>
+          </p>
+          <QuantityCombobox
+            value={data.quantity}
+            disabled={data.quantityUndecided}
+            onChange={(v) => setField('quantity', v)}
+          />
+        </div>
+      </div>
+
+      {/* ── Final details ────────────────────────────────────────────── */}
+      <div className="mt-08 space-y-08 border-t border-border pt-8">
+        <h2 className="font-display text-xl text-text-heading">Final details</h2>
+
+        {/* Description */}
+        <AutoTextarea
+          id="quote-description"
+          name="description"
+          label="Brief description"
+          value={data.description}
+          onChange={handleChange}
+          placeholder={descPlaceholder}
+        />
+      </div>
 
       {/* ── Error message ─────────────────────────────────────────────── */}
       {state === 'error' && errorMessage && (
@@ -869,67 +704,22 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
         </p>
       )}
 
-      {/* ── Navigation buttons ────────────────────────────────────────── */}
-      <div className={`mt-8 flex ${step > 1 ? 'justify-between' : 'justify-end'} items-center gap-4`}>
-        {step > 1 && (
-          <button
-            type="button"
-            onClick={goBack}
-            className="font-body text-label uppercase tracking-wider text-text-muted hover:text-text-heading transition-colors flex items-center gap-2"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-            Back
-          </button>
-        )}
-
-        {/* Distinct `key`s below are load-bearing, not cosmetic: without them
-            React reuses the same <button> DOM node across this ternary. On
-            the 2→3 transition, clicking Continue calls goNext() -> setStep(3)
-            synchronously inside the click handler, which flips this same
-            element from type="button" to type="submit" mid-event — and the
-            browser's native click default-action, evaluated after listeners
-            run, then sees a submit button and immediately submits the form,
-            skipping step 3 entirely. Keying them forces React to mount a
-            fresh node instead of mutating the one still mid-click. */}
-        {step < 3 ? (
-          <button
-            key="continue-button"
-            type="button"
-            onClick={goNext}
-            disabled={navLocked}
-            className="bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider transition-all duration-300 hover:bg-accent-gold-dark focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary flex items-center gap-2 disabled:opacity-70"
-          >
-            Continue
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </button>
-        ) : (
-          <button
-            key="submit-button"
-            type="submit"
-            disabled={state === 'loading' || navLocked}
-            className={[
-              'bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider',
-              'transition-all duration-300 hover:bg-accent-gold-dark',
-              'focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
-              'disabled:opacity-50',
-              state === 'loading' ? 'animate-pulse' : '',
-            ].join(' ')}
-          >
-            {state === 'loading' ? 'Sending…' : 'Send My Request →'}
-          </button>
-        )}
+      {/* ── Submit ────────────────────────────────────────────────────── */}
+      <div className="mt-8 flex justify-end">
+        <button
+          type="submit"
+          disabled={state === 'loading'}
+          className={[
+            'rounded-2xl bg-accent-gold text-bg-primary px-8 py-3.5 font-body font-medium uppercase tracking-wider',
+            'transition-all duration-300 hover:bg-accent-gold-dark',
+            'focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
+            'disabled:opacity-50',
+            state === 'loading' ? 'animate-pulse' : '',
+          ].join(' ')}
+        >
+          {state === 'loading' ? 'Sending…' : 'Send My Request →'}
+        </button>
       </div>
-
-      {/* Privacy note — only on last step */}
-      {step === 3 && (
-        <p className="mt-4 text-center text-sm text-text-muted">
-          Your details are safe. We never share your information with third parties.
-        </p>
-      )}
     </form>
   );
 }

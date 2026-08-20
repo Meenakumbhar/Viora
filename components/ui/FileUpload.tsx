@@ -268,13 +268,15 @@ export default function FileUpload({
             </div>
           ) : (
             <>
-              {/* Upload Icon */}
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-cat-surface text-text-muted transition-transform group-hover:scale-110">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+              {/* Upload Icon — swap /images/upload-icon.svg with your own file in public/images/ */}
+              <div className="mb-3 flex h-12 w-12 items-center justify-center">
+                <Image
+                  src="/images/upload-icon.svg"
+                  alt="Upload"
+                  width={48}
+                  height={48}
+                  unoptimized
+                />
               </div>
 
               <p className="font-body text-sm text-text-heading">

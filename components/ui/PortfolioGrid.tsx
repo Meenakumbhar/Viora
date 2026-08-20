@@ -41,6 +41,16 @@ interface PortfolioGridProps {
 const ITEMS_PER_PAGE = 12;
 
 const ALL_FILTERS = ['All', 'Wedding', 'Funeral', 'Events', 'Sports', 'Branding'] as const;
+// Display-only — keeps the internal filter keys (used for category matching
+// and the ?category= URL param) untouched.
+const FILTER_DISPLAY_LABELS: Record<(typeof ALL_FILTERS)[number], string> = {
+  All: 'All',
+  Wedding: 'Wedding Stationery',
+  Funeral: 'Funeral Stationery',
+  Events: 'Events',
+  Sports: 'Sports',
+  Branding: 'Branding',
+};
 // Temporarily hidden — flip back to true to restore the "All" tab. Landing on
 // /portfolio with no category still shows every item; this only removes the
 // tab itself, so there's nowhere to click back to an unfiltered view.
@@ -509,7 +519,7 @@ export default function PortfolioGrid({
                   : 'text-cat-muted hover:text-cat-heading',
               ].join(' ')}
             >
-              {filter}
+              {FILTER_DISPLAY_LABELS[filter]}
               {activeFilter === filter && (
                 <motion.span
                   layoutId="portfolio-filter-underline"
@@ -555,7 +565,7 @@ export default function PortfolioGrid({
                     whileTap={{ scale: 0.97 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     className={[
-                      'group/filter flex min-h-11 items-center gap-3 border px-6 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
+                      'group/filter flex min-h-11 items-center gap-3 rounded-full border px-6 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
                       openFilter === group
                         ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
                         : 'border-border text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.08)]',
@@ -593,7 +603,7 @@ export default function PortfolioGrid({
                     <div
                       id={`portfolio-filter-${group}`}
                       data-lenis-prevent
-                      className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
+                      className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden rounded-2xl border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
                       style={{ backgroundColor: 'var(--cat-bg)', opacity: 1 }}
                       role="region"
                       aria-label={`${filterLabels[group]} filter options`}
@@ -606,7 +616,7 @@ export default function PortfolioGrid({
                             onChange={(e) => setFilterSearch(e.target.value)}
                             placeholder={`Search ${filterLabels[group].toLowerCase()}…`}
                             autoFocus
-                            className="w-full border border-border bg-transparent px-3 py-2 font-mono text-[11px] text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
+                            className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-[11px] text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
                           />
                         </div>
                       )}
@@ -652,7 +662,7 @@ export default function PortfolioGrid({
                   whileTap={{ scale: 0.97 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   className={[
-                    'group/filter flex min-h-11 items-center gap-3 border px-6 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
+                    'group/filter flex min-h-11 items-center gap-3 rounded-full border px-6 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
                     openFilter === 'template'
                       ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
                       : 'border-border text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.08)]',
@@ -678,7 +688,7 @@ export default function PortfolioGrid({
                   <div
                     id="portfolio-filter-template"
                     data-lenis-prevent
-                    className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
+                    className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden rounded-2xl border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
                     style={{ backgroundColor: 'var(--cat-bg)', opacity: 1 }}
                     role="region"
                     aria-label="Template No. filter options"
@@ -691,7 +701,7 @@ export default function PortfolioGrid({
                           onChange={(e) => setFilterSearch(e.target.value)}
                           placeholder="Search template no.…"
                           autoFocus
-                          className="w-full border border-border bg-transparent px-3 py-2 font-mono text-[11px] text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
+                          className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-[11px] text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
                         />
                       </div>
                     )}
@@ -758,7 +768,7 @@ export default function PortfolioGrid({
         <div className="mt-12 flex justify-center">
           <button
             onClick={handleLoadMore}
-            className="border border-accent-gold bg-transparent px-8 py-3 font-body text-label uppercase tracking-wider text-accent-gold transition-colors duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+            className="rounded-full border border-accent-gold bg-transparent px-8 py-3 font-body text-label uppercase tracking-wider text-accent-gold transition-colors duration-300 hover:bg-accent-gold hover:text-bg-primary focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
           >
             Load more
           </button>

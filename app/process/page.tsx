@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
+import Accordion from '@/components/ui/Accordion';
 import { processSteps } from '@/lib/data';
 
 export const metadata: Metadata = {
@@ -92,21 +93,7 @@ export default function ProcessPage() {
               </h2>
             </div>
 
-            <div className="space-y-2">
-              {processFaqs.map((faq) => (
-                <details key={faq.question} className="group border-b border-border py-6">
-                  <summary className="flex justify-between items-center cursor-pointer list-none font-display text-xl text-text-primary group-open:text-accent-gold transition-colors duration-200">
-                    {faq.question}
-                    <span className="text-accent-gold font-mono transition-transform duration-300 group-open:rotate-180">
-                      &darr;
-                    </span>
-                  </summary>
-                  <p className="mt-4 font-body text-body-base text-text-muted leading-relaxed max-w-3xl">
-                    {faq.answer}
-                  </p>
-                </details>
-              ))}
-            </div>
+            <Accordion items={processFaqs} />
           </SectionReveal>
         </div>
       </section>

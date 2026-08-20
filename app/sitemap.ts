@@ -1,7 +1,6 @@
 import { MetadataRoute } from 'next';
-import { getBlogPosts, getPortfolioItems } from '@/lib/db';
-import { services } from '@/lib/data';
-import { isServiceSlugActive, isCategoryActive } from '@/lib/active-services';
+import { getBlogPosts } from '@/lib/db';
+import { isCategoryActive } from '@/lib/active-services';
 import { SITE_URL as BASE_URL } from '@/lib/site-url';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -18,12 +17,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/services`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.9,
     },
     {
       url: `${BASE_URL}/portfolio`,
@@ -57,16 +50,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // ── Service pages ──────────────────────────────────────────────────────────
-  const serviceRoutes: MetadataRoute.Sitemap = services
-    .filter((s) => isServiceSlugActive(s.slug))
-    .map((s) => ({
-      url: `${BASE_URL}/services/${s.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.85,
-    }));
-
   // ── Blog post pages ─────────────────────────────────────────────────────────
   let blogRoutes: MetadataRoute.Sitemap = [];
   try {
@@ -90,5 +73,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }));
 
-  return [...staticRoutes, ...serviceRoutes, ...blogRoutes, ...portfolioRoutes];
+  return [...staticRoutes, ...blogRoutes, ...portfolioRoutes];
 }

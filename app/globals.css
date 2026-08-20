@@ -130,39 +130,9 @@
   100% { background-position: 200% 0; }
 }
 
-/* ─── SCROLL REVEAL SYSTEM ───────────────────────────────────────────────── */
-
-.reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
-}
-
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Stagger children */
-.reveal.visible [data-delay="1"] { transition-delay: 0.1s; }
-.reveal.visible [data-delay="2"] { transition-delay: 0.2s; }
-.reveal.visible [data-delay="3"] { transition-delay: 0.3s; }
-.reveal.visible [data-delay="4"] { transition-delay: 0.4s; }
-.reveal.visible [data-delay="5"] { transition-delay: 0.5s; }
-
 /* ─── REDUCED MOTION ────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-
-  .reveal.visible [data-delay] {
-    transition-delay: 0s !important;
-  }
-
   *,
   *::before,
   *::after {
@@ -175,7 +145,7 @@
 /* ─── BASE STYLES ────────────────────────────────────────────────────────── */
 
 html {
-  /* scroll-behavior: smooth; -- Disabled to prevent conflict with Lenis */
+  scroll-behavior: smooth;
 }
 
 body {
@@ -314,6 +284,22 @@ body {
 
   --color-accent-gold: var(--cat-accent);
   --color-accent-gold-hover: var(--cat-accent-dark);
+
+  /* Redeclared in-scope (not just at :root) — a custom property whose value
+     is var(--cat-X) only resolves per-descendant if it's declared at the
+     same scope as --cat-X itself; declaring it once at :root and letting
+     [data-category] override --cat-X alone does NOT work, since the
+     computed value of an undeclared-here property still inherits from
+     :root's own (invalid, since --cat-X is unset there) computed value. */
+  --color-cat-bg: var(--cat-bg);
+  --color-cat-surface: var(--cat-surface);
+  --color-cat-accent: var(--cat-accent);
+  --color-cat-accent-dark: var(--cat-accent-dark);
+  --color-cat-heading: var(--cat-heading);
+  --color-cat-body: var(--cat-body);
+  --color-cat-muted: var(--cat-muted);
+  --color-cat-pill-bg: var(--cat-pill-bg);
+  --color-cat-pill-text: var(--cat-pill-text);
 }
 
 [data-category="wedding"] {
@@ -329,6 +315,16 @@ body {
 
   --color-accent-gold: var(--cat-accent);
   --color-accent-gold-hover: var(--cat-accent-dark);
+
+  --color-cat-bg: var(--cat-bg);
+  --color-cat-surface: var(--cat-surface);
+  --color-cat-accent: var(--cat-accent);
+  --color-cat-accent-dark: var(--cat-accent-dark);
+  --color-cat-heading: var(--cat-heading);
+  --color-cat-body: var(--cat-body);
+  --color-cat-muted: var(--cat-muted);
+  --color-cat-pill-bg: var(--cat-pill-bg);
+  --color-cat-pill-text: var(--cat-pill-text);
 }
 
 [data-category="funeral"] {
@@ -344,6 +340,16 @@ body {
 
   --color-accent-gold: var(--cat-accent);
   --color-accent-gold-hover: var(--cat-accent-dark);
+
+  --color-cat-bg: var(--cat-bg);
+  --color-cat-surface: var(--cat-surface);
+  --color-cat-accent: var(--cat-accent);
+  --color-cat-accent-dark: var(--cat-accent-dark);
+  --color-cat-heading: var(--cat-heading);
+  --color-cat-body: var(--cat-body);
+  --color-cat-muted: var(--cat-muted);
+  --color-cat-pill-bg: var(--cat-pill-bg);
+  --color-cat-pill-text: var(--cat-pill-text);
 }
 
 [data-category="events"] {
@@ -359,6 +365,16 @@ body {
 
   --color-accent-gold: var(--cat-accent);
   --color-accent-gold-hover: var(--cat-accent-dark);
+
+  --color-cat-bg: var(--cat-bg);
+  --color-cat-surface: var(--cat-surface);
+  --color-cat-accent: var(--cat-accent);
+  --color-cat-accent-dark: var(--cat-accent-dark);
+  --color-cat-heading: var(--cat-heading);
+  --color-cat-body: var(--cat-body);
+  --color-cat-muted: var(--cat-muted);
+  --color-cat-pill-bg: var(--cat-pill-bg);
+  --color-cat-pill-text: var(--cat-pill-text);
 }
 
 [data-category="sports"] {
@@ -374,6 +390,16 @@ body {
 
   --color-accent-gold: var(--cat-accent);
   --color-accent-gold-hover: var(--cat-accent-dark);
+
+  --color-cat-bg: var(--cat-bg);
+  --color-cat-surface: var(--cat-surface);
+  --color-cat-accent: var(--cat-accent);
+  --color-cat-accent-dark: var(--cat-accent-dark);
+  --color-cat-heading: var(--cat-heading);
+  --color-cat-body: var(--cat-body);
+  --color-cat-muted: var(--cat-muted);
+  --color-cat-pill-bg: var(--cat-pill-bg);
+  --color-cat-pill-text: var(--cat-pill-text);
 }
 
 [data-category="branding"] {
@@ -389,6 +415,16 @@ body {
 
   --color-accent-gold: var(--cat-accent);
   --color-accent-gold-hover: var(--cat-accent-dark);
+
+  --color-cat-bg: var(--cat-bg);
+  --color-cat-surface: var(--cat-surface);
+  --color-cat-accent: var(--cat-accent);
+  --color-cat-accent-dark: var(--cat-accent-dark);
+  --color-cat-heading: var(--cat-heading);
+  --color-cat-body: var(--cat-body);
+  --color-cat-muted: var(--cat-muted);
+  --color-cat-pill-bg: var(--cat-pill-bg);
+  --color-cat-pill-text: var(--cat-pill-text);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

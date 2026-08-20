@@ -12,10 +12,7 @@ const CONTACTS = [
     handle: 'info@memoriesinprints.com',
     href: 'mailto:info@memoriesinprints.com',
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <path d="m2 7 10 7 10-7" />
-      </svg>
+      <img src="/images/icons/Outlook.svg" alt="" className="w-full h-full object-cover" aria-hidden="true" />
     ),
   },
   {
@@ -24,11 +21,7 @@ const CONTACTS = [
     href: 'https://www.instagram.com/memoriesin.prints/',
     external: true,
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="2" y="2" width="20" height="20" rx="5" />
-        <circle cx="12" cy="12" r="4" />
-        <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
-      </svg>
+      <img src="/images/icons/Instagram.svg" alt="" className="w-full h-full object-cover" aria-hidden="true" />
     ),
   },
   {
@@ -37,9 +30,7 @@ const CONTACTS = [
     href: 'https://www.facebook.com/profile.php?id=61584548137585&sk=photos',
     external: true,
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-      </svg>
+      <img src="/images/icons/Facebook.svg" alt="" className="w-full h-full object-cover" aria-hidden="true" />
     ),
   },
   {
@@ -48,11 +39,7 @@ const CONTACTS = [
     href: 'https://www.linkedin.com/company/memoriesinprintseu/',
     external: true,
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-        <rect x="2" y="9" width="4" height="12" />
-        <circle cx="4" cy="4" r="2" />
-      </svg>
+      <img src="/images/icons/Linkedin.svg" alt="" className="w-full h-full object-cover" aria-hidden="true" />
     ),
   },
 ];
@@ -83,43 +70,51 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
       {/* ── Divider ────────────────────────────────────────────────── */}
       <div className="border-t border-border" />
 
-      {/* ── Form section ───────────────────────────────────────────── */}
-      <section className="container-wide py-16 max-w-2xl">
-        <QuoteForm initialService={service} initialDetails={details} fromCart={cart === '1'} />
-      </section>
+      {/* ── Form (left) + socials (right) ─────────────────────────── */}
+      <section className="container-wide py-16">
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-[1.6fr_1fr]">
+          <QuoteForm initialService={service} initialDetails={details} fromCart={cart === '1'} />
 
-      {/* ── Divider ────────────────────────────────────────────────── */}
-      <div className="border-t border-border" />
+          <aside className="lg:border-l lg:border-border lg:pl-16">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">
+              Other ways to reach us
+            </p>
+            <div className="mt-6 flex flex-col gap-5">
+              {CONTACTS.map((c) => (
+                <a
+                  key={c.label}
+                  href={c.href}
+                  target={c.external ? '_blank' : undefined}
+                  rel={c.external ? 'noopener noreferrer' : undefined}
+                  className="group flex items-center gap-3 text-text-heading transition-all duration-200 hover:text-accent-gold"
+                >
+                  {/* Icon */}
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-border rounded-full overflow-hidden text-text-muted transition-all duration-200 group-hover:border-accent-gold group-hover:text-accent-gold">
+                    {c.icon}
+                  </span>
+                  {/* Text */}
+                  <span className="flex flex-col">
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-text-muted">
+                      {c.label}
+                    </span>
+                    <span className="font-body text-body-base leading-tight">
+                      {c.handle}
+                    </span>
+                  </span>
+                </a>
+              ))}
+            </div>
 
-      {/* ── Contact strip ──────────────────────────────────────────── */}
-      <section className="container-wide py-10" aria-label="Contact channels">
-        <p className="mb-6 font-mono text-[11px] uppercase tracking-widest text-text-muted">
-          Other ways to reach us
-        </p>
-        <div className="flex flex-wrap gap-x-8 gap-y-5">
-          {CONTACTS.map((c) => (
-            <a
-              key={c.label}
-              href={c.href}
-              target={c.external ? '_blank' : undefined}
-              rel={c.external ? 'noopener noreferrer' : undefined}
-              className="group flex items-center gap-3 text-text-heading transition-all duration-200 hover:text-accent-gold"
-            >
-              {/* Icon */}
-              <span className="flex h-9 w-9 items-center justify-center border border-border rounded-full text-text-muted transition-all duration-200 group-hover:border-accent-gold group-hover:text-accent-gold">
-                {c.icon}
-              </span>
-              {/* Text */}
-              <span className="flex flex-col">
-                <span className="font-mono text-[11px] uppercase tracking-wider text-text-muted">
-                  {c.label}
-                </span>
-                <span className="font-body text-body-base leading-tight">
-                  {c.handle}
-                </span>
-              </span>
-            </a>
-          ))}
+            <div className="mt-10 rounded-2xl border border-border bg-cat-surface p-6">
+              <p className="font-display text-lg italic text-accent-gold">
+                We respond within 24 hours
+              </p>
+              <p className="mt-2 font-body text-sm text-text-muted leading-relaxed">
+                Every enquiry is read by a real person on the studio team — no
+                automated replies, no waiting in a queue.
+              </p>
+            </div>
+          </aside>
         </div>
       </section>
     </main>

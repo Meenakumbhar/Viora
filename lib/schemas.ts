@@ -127,3 +127,39 @@ export const portfolioItemInputSchema = z.object({
   template_number: z.string().trim().max(50).nullish(),
   published: z.boolean().optional(),
 });
+
+// Shared by the admin create/update product routes — same shape/style as
+// portfolioItemInputSchema. `slug` is unique per product (products are
+// addressed by slug in URLs, unlike portfolio items which use id).
+const productSizeSchema = z.object({
+  label: z.string().trim().min(1).max(100),
+  dimensions: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(1000).optional(),
+});
+
+const slugPattern = /^[a-z0-9-]+$/;
+
+export const productInputSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1, 'Slug is required.')
+    .max(200)
+    .regex(slugPattern, 'Slug may only contain lowercase letters, numbers, and hyphens.'),
+  type_slug: z
+    .string()
+    .trim()
+    .min(1, 'Type is required.')
+    .max(200)
+    .regex(slugPattern, 'Type slug may only contain lowercase letters, numbers, and hyphens.'),
+  type_label: z.string().trim().min(1, 'Type label is required.').max(200),
+  title: z.string().trim().min(1, 'Title is required.').max(300),
+  subtitle: z.string().trim().max(300).nullish(),
+  description: z.string().trim().max(3000).nullish(),
+  category: z.enum(PORTFOLIO_CATEGORIES),
+  image_url: z.string().trim().max(2000).nullish(),
+  image_urls: z.array(z.string().trim().max(2000)).max(20).nullish(),
+  sizes: z.array(productSizeSchema).min(1, 'At least one size is required.').max(20),
+  related_slugs: z.array(z.string().trim().max(200)).max(20).optional(),
+  published: z.boolean().optional(),
+});

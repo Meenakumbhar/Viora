@@ -281,7 +281,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
       {/* ── Date ─────────────────────────────────────────────────────────── */}
       <div>
         <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
-          Event or delivery date
+          Delivery Date
         </p>
         <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
       </div>
@@ -381,10 +381,6 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
           {state === 'loading' ? 'Sending…' : 'Send My Request →'}
         </button>
       </div>
-
-      <p className="text-center text-sm text-text-muted">
-        Your details are safe. We never share your information with third parties.
-      </p>
     </form>
   );
 }

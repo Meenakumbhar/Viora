@@ -11,7 +11,6 @@ interface FooterLink {
 }
 
 const STUDIO_LINKS: FooterLink[] = [
-  // { label: 'Services', href: '/services' },
   { label: 'Portfolio', href: '/portfolio' },
   { label: 'Process', href: '/process' },
   { label: 'About Us', href: '/about' },

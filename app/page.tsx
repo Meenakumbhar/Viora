@@ -6,7 +6,7 @@ import SectionReveal from '@/components/ui/SectionReveal';
 import TestimonialSlider from '@/components/ui/TestimonialSlider';
 import AnimatedHeadline from '@/components/ui/AnimatedHeadline';
 import ImageRevealCard from '@/components/ui/ImageRevealCard';
-import CountUp from '@/components/ui/CountUp';
+import { PANEL_TONES } from '@/components/ui/SplitHero';
 import { processSteps, blogPosts } from '@/lib/data';
 import { ACTIVE_CATEGORIES } from '@/lib/active-services';
 import { getPortfolioItems } from '@/lib/db';
@@ -203,7 +203,7 @@ export default async function Home() {
                   src="/images/design_with_intention.jpeg"
                   alt="Designed with Intention"
                   delay={0.1}
-                  className="aspect-[1408/768]"
+                  className="aspect-[1408/768] rounded-[2rem]"
                   sizes="(min-width: 1024px) 45vw, 90vw"
                   priority
                 />
@@ -480,7 +480,7 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 8 — GLOBAL REACH ──────────────────── */}
-      <section id="global" className="py-24 md:py-36 lg:py-48 bg-bg-alternate">
+      <section id="global" className="py-24 md:py-36 lg:py-48" style={{ backgroundColor: PANEL_TONES.mist.bg }}>
         <SectionReveal>
           <div className="container-wide">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -520,7 +520,7 @@ export default async function Home() {
                   ].map((region) => (
                     <span
                       key={region}
-                      className="border border-border bg-bg-primary/70 px-3 py-1 font-mono text-label uppercase tracking-wider text-text-muted"
+                      className="rounded-full border border-border bg-bg-primary/70 px-3 py-1 font-mono text-label uppercase tracking-wider text-text-muted"
                     >
                       {region}
                     </span>
@@ -546,7 +546,7 @@ export default async function Home() {
                   <Link href={`/blog/${post.slug}`} className="group block">
                     {/* Image placeholder */}
                     <div
-                      className="aspect-video rounded-none overflow-hidden"
+                      className="aspect-video rounded-[1.5rem] overflow-hidden"
                       style={{
                         background:
                           blogGradients[post.category || ''] ||

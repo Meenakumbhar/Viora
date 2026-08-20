@@ -360,12 +360,12 @@ export default async function AdminPage() {
                       <span className={`font-mono text-[10px] ${p.published ? 'text-emerald-400' : 'text-white/30'}`}>
                         {p.published
                           ? (p.published_at
-                              ? new Date(p.published_at).toLocaleDateString('en-GB', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                })
-                              : 'Published')
+                            ? new Date(p.published_at).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                            : 'Published')
                           : 'Draft'}
                       </span>
                     </td>
