@@ -1,4 +1,4 @@
-import { eq, and, gt, asc, desc, inArray, sql as dsql } from 'drizzle-orm';
+import { eq, and, or, gt, asc, desc, inArray, sql as dsql } from 'drizzle-orm';
 import { getDrizzle } from '@/db/client';
 import {
   portfolioItems as portfolioItemsTable,
@@ -203,6 +203,7 @@ function normalizeEnquiry(row: any): Enquiry {
     id: String(row.id),
     name: String(row.name ?? ''),
     email: String(row.email ?? ''),
+    user_id: row.user_id != null ? String(row.user_id) : null,
     phone: row.phone != null ? String(row.phone) : null,
     country: row.country != null ? String(row.country) : null,
     service_type: String(row.service_type ?? ''),
@@ -221,6 +222,7 @@ function normalizeOrder(row: any): Order {
   return {
     id: String(row.id),
     enquiry_id: row.enquiry_id != null ? String(row.enquiry_id) : null,
+    user_id: row.user_id != null ? String(row.user_id) : null,
     customer_name: String(row.customer_name ?? ''),
     customer_email: String(row.customer_email ?? ''),
     service_type: String(row.service_type ?? ''),
@@ -743,7 +745,10 @@ export async function getBlogPostBySlug(slug: string): Promise<Post | null> {
 
 // ─── Enquiries ────────────────────────────────────────────────────────────────
 
-export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
+// `userId` is never client-supplied — pass the authenticated session's user
+// id (if any) from the caller, same as updateUserProfile's usage in
+// app/api/enquiries/route.ts.
+export async function insertEnquiry(payload: EnquiryPayload, userId?: string | null): Promise<Enquiry> {
   const db = getDrizzle();
   if (!db) {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
@@ -754,6 +759,7 @@ export async function insertEnquiry(payload: EnquiryPayload): Promise<Enquiry> {
     .values({
       name: payload.name.trim(),
       email: payload.email.trim().toLowerCase(),
+      user_id: userId ?? null,
       phone: payload.phone?.trim() || null,
       country: payload.country?.trim() || null,
       service_type: payload.service_type,
@@ -781,14 +787,20 @@ export async function getEnquiryById(id: string): Promise<Enquiry | null> {
   return rows.length > 0 ? normalizeEnquiry(rows[0]) : null;
 }
 
-export async function getEnquiriesByEmail(email: string): Promise<Enquiry[]> {
+// Matches by user_id when given (the reliable link) as well as email
+// (the guest-checkout fallback, and what covers enquiries submitted before
+// this account existed) — either match includes the row.
+export async function getEnquiriesByEmail(email: string, userId?: string | null): Promise<Enquiry[]> {
   const db = getDrizzle();
   if (!db) return [];
+
+  const emailMatch = eq(enquiriesTable.email, email.trim().toLowerCase());
+  const condition = userId ? or(emailMatch, eq(enquiriesTable.user_id, userId)) : emailMatch;
 
   const rows = await db
     .select()
     .from(enquiriesTable)
-    .where(eq(enquiriesTable.email, email.trim().toLowerCase()))
+    .where(condition)
     .orderBy(desc(enquiriesTable.created_at));
 
   return rows.map(normalizeEnquiry);
@@ -1142,10 +1154,26 @@ export async function createOrder(input: OrderInput): Promise<Order> {
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
+  // Link to the customer's account when one exists — carried over from the
+  // source enquiry first (most orders are converted from one), else
+  // best-effort matched by email. Stays null (guest order) if neither hits;
+  // customer_email remains the fallback for showing it in their account
+  // once they do sign up.
+  let userId: string | null = null;
+  if (input.enquiry_id) {
+    const enquiry = await getEnquiryById(input.enquiry_id);
+    userId = enquiry?.user_id ?? null;
+  }
+  if (!userId) {
+    const account = await getUserByEmail(input.customer_email);
+    userId = account?.id ?? null;
+  }
+
   const rows = await db
     .insert(ordersTable)
     .values({
       enquiry_id: input.enquiry_id ?? null,
+      user_id: userId,
       customer_name: input.customer_name.trim(),
       customer_email: input.customer_email.trim().toLowerCase(),
       service_type: input.service_type.trim(),
@@ -1190,18 +1218,21 @@ export async function getAllEnquiries(): Promise<Enquiry[]> {
   }
 }
 
-// Orders aren't tied to a user_id — a customer can place a quote as a guest
-// before ever creating an account. Matching by email means their history
-// still shows up correctly the moment they sign up with the same address.
-export async function getOrdersByEmail(email: string): Promise<Order[]> {
+// Matches by user_id when given (the reliable link, set at creation — see
+// createOrder) as well as email (the guest-checkout fallback, and what
+// covers orders placed before this account existed) — either match includes
+// the row.
+export async function getOrdersByEmail(email: string, userId?: string | null): Promise<Order[]> {
   const db = getDrizzle();
   if (!db) return [];
 
   try {
+    const emailMatch = eq(ordersTable.customer_email, email.trim().toLowerCase());
+    const condition = userId ? or(emailMatch, eq(ordersTable.user_id, userId)) : emailMatch;
     const rows = await db
       .select()
       .from(ordersTable)
-      .where(eq(ordersTable.customer_email, email.trim().toLowerCase()))
+      .where(condition)
       .orderBy(desc(ordersTable.created_at));
     return rows.map(normalizeOrder);
   } catch (err) {

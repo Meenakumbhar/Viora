@@ -8,6 +8,7 @@ import { readSavedItems } from '@/utils/portfolio-saved';
 const NAV_ITEMS = [
   { href: '/account/quote', label: 'New quote', exact: true },
   { href: '/account', label: 'Orders', exact: true },
+  { href: '/account/completed', label: 'Completed', exact: true },
   { href: '/account/spend', label: 'Spend sheet', exact: true },
   { href: '/account/saved', label: 'Saved', exact: true },
   { href: '/account/profile', label: 'Account spec', exact: true },

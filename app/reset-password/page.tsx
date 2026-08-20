@@ -15,8 +15,10 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
 
   return (
     <main id="main-content" className="min-h-screen bg-bg-primary">
-      <div className="container-wide flex min-h-screen max-w-md flex-col justify-center py-24">
-        <ResetPasswordForm token={token ?? null} />
+      <div className="container-wide flex min-h-screen flex-col justify-center py-20">
+        <div className="w-full max-w-sm md:max-w-[32%]">
+          <ResetPasswordForm token={token ?? null} />
+        </div>
       </div>
     </main>
   );

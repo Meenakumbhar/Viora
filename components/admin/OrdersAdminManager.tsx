@@ -255,7 +255,7 @@ export default function OrdersAdminManager({ initialOrders }: { initialOrders: O
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
                 <th className="w-8 px-2 py-3" />
-                <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">Order</th>
+                <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">Order #</th>
                 <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40">Customer</th>
                 <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40 hidden md:table-cell">Item / Service</th>
                 <th className="px-3 py-3 text-left font-mono text-[10px] uppercase tracking-wider text-white/40 hidden lg:table-cell">Date</th>
@@ -280,7 +280,7 @@ export default function OrdersAdminManager({ initialOrders }: { initialOrders: O
                           ▸
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-[10px] text-white/40">#{order.id.slice(0, 8).toUpperCase()}</td>
+                      <td className="px-3 py-2.5 font-mono text-xs text-[#C6A85C]">#{order.id.slice(0, 8).toUpperCase()}</td>
                       <td className="max-w-[160px] truncate px-3 py-2.5 font-body text-sm text-white/80">{order.customer_name}</td>
                       <td className="hidden max-w-[220px] truncate px-3 py-2.5 font-mono text-xs text-white/50 md:table-cell">{rowLabel(order)}</td>
                       <td className="hidden px-3 py-2.5 font-mono text-[10px] text-white/30 lg:table-cell">
@@ -320,7 +320,10 @@ export default function OrdersAdminManager({ initialOrders }: { initialOrders: O
                             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                               {/* ── Left: lifecycle + line items ── */}
                               <div>
-                                <p className="font-mono text-[10px] uppercase tracking-widest text-white/30">{detailOrder.customer_email}</p>
+                                <p className="font-mono text-sm text-[#C6A85C]">
+                                  Order #{detailOrder.id.slice(0, 8).toUpperCase()}
+                                </p>
+                                <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-white/30">{detailOrder.customer_email}</p>
                                 <h3 className="mt-1 font-display text-xl font-light text-white/90">{detailOrder.service_type}</h3>
 
                                 {(detailOrder.event_date || detailOrder.quantity_estimate) && (

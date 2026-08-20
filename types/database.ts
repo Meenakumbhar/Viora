@@ -77,6 +77,9 @@ export interface Enquiry {
   id: string;
   name: string;
   email: string;
+  // Real link to the submitter's account — set when they were logged in at
+  // submission time, null for guest enquiries (matched by `email` instead).
+  user_id: string | null;
   phone: string | null;
   country: string | null;
   service_type: string;
@@ -146,6 +149,8 @@ export type PaymentProvider = 'paypal' | 'razorpay';
 export interface Order {
   id: string;
   enquiry_id: string | null;
+  // Real link to the customer's account — see the same field on Enquiry.
+  user_id: string | null;
   customer_name: string;
   customer_email: string;
   service_type: string;

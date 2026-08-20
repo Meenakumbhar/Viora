@@ -30,26 +30,15 @@ interface CategoryContent {
 
 const categoryContentMap: Record<string, CategoryContent> = {
   all: {
-    eyebrow: 'Studio Case Studies',
+    eyebrow: '',
     headline: 'Print that',
     headlineAccent: 'speaks',
     description:
-      'A curated selection of our wedding suites, celebration of life books, sports programmes, and branding designs delivered to clients globally.',
+      'A curated selection of our bespoke designs, wedding suites, celebration of life books, designs delivered to clients globally.',
     bgGradient:
       'linear-gradient(135deg, #F7F4EF 0%, #FAF8F5 30%, #FDFCFA 60%, #F7F4EF 100%)',
     overlayGradient:
       'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,252,250,0.6) 65%, #FDFCFA 100%)',
-  },
-  wedding: {
-    eyebrow: 'Wedding Stationery',
-    headline: 'Stationery for your',
-    headlineAccent: 'forever',
-    description:
-      'Invitation suites, orders of service, table plans, and bespoke signage — each piece crafted to mirror the joy of the day.',
-    bgGradient:
-      'linear-gradient(135deg, #FDF7F5 0%, #F5E6DF 30%, #E8D5C4 60%, #FDF7F5 100%)',
-    overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,247,245,0.6) 65%, #FDF7F5 100%)',
   },
   funeral: {
     eyebrow: 'Funeral Stationery',
@@ -61,6 +50,17 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'linear-gradient(135deg, #F8F7FD 0%, #EDEAF8 30%, #D6D3EE 60%, #F8F7FD 100%)',
     overlayGradient:
       'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(248,247,253,0.6) 65%, #F8F7FD 100%)',
+  },
+  wedding: {
+    eyebrow: 'Wedding Stationery',
+    headline: 'Stationery for your',
+    headlineAccent: 'forever',
+    description:
+      'Invitation suites, orders of service, table plans, and bespoke signage — each piece crafted to mirror the joy of the day.',
+    bgGradient:
+      'linear-gradient(135deg, #FDF7F5 0%, #F5E6DF 30%, #E8D5C4 60%, #FDF7F5 100%)',
+    overlayGradient:
+      'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,247,245,0.6) 65%, #FDF7F5 100%)',
   },
   events: {
     eyebrow: 'Events Portfolio',

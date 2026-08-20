@@ -5,7 +5,7 @@ import { testimonials } from '@/lib/data';
 
 const INTERVAL_MS = 6000;
 
-export default function TestimonialSlider() {
+export default function TestimonialSlider({ dark = false }: { dark?: boolean }) {
   const [current, setCurrent] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
@@ -55,6 +55,9 @@ export default function TestimonialSlider() {
 
   const testimonial = testimonials[current];
 
+  const quoteColor = dark ? 'text-white' : 'text-text-heading';
+  const metaColor  = dark ? 'text-white/80' : 'text-text-muted';
+
   return (
     <div
       className="relative mx-auto max-w-5xl px-4 text-center"
@@ -62,10 +65,10 @@ export default function TestimonialSlider() {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Quote region */}
-      <div aria-live="polite" aria-atomic="true" className="min-h-[280px] flex flex-col items-center justify-center">
+      <div aria-live="polite" aria-atomic="true" className="min-h-[240px] flex flex-col items-center justify-center">
         <blockquote
           className={[
-            'mx-auto max-w-4xl font-display italic text-display-md text-text-heading',
+            `mx-auto max-w-4xl font-display italic text-display-md ${quoteColor}`,
             'transition-all duration-300 ease-in-out',
             transitioning
               ? 'translate-y-2 opacity-0'
@@ -77,17 +80,31 @@ export default function TestimonialSlider() {
           <span aria-hidden="true" className="text-accent-gold">&rdquo;</span>
         </blockquote>
 
+        {/* Author name */}
         <p
           className={[
-            'mt-8 font-mono text-label text-text-muted',
+            `mt-6 font-mono text-label font-medium ${metaColor}`,
             'transition-all duration-300 ease-in-out',
-            transitioning
-              ? 'translate-y-2 opacity-0'
-              : 'translate-y-0 opacity-100',
+            transitioning ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100',
           ].join(' ')}
         >
-          &mdash; {testimonial.name}, {testimonial.location}
+          &mdash; {testimonial.name}
         </p>
+
+        {/* Location badge */}
+        <span
+          className={[
+            'mt-3 inline-flex items-center gap-1.5 rounded-full border border-accent-gold/60 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-accent-gold',
+            'transition-all duration-300 ease-in-out',
+            transitioning ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100',
+          ].join(' ')}
+        >
+          <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M8 1.5A4.5 4.5 0 0 1 12.5 6c0 3.5-4.5 8.5-4.5 8.5S3.5 9.5 3.5 6A4.5 4.5 0 0 1 8 1.5Z" />
+            <circle cx="8" cy="6" r="1.5" />
+          </svg>
+          {testimonial.location}
+        </span>
       </div>
 
       {/* Navigation arrows */}

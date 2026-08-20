@@ -31,8 +31,8 @@ export default async function SpendPage() {
   if (!user) redirect('/login');
 
   const [orders, enquiries] = await Promise.all([
-    getOrdersByEmail(user.email),
-    getEnquiriesByEmail(user.email),
+    getOrdersByEmail(user.email, user.id),
+    getEnquiriesByEmail(user.email, user.id),
   ]);
 
   const paidOrders = orders.filter((o) => o.payment_status === 'paid' && o.payment_amount !== null);

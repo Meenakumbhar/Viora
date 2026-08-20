@@ -5,14 +5,22 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { isCategoryActive } from '@/lib/active-services';
 import { groupProductsByType } from '@/lib/product-types';
-import type { Product } from '@/types/database';
+import type { Product, PublicUser } from '@/types/database';
 import Logo from '@/components/ui/Logo';
+import AuthPopup from '@/components/ui/AuthPopup';
 import { readPortfolioCart } from '@/utils/portfolio-cart';
 
 function isNavHrefActive(href: string): boolean {
   const categoryMatch = href.match(/category=([a-z]+)/);
   if (categoryMatch) return isCategoryActive(categoryMatch[1]);
   return true;
+}
+
+// Same staff roles app/staff/page.tsx gates on — everyone else is a
+// customer and belongs on /account.
+const STAFF_ROLES = ['designer', 'employee', 'proofreader', 'admin'];
+function accountHref(user: PublicUser): string {
+  return STAFF_ROLES.includes(user.role) ? '/staff' : '/account';
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -33,30 +41,30 @@ interface NavLink {
 function getNavLinks(products: Product[]): NavLink[] {
   const productGroups = groupProductsByType(products);
   return [
-  // Dropdown items are filtered by isNavHrefActive() at render time, so
-  // paused categories (see lib/active-services.ts) are hidden automatically
-  // — no need to keep this list in sync by hand.
-  {
-    label: 'Portfolio',
-    href: '/portfolio',
-    dropdown: [
-      // "All Work" temporarily hidden — see SHOW_ALL_FILTER in PortfolioGrid.tsx.
-      { label: 'Funeral Stationery', href: '/portfolio?category=funeral' },
-      { label: 'Wedding Stationery', href: '/portfolio?category=wedding' },
-      { label: 'Sports', href: '/portfolio?category=sports' },
-      { label: 'Branding', href: '/portfolio?category=branding' },
-    ],
-  },
-  {
-    label: 'Products',
-    href: '/products',
-    dropdown: productGroups.map((group) => ({ label: group.type_label, href: `/products/${group.type_slug}` })),
-  },
-  {
-    label: 'About Us',
-    href: '/about',
-  },
-  { label: 'Process', href: '/process' },
+    // Dropdown items are filtered by isNavHrefActive() at render time, so
+    // paused categories (see lib/active-services.ts) are hidden automatically
+    // — no need to keep this list in sync by hand.
+    {
+      label: 'Portfolio',
+      href: '/portfolio',
+      dropdown: [
+        // "All Work" temporarily hidden — see SHOW_ALL_FILTER in PortfolioGrid.tsx.
+        { label: 'Funeral Stationery', href: '/portfolio?category=funeral' },
+        { label: 'Wedding Stationery', href: '/portfolio?category=wedding' },
+        { label: 'Sports', href: '/portfolio?category=sports' },
+        { label: 'Branding', href: '/portfolio?category=branding' },
+      ],
+    },
+    {
+      label: 'Products',
+      href: '/products',
+      dropdown: productGroups.map((group) => ({ label: group.type_label, href: `/products/${group.type_slug}` })),
+    },
+    {
+      label: 'About Us',
+      href: '/about',
+    },
+    { label: 'Process', href: '/process' },
   ];
 }
 
@@ -73,23 +81,23 @@ interface MobileNavSection {
 function getMobileNav(products: Product[]): MobileNavSection[] {
   const productGroups = groupProductsByType(products);
   return [
-  {
-    label: 'Products',
-    href: '/products',
-    children: productGroups.map((group) => ({ label: group.type_label, href: `/products/${group.type_slug}` })),
-  },
-  {
-    label: 'Portfolio',
-    href: '/portfolio',
-    children: [
-      { label: 'Wedding Stationery', href: '/portfolio?category=wedding' },
-      { label: 'Funeral Stationery', href: '/portfolio?category=funeral' },
-      { label: 'Sports', href: '/portfolio?category=sports' },
-      { label: 'Branding', href: '/portfolio?category=branding' },
-    ],
-  },
-  { label: 'Process', href: '/process' },
-  { label: 'About', href: '/about' },
+    {
+      label: 'Products',
+      href: '/products',
+      children: productGroups.map((group) => ({ label: group.type_label, href: `/products/${group.type_slug}` })),
+    },
+    {
+      label: 'Portfolio',
+      href: '/portfolio',
+      children: [
+        { label: 'Funeral Stationery', href: '/portfolio?category=funeral' },
+        { label: 'Wedding Stationery', href: '/portfolio?category=wedding' },
+        { label: 'Sports', href: '/portfolio?category=sports' },
+        { label: 'Branding', href: '/portfolio?category=branding' },
+      ],
+    },
+    { label: 'Process', href: '/process' },
+    { label: 'About', href: '/about' },
   ];
 }
 
@@ -112,15 +120,19 @@ export default function Nav({ products }: { products: Product[] }) {
   const NAV_LINKS = getNavLinks(products);
   const MOBILE_NAV = getMobileNav(products);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [authPopupOpen, setAuthPopupOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     setMobileOpen(false);
+    setAuthPopupOpen(false);
   }
   const [scrolled, setScrolled] = useState(false);
   const [navHidden, setNavHidden] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  // undefined = session not checked yet, null = signed out
+  const [user, setUser] = useState<PublicUser | null | undefined>(undefined);
 
   useEffect(() => {
     const syncCart = () => {
@@ -129,6 +141,21 @@ export default function Nav({ products }: { products: Product[] }) {
     syncCart();
     window.addEventListener('portfolio-cart-updated', syncCart);
     return () => window.removeEventListener('portfolio-cart-updated', syncCart);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((json) => {
+        if (!cancelled) setUser(json.data?.user ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -192,6 +219,17 @@ export default function Nav({ products }: { products: Product[] }) {
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [mobileOpen]);
+
+  /* ── Escape key closes the login/register popup ───────────────────────── */
+
+  useEffect(() => {
+    if (!authPopupOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAuthPopupOpen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [authPopupOpen]);
 
   /* ── Focus trap ──────────────────────────────────────────────────────── */
 
@@ -268,10 +306,8 @@ export default function Nav({ products }: { products: Product[] }) {
 
       <nav
         aria-label="Main navigation"
-        className={`fixed top-0 left-0 right-0 z-50 h-20 backdrop-blur-2xl transition-[transform,background-color,border-color] duration-300 ${
-          navHidden ? '-translate-y-full' : 'translate-y-0'
-        } ${
-          scrolled
+        className={`fixed top-0 left-0 right-0 z-50 h-20 backdrop-blur-2xl transition-[transform,background-color,border-color] duration-300 ${navHidden ? '-translate-y-full' : 'translate-y-0'
+          } ${scrolled
             ? 'bg-bg-primary/40 border-b border-border/50'
             : 'bg-bg-primary/15 border-b border-transparent'
           }`}
@@ -344,17 +380,6 @@ export default function Nav({ products }: { products: Product[] }) {
             </div>
 
             <Link
-              href="/account"
-              aria-label="Account — log in or view your account"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="3.5" />
-                <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
-              </svg>
-            </Link>
-
-            <Link
               href="/pricing"
               aria-label="View quote cart"
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
@@ -378,6 +403,30 @@ export default function Nav({ products }: { products: Product[] }) {
             >
               Get a Quote
             </Link>
+
+            {/* Login / Register, or Account once signed in — rightmost element in the bar */}
+            {user === undefined ? null : user ? (
+              <Link
+                href={accountHref(user)}
+                aria-label="Your account"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="3.5" />
+                  <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
+                </svg>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAuthPopupOpen((prev) => !prev)}
+                aria-haspopup="dialog"
+                aria-expanded={authPopupOpen}
+                className="rounded-2xl border border-text-heading bg-text-heading px-5 py-2.5 font-body text-label uppercase tracking-wider text-bg-primary transition-all duration-300 hover:opacity-85"
+              >
+                Login / Register
+              </button>
+            )}
           </div>
 
           {/* ── Hamburger ────────────────────────────────────────────── */}
@@ -498,33 +547,53 @@ export default function Nav({ products }: { products: Product[] }) {
               Get a Quote
             </Link>
             <div className="flex items-center gap-3">
-            <Link
-              href="/pricing"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="20" r="1" />
-                <circle cx="19" cy="20" r="1" />
-                <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
-              </svg>
-              Cart ({cartCount})
-            </Link>
-            <Link
-              href="/account"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="3.5" />
-                <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
-              </svg>
-              Account
-            </Link>
+              <Link
+                href="/pricing"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="20" r="1" />
+                  <circle cx="19" cy="20" r="1" />
+                  <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
+                </svg>
+                Cart ({cartCount})
+              </Link>
+              {user ? (
+                <Link
+                  href={accountHref(user)}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="3.5" />
+                    <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
+                  </svg>
+                  Account
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAuthPopupOpen(true)}
+                  aria-haspopup="dialog"
+                  className="flex items-center gap-2 rounded-full border border-text-heading bg-text-heading px-4 py-2 font-body text-label uppercase tracking-wider text-bg-primary hover:opacity-85"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="3.5" />
+                    <path d="M4.5 20c1.5-4 4.5-6 7.5-6s6 2 7.5 6" />
+                  </svg>
+                  Login / Register
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+         LOGIN / REGISTER POPUP — inline forms, no separate page navigation
+         ═══════════════════════════════════════════════════════════════════ */}
+      {authPopupOpen && <AuthPopup onClose={() => setAuthPopupOpen(false)} />}
     </>
   );
 }

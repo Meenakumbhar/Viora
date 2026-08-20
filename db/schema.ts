@@ -25,6 +25,11 @@ export const enquiries = pgTable('enquiries', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   email: text('email').notNull(),
+  // Set when the customer was logged in at submission — the real link to
+  // their account, separate from `email` above (which stays as the guest
+  // fallback: a customer can submit before ever creating an account, and
+  // matching by email means their history still shows up once they sign up).
+  user_id: text('user_id').references(() => user.id, { onDelete: 'set null' }),
   phone: text('phone'),
   country: text('country'),
   service_type: text('service_type').notNull(),
@@ -137,6 +142,11 @@ export const posts = pgTable('posts', {
 export const orders = pgTable('orders', {
   id: uuid('id').primaryKey().defaultRandom(),
   enquiry_id: uuid('enquiry_id').references(() => enquiries.id, { onDelete: 'set null' }),
+  // Real link to the customer's account — carried over from the source
+  // enquiry when there is one, else best-effort matched by email at
+  // creation time (see createOrder in lib/db.ts). `customer_email` remains
+  // the guest-checkout fallback for orders with no matching account.
+  user_id: text('user_id').references(() => user.id, { onDelete: 'set null' }),
   customer_name: text('customer_name').notNull(),
   customer_email: text('customer_email').notNull(),
   service_type: text('service_type').notNull(),
