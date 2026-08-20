@@ -104,6 +104,23 @@ export const portfolioItems = pgTable('portfolio_items', {
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const products = pgTable('products', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: text('slug').notNull().unique('products_slug_key'),
+  type_slug: text('type_slug').notNull(),
+  type_label: text('type_label').notNull(),
+  title: text('title').notNull(),
+  subtitle: text('subtitle'),
+  description: text('description'),
+  category: text('category').notNull(),
+  image_url: text('image_url'),
+  image_urls: jsonb('image_urls'),
+  sizes: jsonb('sizes').notNull().default([]),
+  related_slugs: text('related_slugs').array().notNull().default([]),
+  published: boolean('published').notNull().default(true),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const posts = pgTable('posts', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),

@@ -22,6 +22,8 @@ async function getSessionUser(request: NextRequest) {
 function isProtectedApiRoute(pathname: string, method: string): boolean {
   if (pathname === "/api/portfolio" && method === "POST") return true;
   if (pathname.startsWith("/api/portfolio/") && (method === "PUT" || method === "DELETE")) return true;
+  if (pathname === "/api/products" && method === "POST") return true;
+  if (pathname.startsWith("/api/products/") && (method === "PUT" || method === "DELETE")) return true;
   if (pathname === "/api/orders" || (pathname.startsWith("/api/orders/") && !pathname.endsWith("/payment"))) return true; // customer PII — admin only
   if (pathname.endsWith("/payment") && method === "PATCH") return true; // admin sets price
   if (pathname.startsWith("/api/admin/users")) return true; // role management — admin only

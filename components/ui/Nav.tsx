@@ -3,14 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { isServiceSlugActive, isCategoryActive } from '@/lib/active-services';
-import { products } from '@/lib/data';
+import { isCategoryActive } from '@/lib/active-services';
+import { groupProductsByType } from '@/lib/product-types';
+import type { Product } from '@/types/database';
 import Logo from '@/components/ui/Logo';
 import { readPortfolioCart } from '@/utils/portfolio-cart';
 
 function isNavHrefActive(href: string): boolean {
-  const serviceMatch = href.match(/^\/services\/([a-z-]+)$/);
-  if (serviceMatch) return isServiceSlugActive(serviceMatch[1]);
   const categoryMatch = href.match(/category=([a-z]+)/);
   if (categoryMatch) return isCategoryActive(categoryMatch[1]);
   return true;
@@ -31,26 +30,19 @@ interface NavLink {
   dropdown?: DropdownItem[];
 }
 
-const NAV_LINKS: NavLink[] = [
-  // Services is paused for now — see lib/active-services.ts.
-  // {
-  //   label: 'Services',
-  //   href: '/services',
-  //   dropdown: [
-  //     { label: 'Wedding & Events', href: '/services/wedding-events' },
-  //     { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
-  //     { label: 'Sports & Branding', href: '/services/sports-branding' },
-  //     { label: 'Graphic Design', href: '/services/graphic-design' },
-  //     { label: 'Print & Production', href: '/services/print-production' },
-  //   ],
-  // },
+function getNavLinks(products: Product[]): NavLink[] {
+  const productGroups = groupProductsByType(products);
+  return [
+  // Dropdown items are filtered by isNavHrefActive() at render time, so
+  // paused categories (see lib/active-services.ts) are hidden automatically
+  // — no need to keep this list in sync by hand.
   {
     label: 'Portfolio',
     href: '/portfolio',
     dropdown: [
       // "All Work" temporarily hidden — see SHOW_ALL_FILTER in PortfolioGrid.tsx.
-      { label: 'Funeral', href: '/portfolio?category=funeral' },
-      { label: 'Wedding', href: '/portfolio?category=wedding' },
+      { label: 'Funeral Stationery', href: '/portfolio?category=funeral' },
+      { label: 'Wedding Stationery', href: '/portfolio?category=wedding' },
       { label: 'Sports', href: '/portfolio?category=sports' },
       { label: 'Branding', href: '/portfolio?category=branding' },
     ],
@@ -58,15 +50,15 @@ const NAV_LINKS: NavLink[] = [
   {
     label: 'Products',
     href: '/products',
-    dropdown: products.map((product) => ({ label: product.title, href: `/products/${product.slug}` })),
+    dropdown: productGroups.map((group) => ({ label: group.type_label, href: `/products/${group.type_slug}` })),
   },
   {
     label: 'About Us',
     href: '/about',
   },
   { label: 'Process', href: '/process' },
-  { label: 'Contact US', href: '/contact' },
-];
+  ];
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MOBILE LINK DATA (flat list with sub-items)
@@ -78,38 +70,28 @@ interface MobileNavSection {
   children?: { label: string; href: string }[];
 }
 
-const MOBILE_NAV: MobileNavSection[] = [
-  // Services is paused for now — see lib/active-services.ts.
-  // {
-  //   label: 'Services',
-  //   href: '/services',
-  //   children: [
-  //     { label: 'Wedding & Events', href: '/services/wedding-events' },
-  //     { label: 'Funeral & Memorial', href: '/services/funeral-memorial' },
-  //     { label: 'Sports & Branding', href: '/services/sports-branding' },
-  //     { label: 'Graphic Design', href: '/services/graphic-design' },
-  //     { label: 'Print & Production', href: '/services/print-production' },
-  //   ],
-  // },
+function getMobileNav(products: Product[]): MobileNavSection[] {
+  const productGroups = groupProductsByType(products);
+  return [
   {
     label: 'Products',
     href: '/products',
-    children: products.map((product) => ({ label: product.title, href: `/products/${product.slug}` })),
+    children: productGroups.map((group) => ({ label: group.type_label, href: `/products/${group.type_slug}` })),
   },
   {
     label: 'Portfolio',
     href: '/portfolio',
     children: [
-      { label: 'Wedding', href: '/portfolio?category=wedding' },
-      { label: 'Funeral', href: '/portfolio?category=funeral' },
+      { label: 'Wedding Stationery', href: '/portfolio?category=wedding' },
+      { label: 'Funeral Stationery', href: '/portfolio?category=funeral' },
       { label: 'Sports', href: '/portfolio?category=sports' },
       { label: 'Branding', href: '/portfolio?category=branding' },
     ],
   },
   { label: 'Process', href: '/process' },
   { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
-];
+  ];
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    NAV COMPONENT
@@ -125,8 +107,10 @@ function getHoverColorClass(href: string): string {
   return 'hover:text-accent-gold';
 }
 
-export default function Nav() {
+export default function Nav({ products }: { products: Product[] }) {
   const pathname = usePathname();
+  const NAV_LINKS = getNavLinks(products);
+  const MOBILE_NAV = getMobileNav(products);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (pathname !== prevPathname) {
@@ -134,6 +118,7 @@ export default function Nav() {
     setMobileOpen(false);
   }
   const [scrolled, setScrolled] = useState(false);
+  const [navHidden, setNavHidden] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
@@ -149,14 +134,38 @@ export default function Nav() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
 
-  /* ── Scroll listener ──────────────────────────────────────────────────── */
+  /* ── Scroll listener — track position (for the blur tint) and direction
+     (to hide the bar on the way down, reveal it on the way back up) ──────── */
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 50);
+
+      // Ignore the first 100px so the bar doesn't flicker while someone's
+      // just nudging the page near the very top.
+      if (currentScrollY <= 100) {
+        setNavHidden(false);
+      } else if (currentScrollY > lastScrollY) {
+        setNavHidden(true);
+      } else if (currentScrollY < lastScrollY) {
+        setNavHidden(false);
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Never hide the bar while the mobile menu (which lives inside it) is open.
+  useEffect(() => {
+    if (mobileOpen) setNavHidden(false);
+  }, [mobileOpen]);
 
   /* ── Body scroll lock ────────────────────────────────────────────────── */
 
@@ -259,9 +268,12 @@ export default function Nav() {
 
       <nav
         aria-label="Main navigation"
-        className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ${scrolled
-          ? 'bg-bg-primary/95 backdrop-blur-md border-b border-border/50'
-          : 'bg-transparent'
+        className={`fixed top-0 left-0 right-0 z-50 h-20 backdrop-blur-2xl transition-[transform,background-color,border-color] duration-300 ${
+          navHidden ? '-translate-y-full' : 'translate-y-0'
+        } ${
+          scrolled
+            ? 'bg-bg-primary/40 border-b border-border/50'
+            : 'bg-bg-primary/15 border-b border-transparent'
           }`}
       >
         <div className="container-wide h-full flex items-center justify-between">
@@ -362,7 +374,7 @@ export default function Nav() {
             {/* CTA */}
             <Link
               href="/contact"
-              className="border border-accent-gold text-accent-gold bg-transparent px-6 py-2.5 font-body text-label uppercase tracking-wider hover:bg-accent-gold hover:text-bg-primary transition-all duration-300"
+              className="rounded-2xl border border-accent-gold text-accent-gold bg-transparent px-6 py-2.5 font-body text-label uppercase tracking-wider hover:bg-accent-gold hover:text-bg-primary transition-all duration-300"
             >
               Get a Quote
             </Link>
@@ -479,6 +491,14 @@ export default function Nav() {
             }}
           >
             <Link
+              href="/contact"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-2xl border border-accent-gold bg-accent-gold px-6 py-2.5 font-body text-label uppercase tracking-wider text-bg-primary transition-all duration-300 hover:bg-accent-gold-hover"
+            >
+              Get a Quote
+            </Link>
+            <div className="flex items-center gap-3">
+            <Link
               href="/pricing"
               onClick={() => setMobileOpen(false)}
               className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
@@ -501,6 +521,7 @@ export default function Nav() {
               </svg>
               Account
             </Link>
+            </div>
           </div>
         </div>
       </div>

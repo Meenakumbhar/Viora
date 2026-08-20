@@ -2,6 +2,7 @@ import { eq, and, gt, asc, desc, inArray, sql as dsql } from 'drizzle-orm';
 import { getDrizzle } from '@/db/client';
 import {
   portfolioItems as portfolioItemsTable,
+  products as productsTable,
   posts as postsTable,
   subscribers as subscribersTable,
   enquiries as enquiriesTable,
@@ -14,9 +15,11 @@ import {
   customerItemPrices as customerItemPricesTable,
 } from '@/db/schema';
 import { user as usersTable } from '@/db/auth-schema';
-import { portfolioItems as staticPortfolio, blogPosts as staticBlog } from './data';
+import { portfolioItems as staticPortfolio, blogPosts as staticBlog, products as staticProducts } from './data';
 import type {
   PortfolioItem,
+  Product,
+  ProductSize,
   Post,
   Enquiry,
   Subscriber,
@@ -132,6 +135,55 @@ function normalizePortfolioItem(row: any): PortfolioItem {
     location: row.location != null ? String(row.location) : null,
     published: Boolean(row.published),
     created_at: toIsoTimestampString(row.created_at),
+  };
+}
+
+function normalizeProductSizes(value: unknown): ProductSize[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((item) => ({
+      label: String(item.label ?? ''),
+      dimensions: String(item.dimensions ?? ''),
+      description: item.description != null ? String(item.description) : undefined,
+    }));
+}
+
+function normalizeProduct(row: any): Product {
+  return {
+    id: String(row.id),
+    slug: String(row.slug ?? ''),
+    type_slug: String(row.type_slug ?? row.slug ?? ''),
+    type_label: String(row.type_label ?? row.title ?? ''),
+    title: String(row.title ?? ''),
+    subtitle: row.subtitle != null ? String(row.subtitle) : null,
+    description: row.description != null ? String(row.description) : null,
+    category: row.category as ServiceCategory,
+    image_url: row.image_url != null ? String(row.image_url) : null,
+    image_urls: Array.isArray(row.image_urls) ? row.image_urls : null,
+    sizes: normalizeProductSizes(row.sizes),
+    related_slugs: Array.isArray(row.related_slugs) ? row.related_slugs.map(String) : [],
+    published: Boolean(row.published),
+    created_at: toIsoTimestampString(row.created_at),
+  };
+}
+
+function staticProductToProduct(item: (typeof staticProducts)[number]): Product {
+  return {
+    id: `static-product-${item.slug}`,
+    slug: item.slug,
+    type_slug: item.slug,
+    type_label: item.title,
+    title: item.title,
+    subtitle: item.subtitle,
+    description: item.description,
+    category: item.category,
+    image_url: item.image,
+    image_urls: item.image_urls ?? null,
+    sizes: item.sizes,
+    related_slugs: item.relatedSlugs,
+    published: true,
+    created_at: new Date().toISOString(),
   };
 }
 
@@ -415,6 +467,201 @@ export async function deletePortfolioItem(id: string): Promise<boolean> {
   }
 
   const rows = await db.delete(portfolioItemsTable).where(eq(portfolioItemsTable.id, id)).returning({ id: portfolioItemsTable.id });
+  return rows.length > 0;
+}
+
+// ─── Products ─────────────────────────────────────────────────────────────────
+
+export async function getProducts(category?: string): Promise<Product[]> {
+  const db = getDrizzle();
+
+  if (db) {
+    try {
+      const where =
+        category && category !== 'all'
+          ? and(eq(productsTable.published, true), eq(productsTable.category, category))
+          : eq(productsTable.published, true);
+
+      const rows = await db
+        .select()
+        .from(productsTable)
+        .where(where)
+        .orderBy(desc(productsTable.created_at));
+
+      if (rows.length > 0) {
+        return rows.map(normalizeProduct);
+      }
+    } catch (err) {
+      console.error('[db] getProducts error:', err);
+    }
+  }
+
+  // Static fallback if DB is not yet populated or configured
+  let filtered = staticProducts;
+  if (category && category !== 'all') {
+    filtered = staticProducts.filter((item) => item.category === category);
+  }
+
+  return filtered.map(staticProductToProduct);
+}
+
+// All published designs belonging to one catalog type (e.g. every "Memory
+// Cards" design), ordered oldest-first so the original design is the
+// default selection on the master-detail page.
+export async function getProductsByType(typeSlug: string): Promise<Product[]> {
+  const db = getDrizzle();
+
+  if (db) {
+    try {
+      const rows = await db
+        .select()
+        .from(productsTable)
+        .where(and(eq(productsTable.published, true), eq(productsTable.type_slug, typeSlug)))
+        .orderBy(asc(productsTable.created_at));
+
+      if (rows.length > 0) {
+        return rows.map(normalizeProduct);
+      }
+    } catch (err) {
+      console.error(`[db] getProductsByType(${typeSlug}) error:`, err);
+    }
+  }
+
+  return staticProducts.filter((p) => p.slug === typeSlug).map(staticProductToProduct);
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const db = getDrizzle();
+  if (db) {
+    try {
+      const rows = await db
+        .select()
+        .from(productsTable)
+        .where(and(eq(productsTable.slug, slug), eq(productsTable.published, true)))
+        .limit(1);
+      if (rows.length > 0) return normalizeProduct(rows[0]);
+    } catch (err) {
+      console.error(`[db] getProductBySlug(${slug}) error:`, err);
+    }
+  }
+
+  const item = staticProducts.find((p) => p.slug === slug);
+  return item ? staticProductToProduct(item) : null;
+}
+
+export async function getRelatedProducts(slugs: string[]): Promise<Product[]> {
+  if (slugs.length === 0) return [];
+  const db = getDrizzle();
+
+  if (db) {
+    try {
+      const rows = await db
+        .select()
+        .from(productsTable)
+        .where(and(eq(productsTable.published, true), inArray(productsTable.slug, slugs)));
+      if (rows.length > 0) {
+        const bySlug = new Map(rows.map((row) => [row.slug, normalizeProduct(row)]));
+        return slugs.map((slug) => bySlug.get(slug)).filter((p): p is Product => Boolean(p));
+      }
+    } catch (err) {
+      console.error('[db] getRelatedProducts error:', err);
+    }
+  }
+
+  return staticProducts.filter((p) => slugs.includes(p.slug)).map(staticProductToProduct);
+}
+
+export interface ProductInput {
+  slug: string;
+  type_slug: string;
+  type_label: string;
+  title: string;
+  subtitle?: string | null;
+  description?: string | null;
+  category: ServiceCategory;
+  image_url?: string | null;
+  image_urls?: string[] | null;
+  sizes: ProductSize[];
+  related_slugs?: string[];
+  published: boolean;
+}
+
+// Admin-only: every product regardless of published state
+export async function getAllProductsForAdmin(): Promise<Product[]> {
+  const db = getDrizzle();
+  if (!db) return [];
+
+  try {
+    const rows = await db.select().from(productsTable).orderBy(desc(productsTable.created_at));
+    return rows.map(normalizeProduct);
+  } catch (err) {
+    console.error('[db] getAllProductsForAdmin error:', err);
+    return [];
+  }
+}
+
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const db = getDrizzle();
+  if (!db) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const rows = await db
+    .insert(productsTable)
+    .values({
+      slug: input.slug.trim(),
+      type_slug: input.type_slug.trim(),
+      type_label: input.type_label.trim(),
+      title: input.title.trim(),
+      subtitle: input.subtitle?.trim() || null,
+      description: input.description?.trim() || null,
+      category: input.category,
+      image_url: input.image_url?.trim() || null,
+      image_urls: input.image_urls && input.image_urls.length > 0 ? input.image_urls : null,
+      sizes: input.sizes,
+      related_slugs: input.related_slugs ?? [],
+      published: input.published,
+    })
+    .returning();
+
+  return normalizeProduct(rows[0]);
+}
+
+export async function updateProduct(id: string, input: ProductInput): Promise<Product | null> {
+  const db = getDrizzle();
+  if (!db) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const rows = await db
+    .update(productsTable)
+    .set({
+      slug: input.slug.trim(),
+      type_slug: input.type_slug.trim(),
+      type_label: input.type_label.trim(),
+      title: input.title.trim(),
+      subtitle: input.subtitle?.trim() || null,
+      description: input.description?.trim() || null,
+      category: input.category,
+      image_url: input.image_url?.trim() || null,
+      image_urls: input.image_urls && input.image_urls.length > 0 ? input.image_urls : null,
+      sizes: input.sizes,
+      related_slugs: input.related_slugs ?? [],
+      published: input.published,
+    })
+    .where(eq(productsTable.id, id))
+    .returning();
+
+  return rows.length > 0 ? normalizeProduct(rows[0]) : null;
+}
+
+export async function deleteProduct(id: string): Promise<boolean> {
+  const db = getDrizzle();
+  if (!db) {
+    throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+  }
+
+  const rows = await db.delete(productsTable).where(eq(productsTable.id, id)).returning({ id: productsTable.id });
   return rows.length > 0;
 }
 

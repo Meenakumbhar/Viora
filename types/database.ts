@@ -18,38 +18,6 @@ export interface ProcessStep {
   timeframe: string;
 }
 
-export interface ServiceIncluded {
-  name: string;
-  description: string;
-}
-
-export interface ServiceTier {
-  name: string;
-  price: string;
-  features: string[];
-  cta: string;
-  highlighted?: boolean;
-}
-
-export interface ServiceFaq {
-  question: string;
-  answer: string;
-}
-
-export interface ServiceData {
-  slug: string;
-  title: string;
-  titleAccent: string;
-  description: string;
-  heroImage: string;
-  tone: string;
-  included: ServiceIncluded[];
-  idealClient: string;
-  tiers: ServiceTier[];
-  faqs: ServiceFaq[];
-  relatedSlugs: string[];
-}
-
 // One orderable option within a product — usually just a size (A1/A2/A3),
 // but for products like Memorial Portraits where each option is a genuinely
 // different style, `description` carries the material/finish details.
@@ -59,9 +27,8 @@ export interface ProductSize {
   description?: string;
 }
 
-// Standalone catalog items (memorial keepsakes, cards, prints) — distinct
-// from ServiceData, which describes a whole category of work rather than a
-// single product a customer picks off a shelf.
+// Standalone catalog items (memorial keepsakes, cards, prints) — a single
+// product a customer picks off a shelf.
 export interface ProductData {
   slug: string;
   title: string;
@@ -73,6 +40,29 @@ export interface ProductData {
   image_urls?: string[];
   sizes: ProductSize[];
   relatedSlugs: string[];
+}
+
+// DB-backed products row (mirrors PortfolioItem's relationship to the
+// portfolio_items table) — admin-manageable, spans all service sectors.
+// `ProductData` above remains the static emergency-fallback shape used when
+// the DB is unset/empty, same role `portfolioItems` in lib/data.ts plays
+// for PortfolioItem.
+export interface Product {
+  id: string;
+  slug: string;
+  /** Groups this design with sibling designs of the same catalog item (e.g. every "Memory Cards" design shares type_slug 'memory-cards'). Public /products/[typeSlug] routes and listing pages key off this, not `slug`. */
+  type_slug: string;
+  type_label: string;
+  title: string;
+  subtitle: string | null;
+  description: string | null;
+  category: ServiceCategory;
+  image_url: string | null;
+  image_urls: string[] | null;
+  sizes: ProductSize[];
+  related_slugs: string[];
+  published: boolean;
+  created_at: string;
 }
 
 // Denormalized snapshot of a portfolio item at the time a quote/order referenced it —

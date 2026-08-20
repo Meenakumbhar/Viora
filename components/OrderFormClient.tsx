@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type ChangeEvent } from 'react';
 import Link from 'next/link';
-import { products } from '@/lib/data';
 import FileUpload from '@/components/ui/FileUpload';
 import type {
   Enquiry,
@@ -11,6 +10,7 @@ import type {
   PhotoOption,
   InsidePagesStyle,
   PhotoSuppliedVia,
+  Product,
 } from '@/types/database';
 
 /* ── Shared field primitives, matching QuoteForm's visual language ─────── */
@@ -168,9 +168,11 @@ const QUANTITY_DEFAULT = 50;
 export default function OrderFormClient({
   enquiry,
   initialOrderForm,
+  products,
 }: {
   enquiry: Enquiry;
   initialOrderForm: OrderForm | null;
+  products: Product[];
 }) {
   const [data, setData] = useState<FormState>(() => toFormState(initialOrderForm));
   const [status, setStatus] = useState<'idle' | 'saving' | 'submitting' | 'saved' | 'submitted' | 'error'>(

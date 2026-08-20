@@ -6,6 +6,7 @@ import Footer from '@/components/ui/Footer';
 import CategoryWrapper from '@/components/ui/CategoryWrapper';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { SITE_URL } from '@/lib/site-url';
+import { getProducts } from '@/lib/db';
 import './globals.css';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -105,11 +106,13 @@ export const metadata: Metadata = {
    ROOT LAYOUT
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const products = await getProducts();
+
   return (
     <html
       lang="en"
@@ -118,7 +121,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-body bg-bg-primary text-text-body antialiased" suppressHydrationWarning>
-        <Nav />
+        <Nav products={products} />
         <CategoryWrapper>
           <PageTransition>{children}</PageTransition>
         </CategoryWrapper>

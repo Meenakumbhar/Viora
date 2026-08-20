@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getEnquiryById, getOrderFormByEnquiryId } from '@/lib/db';
+import { getEnquiryById, getOrderFormByEnquiryId, getProducts } from '@/lib/db';
 import OrderFormClient from '@/components/OrderFormClient';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +23,7 @@ export default async function OrderFormPage({
   }
 
   const orderForm = await getOrderFormByEnquiryId(enquiryId);
+  const products = await getProducts();
 
-  return <OrderFormClient enquiry={enquiry} initialOrderForm={orderForm} />;
+  return <OrderFormClient enquiry={enquiry} initialOrderForm={orderForm} products={products} />;
 }

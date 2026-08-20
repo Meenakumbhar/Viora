@@ -4,14 +4,18 @@ import Image from 'next/image';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-import { products } from '@/lib/data';
+import { getProducts } from '@/lib/db';
+import { groupProductsByType } from '@/lib/product-types';
 
 export const metadata: Metadata = {
   title: 'Products',
   description: 'Memorial keepsakes and stationery — memory cards, thank you cards, memorial boards, seed cards, attendance cards, photo prints, bookmarks, and memorial portraits.',
 };
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const products = await getProducts();
+  const groups = groupProductsByType(products);
+
   return (
     <div data-category="funeral">
       <HeroVideo>
@@ -30,47 +34,53 @@ export default function ProductsPage() {
         <div className="container-wide">
           <SectionReveal>
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <Link
-                  key={product.slug}
-                  href={`/products/${product.slug}`}
-                  className="group flex flex-col overflow-hidden border border-border bg-cat-surface transition-colors duration-300 hover:border-cat-accent"
-                >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-border bg-cat-bg">
-                    {product.image ? (
-                      <Image
-                        src={product.image}
-                        alt={product.title}
-                        fill
-                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <span className="font-display text-6xl font-bold text-cat-heading opacity-[0.08]">
-                          {product.title.charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <h2 className="font-display text-xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
-                      {product.title}
-                    </h2>
-                    <p className="mt-2 font-body text-sm text-cat-body leading-relaxed line-clamp-3">
-                      {product.subtitle}
-                    </p>
-                    <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-cat-muted">
-                      {product.sizes.length > 1
-                        ? `${product.sizes.length} sizes available`
-                        : product.sizes[0]?.dimensions}
-                    </p>
-                    <span className="mt-auto pt-6 font-mono text-[11px] uppercase tracking-wider text-cat-accent-dark">
-                      View details &rarr;
-                    </span>
-                  </div>
-                </Link>
-              ))}
+              {groups.map((group) => {
+                const representative = group.products[0];
+                return (
+                  <Link
+                    key={group.type_slug}
+                    href={`/products/${group.type_slug}`}
+                    data-category={representative.category}
+                    className="group flex flex-col overflow-hidden border border-border bg-cat-surface transition-colors duration-300 hover:border-cat-accent"
+                  >
+                    <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-border bg-cat-bg">
+                      {representative.image_url ? (
+                        <Image
+                          src={representative.image_url}
+                          alt={group.type_label}
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <span className="font-display text-6xl font-bold text-cat-heading opacity-[0.08]">
+                            {group.type_label.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col p-6">
+                      <h2 className="font-display text-xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
+                        {group.type_label}
+                      </h2>
+                      <p className="mt-2 font-body text-sm text-cat-body leading-relaxed line-clamp-3">
+                        {representative.subtitle}
+                      </p>
+                      <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-cat-muted">
+                        {group.products.length > 1
+                          ? `${group.products.length} designs available`
+                          : representative.sizes.length > 1
+                            ? `${representative.sizes.length} sizes available`
+                            : representative.sizes[0]?.dimensions}
+                      </p>
+                      <span className="mt-auto pt-6 font-mono text-[11px] uppercase tracking-wider text-cat-accent-dark">
+                        View details &rarr;
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </SectionReveal>
         </div>

@@ -25,6 +25,7 @@ export function CountUp({ end, suffix = '' }: { end: number; suffix?: string }) 
           val: end,
           duration: 1.8,
           ease: 'power2.out',
+          immediateRender: false,
           scrollTrigger: {
             trigger: el,
             start: 'top 85%',

@@ -41,7 +41,7 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,252,250,0.6) 65%, #FDFCFA 100%)',
   },
   wedding: {
-    eyebrow: 'Wedding Portfolio',
+    eyebrow: 'Wedding Stationery',
     headline: 'Stationery for your',
     headlineAccent: 'forever',
     description:
@@ -52,7 +52,7 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,247,245,0.6) 65%, #FDF7F5 100%)',
   },
   funeral: {
-    eyebrow: 'Memorial Portfolio',
+    eyebrow: 'Funeral Stationery',
     headline: 'Print that honours a',
     headlineAccent: 'life',
     description:
@@ -154,14 +154,17 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
   return (
     <section
       data-category={activeCategory.toLowerCase()}
-      className="relative min-h-[70vh] overflow-hidden transition-colors duration-700"
+      className="relative min-h-[70vh] overflow-hidden bg-cat-bg transition-colors duration-700"
     >
-      {/* Background — video for funeral (once added), a static photo for categories that have one, animated gradient otherwise */}
+      {/* Background layers start below the fixed nav (h-20) plus a little
+          breathing room, matching the homepage hero — so the nav always sits
+          on this section's plain bg-cat-bg strip, never directly over the
+          photo/video/gradient. */}
       {showVideo ? (
         <video
           ref={videoRef}
           key={videoSrc}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-x-0 top-24 bottom-0 h-[calc(100%-6rem)] w-full object-cover"
           src={videoSrc}
           autoPlay
           muted
@@ -170,19 +173,21 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
           onError={() => setVideoFailed(true)}
         />
       ) : showImage ? (
-        <Image
-          key={imageSrc}
-          src={imageSrc!}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-          onError={() => setImageFailed(true)}
-        />
+        <div className="absolute inset-x-0 top-24 bottom-0">
+          <Image
+            key={imageSrc}
+            src={imageSrc!}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+            onError={() => setImageFailed(true)}
+          />
+        </div>
       ) : (
         <div
-          className="absolute inset-0 h-full w-full transition-all duration-700 ease-in-out"
+          className="absolute inset-x-0 top-24 bottom-0 transition-all duration-700 ease-in-out"
           style={{
             backgroundImage: content.bgGradient,
             backgroundSize: '400% 400%',

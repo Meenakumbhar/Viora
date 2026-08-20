@@ -197,7 +197,7 @@ export function QuantityCombobox({
         aria-hidden="true"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
 
@@ -234,8 +234,8 @@ export function QuantityCombobox({
 
 const CURRENT_YEAR = new Date().getFullYear();
 const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
 // Years: from current year to +8 years
 const YEAR_LIST = Array.from({ length: 9 }, (_, i) => CURRENT_YEAR + i);
@@ -245,7 +245,7 @@ type DatePickerView = 'days' | 'months' | 'years';
 export function DateField({
   value,
   onChange,
-  label = 'Event or delivery date',
+  label = '',
 }: {
   value: Date | undefined;
   onChange: (d: Date | undefined) => void;
@@ -440,8 +440,8 @@ export function DateField({
                       isSelected
                         ? 'bg-accent-gold text-bg-primary font-semibold'
                         : isPast
-                        ? 'text-text-muted/30 cursor-not-allowed'
-                        : 'text-text-heading hover:bg-accent-gold/10 hover:text-accent-gold',
+                          ? 'text-text-muted/30 cursor-not-allowed'
+                          : 'text-text-heading hover:bg-accent-gold/10 hover:text-accent-gold',
                     ].join(' ')}
                   >
                     {name.slice(0, 3)}
@@ -562,9 +562,8 @@ export function AutoTextarea({
       </label>
       {/* Character counter */}
       {(focused || value.length > 0) && (
-        <p className={`mt-1 text-right font-mono text-[11px] transition-colors ${
-          nearLimit ? 'text-accent-blush' : 'text-text-muted'
-        }`}>
+        <p className={`mt-1 text-right font-mono text-[11px] transition-colors ${nearLimit ? 'text-accent-blush' : 'text-text-muted'
+          }`}>
           {value.length} / {maxLength}
         </p>
       )}

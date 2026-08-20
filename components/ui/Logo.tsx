@@ -51,7 +51,7 @@ export default function Logo({
             src={LOGO_SRC}
             alt={wordmark}
             fill
-            unoptimized
+            sizes={`${containerWidth}px`}
             style={{ objectFit: 'contain' }}
             onLoad={() => setLoaded(true)}
             onError={() => setErrored(true)}

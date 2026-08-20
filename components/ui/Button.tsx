@@ -48,7 +48,7 @@ export default function Button({
   const base = [
     'inline-flex items-center justify-center',
     'font-body font-medium uppercase tracking-wider text-label',
-    'transition-all duration-300',
+    'rounded-2xl transition-all duration-300',
     'focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',
     'disabled:opacity-50 disabled:pointer-events-none',
     variantClasses[variant],

@@ -90,14 +90,6 @@ export default function AboutPage() {
                 <p>
                   That background shapes how we design everything today. We treat every wedding suite, branding brief, and sports card with the exact same level of thoroughness and respect.
                 </p>
-                <div className="pt-6 border-t border-border">
-                  <span className="block font-display text-xl text-text-primary italic">
-                    Aboli
-                  </span>
-                  <span className="block font-mono text-xs text-text-muted uppercase tracking-wider mt-1">
-                    Founder & Creative Director
-                  </span>
-                </div>
               </div>
             </div>
           </SectionReveal>
