@@ -1,73 +1,51 @@
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { getDrizzle } from '@/db/client';
-import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/resend';
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import type { NextResponse } from "next/server";
+import { getDrizzle } from "@/db/client";
+import { user, session, account, verification } from "@/db/auth-schema";
+import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/resend";
 
-function requireDb() {
-  const db = getDrizzle();
-  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
-  return db;
-}
-
-// Better Auth's server API returns a real Response when called with
-// `asResponse: true` — this copies its Set-Cookie header(s) onto our own
-// NextResponse so the session cookie actually reaches the browser, since we
-// call auth.api.* from our own route handlers rather than exposing Better
-// Auth's routes directly for login/signup/logout.
-export function forwardSetCookie(from: Response, to: { headers: Headers }) {
-  for (const cookie of from.headers.getSetCookie()) {
-    to.headers.append('set-cookie', cookie);
-  }
+const db = getDrizzle();
+if (!db) {
+  throw new Error(
+    "DATABASE_URL is required for authentication — better-auth stores users, sessions, and accounts in Postgres, not in the static-seed-data fallback the rest of lib/db.ts uses."
+  );
 }
 
 export const auth = betterAuth({
-  baseURL: process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_SITE_URL : 'http://localhost:3000',
-  secret: process.env.SESSION_SECRET,
-  database: drizzleAdapter(requireDb(), { provider: 'pg' }),
+  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000/",
+  secret: process.env.BETTER_AUTH_SECRET,
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema: { user, session, account, verification },
+  }),
   emailAndPassword: {
     enabled: true,
+    // The login/signup routes already branch on an EMAIL_NOT_VERIFIED code
+    // and an unverified-existing-user case, so this must stay true to match
+    // what they assume.
     requireEmailVerification: true,
-    minPasswordLength: 8,
-    resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
-    // A successful reset invalidates every other active session — the same
-    // security posture as "log out everywhere" after a credential change.
-    revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
       await sendPasswordResetEmail({ email: user.email, name: user.name, url });
     },
   },
   emailVerification: {
     sendOnSignUp: true,
-    autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) => {
       await sendVerificationEmail({ email: user.email, name: user.name, url });
     },
   },
-  user: {
-    additionalFields: {
-      role: {
-        type: 'string',
-        input: false,
-        defaultValue: 'user',
-      },
-      phone: {
-        type: 'string',
-        required: false,
-        input: true,
-      },
-      country: {
-        type: 'string',
-        required: false,
-        input: true,
-      },
-      address: {
-        type: 'string',
-        required: false,
-        input: true,
-      },
-    },
-  },
-  session: {
-    expiresIn: 60 * 60 * 24 * 30, // 30 days, matches the previous custom session TTL
-  },
 });
+
+// Better Auth's `asResponse: true` calls (signInEmail, signOut,
+// changePassword, ...) return their own Response carrying the session
+// Set-Cookie header(s). Route handlers build a different NextResponse for
+// their own JSON body, so that cookie has to be copied across by hand or
+// the browser never receives it. getSetCookie() (not .get(), which joins
+// multiple cookies into one invalid comma-separated string) preserves each
+// cookie separately.
+export function forwardSetCookie(source: Response, target: NextResponse) {
+  for (const cookie of source.headers.getSetCookie()) {
+    target.headers.append("set-cookie", cookie);
+  }
+}
