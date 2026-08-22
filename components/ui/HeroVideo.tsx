@@ -46,7 +46,7 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
   const showPosterOnly = Boolean(src) && !videoFailed && reducedMotion && Boolean(poster);
 
   return (
-    <section className="relative min-h-svh overflow-hidden">
+    <section className="relative h-[62vh] min-h-[440px] max-h-[600px] overflow-hidden">
       {/* Background — video, poster (reduced motion), or animated warm light gradient */}
       {showVideo ? (
         <video

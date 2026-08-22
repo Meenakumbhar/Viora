@@ -26,7 +26,7 @@ export default function AboutPage() {
       </HeroVideo>
 
       {/* Intro section */}
-      <section className="bg-bg-primary py-24 md:py-36 border-t border-border">
+      <section className="bg-bg-primary py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -61,7 +61,7 @@ export default function AboutPage() {
       </section>
 
       {/* Founder's note */}
-      <section className="bg-bg-alternate py-24 md:py-36 border-t border-border">
+      <section className="bg-bg-alternate py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
             <div className="mx-auto max-w-5xl">
@@ -72,7 +72,7 @@ export default function AboutPage() {
                 A note from the <em className="italic text-accent-gold">founder</em>
               </h2>
 
-              <div className="relative mt-12 aspect-[5463/3875] border border-border overflow-hidden">
+              <div className="relative mt-8 aspect-[5463/3875] border border-border overflow-hidden">
                 <Image
                   src="/images/products/Founders-note.jpeg"
                   alt="Aboli, Founder & Creative Director — a handwritten note"
@@ -83,7 +83,7 @@ export default function AboutPage() {
                 />
               </div>
 
-              <div className="mx-auto mt-12 max-w-2xl space-y-6 font-body text-body-lg text-text-muted leading-relaxed">
+              <div className="mx-auto mt-8 max-w-2xl space-y-6 font-body text-body-lg text-text-muted leading-relaxed">
                 <p>
                   Our studio started with a simple belief: that print during life&apos;s key passages should feel considered. We began by designing memorial booklets. In that space, there is no room for errors, delays, or clinical templates.
                 </p>
@@ -97,10 +97,10 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="bg-bg-primary py-24 md:py-36 border-t border-border">
+      <section className="bg-bg-primary py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="text-center max-w-2xl mx-auto mb-10">
               <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
                 Principles
               </span>
@@ -109,7 +109,7 @@ export default function AboutPage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="border border-border p-8 bg-bg-secondary">
                 <h3 className="font-display text-2xl text-text-primary">
                   Uncompromising Quality
@@ -142,10 +142,10 @@ export default function AboutPage() {
       </section>
 
       {/* Timeline Section */}
-      <section className="bg-bg-secondary py-24 md:py-36 border-t border-border">
+      <section className="bg-bg-secondary py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide max-w-4xl">
           <SectionReveal>
-            <div className="text-center mb-16">
+            <div className="text-center mb-10">
               <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
                 History
               </span>
@@ -154,7 +154,7 @@ export default function AboutPage() {
               </h2>
             </div>
 
-            <div className="space-y-12 relative before:absolute before:inset-y-0 before:left-4 md:before:left-1/2 before:w-[1px] before:bg-border">
+            <div className="space-y-10 relative before:absolute before:inset-y-0 before:left-4 md:before:left-1/2 before:w-[1px] before:bg-border">
               {/* Event 1 */}
               <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pl-10 md:pl-0">
                 <div className="absolute left-3.5 md:left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-accent-gold z-10" />
@@ -225,7 +225,7 @@ export default function AboutPage() {
       </section>
 
       {/* final CTA */}
-      <section className="bg-bg-primary py-24 text-center">
+      <section className="bg-bg-primary py-16 md:py-20 text-center">
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">

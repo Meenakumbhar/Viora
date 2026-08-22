@@ -80,7 +80,7 @@ export default async function Home() {
       {/* ──────────────────── SECTION 1 — HERO ──────────────────── */}
       <section
         id="hero"
-        className="hero-section relative min-h-svh overflow-hidden bg-bg-primary flex items-center py-32 lg:py-24"
+        className="hero-section relative h-[82vh] min-h-[600px] max-h-[780px] overflow-hidden bg-bg-primary flex items-center pt-28 pb-16"
       >
         {/* Banner photo — starts below the fixed nav's height (h-20) plus a
             little breathing room, so the nav always sits on the section's
@@ -94,6 +94,7 @@ export default async function Home() {
             quality={90}
             sizes="100vw"
             className="object-cover"
+            style={{ objectPosition: '65% 30%' }}
           />
 
         </div>
@@ -149,10 +150,10 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 2 — STUDIO INTRODUCTION ──────────────────── */}
-      <section id="about" className="py-24 md:py-36 lg:py-48 bg-bg-primary">
+      <section id="about" className="py-16 md:py-24 lg:py-28 bg-bg-primary">
         <SectionReveal>
           <div className="container-wide">
-            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
               {/* Divider line — centered in the gap between the two columns */}
               <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px -translate-x-1/2 bg-border lg:block" />
 
@@ -173,20 +174,14 @@ export default async function Home() {
 
                 <div data-delay="3">
                   <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
-                    Memories in Prints is a full-service design and print studio with a
-                    global client base. We produce print for life&rsquo;s most meaningful
-                    occasions and for the brands and organisations that shape communities.
+                    Memories in Prints is a full-service design and print studio serving a global client base. 
+                    We create digital and printed materials for life&rsquo;s most meaningful occasions, 
+                    as well as brands and organisations that shape communities.
                   </p>
 
                   <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
-                    Founded with roots in funeral print, we understand the weight some
-                    briefs carry. That background informs everything we do precision,
-                    sensitivity, and a refusal to cut corners.
-                  </p>
-
-                  <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
-                    We serve families, wedding planners and event organisers. Whether digital or
-                    printed, every project receives the same level of care.
+                    With roots in funeral print, we bring precision, sensitivity and a commitment to quality to every project. 
+                    From funeral stationery and weddings to events and organisations, every brief receives the same level of care.
                   </p>
                 </div>
 
@@ -200,12 +195,12 @@ export default async function Home() {
               {/* Right column — a single studio-made photo matching the headline,
                   kept at its own true proportions rather than stretched/cropped
                   to match the taller text column beside it */}
-              <div data-delay="3">
+              <div data-delay="3" className="self-center">
                 <ImageRevealCard
                   src="/images/design_with_intention.jpeg"
                   alt="Designed with Intention"
                   delay={0.1}
-                  className="aspect-[1408/768] rounded-[2rem]"
+                  className="aspect-square rounded-[2rem]"
                   sizes="(min-width: 1024px) 45vw, 90vw"
                   priority
                 />
@@ -216,7 +211,7 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 4 — FEATURED WORK (PORTFOLIO STRIP) ──────────────────── */}
-      <section id="portfolio" className="py-24 md:py-36 lg:py-48 bg-bg-primary">
+      <section id="portfolio" className="py-16 md:py-24 lg:py-28 bg-bg-alternate border-t border-border/60">
         <SectionReveal>
           <div className="flex flex-col lg:flex-row">
             {/* Left — sticky text */}
@@ -228,7 +223,7 @@ export default async function Home() {
               <AnimatedHeadline
                 text="Print that speaks"
                 accentWord="speaks"
-                className="font-display text-display-lg text-text-heading mt-4"
+                className="font-display text-display-md text-text-heading mt-4"
               />
 
               <div className="mt-8">
@@ -293,7 +288,7 @@ export default async function Home() {
       {/* ──────────────────── SECTION 5 — PHILOSOPHY / WHY US ──────────────────── */}
       <section
         id="philosophy"
-        className="relative min-h-[80vh] overflow-hidden bg-bg-alternate"
+        className="relative overflow-hidden bg-bg-primary border-t border-border/60"
       >
         {/* Subtle decorative gradient accent */}
         <div
@@ -305,16 +300,16 @@ export default async function Home() {
         />
 
         {/* Content */}
-        <div className="relative z-10 container-wide flex flex-col items-center justify-center min-h-[80vh] py-24 md:py-36 lg:py-48 text-center">
+        <div className="relative z-10 container-wide flex flex-col items-center justify-center py-12 md:py-14 lg:py-16 text-center">
           <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
             Our Approach
           </span>
 
-          <h2 className="font-display text-display-lg text-text-heading mt-4">
+          <h2 className="font-display text-display-lg text-text-heading mt-3">
             Where craft meets <em className="italic text-accent-gold">care</em>
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-16 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 w-full">
             {/* Precision */}
             <div className="text-center">
               <svg
@@ -323,7 +318,7 @@ export default async function Home() {
                 viewBox="0 0 48 48"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-12 h-12 text-accent-gold mx-auto"
+                className="w-9 h-9 text-accent-gold mx-auto"
                 aria-hidden="true"
               >
                 <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="1.5" />
@@ -331,8 +326,8 @@ export default async function Home() {
                 <circle cx="24" cy="24" r="8" stroke="currentColor" strokeWidth="1.5" />
                 <circle cx="24" cy="24" r="2.5" fill="currentColor" />
               </svg>
-              <h3 className="font-display text-xl text-text-heading mt-6">Precision</h3>
-              <p className="font-body text-body-base text-text-muted mt-3 max-w-xs mx-auto">
+              <h3 className="font-display text-xl text-text-heading mt-4">Precision</h3>
+              <p className="font-body text-body-base text-text-muted mt-2 max-w-xs mx-auto">
                 Every proof reviewed by hand before print. No detail overlooked, no
                 shortcut taken.
               </p>
@@ -346,7 +341,7 @@ export default async function Home() {
                 viewBox="0 0 48 48"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-12 h-12 text-accent-gold mx-auto"
+                className="w-9 h-9 text-accent-gold mx-auto"
                 aria-hidden="true"
               >
                 <path
@@ -357,8 +352,8 @@ export default async function Home() {
                   strokeLinejoin="round"
                 />
               </svg>
-              <h3 className="font-display text-xl text-text-heading mt-6">Sensitivity</h3>
-              <p className="font-body text-body-base text-text-muted mt-3 max-w-xs mx-auto">
+              <h3 className="font-display text-xl text-text-heading mt-4">Sensitivity</h3>
+              <p className="font-body text-body-base text-text-muted mt-2 max-w-xs mx-auto">
                 We understand the emotional weight of every brief. Some orders carry more
                 than ink.
               </p>
@@ -372,7 +367,7 @@ export default async function Home() {
                 viewBox="0 0 48 48"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-12 h-12 text-accent-gold mx-auto"
+                className="w-9 h-9 text-accent-gold mx-auto"
                 aria-hidden="true"
               >
                 <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="1.5" />
@@ -411,14 +406,14 @@ export default async function Home() {
                   opacity="0.6"
                 />
               </svg>
-              <h3 className="font-display text-xl text-text-heading mt-6">Inclusive</h3>
-              <p className="font-body text-body-base text-text-muted mt-3 max-w-xs mx-auto">
+              <h3 className="font-display text-xl text-text-heading mt-4">Inclusive</h3>
+              <p className="font-body text-body-base text-text-muted mt-2 max-w-xs mx-auto">
                 Transparent pricing with no surprises. what you see is what you pay.
               </p>
             </div>
           </div>
 
-          <div className="mt-12">
+          <div className="mt-6">
             <Button variant="ghost" href="/about">
               Behind the Studio →
             </Button>
@@ -427,7 +422,7 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 6 — CELEBRATION OF LIFE ──────────────────── */}
-      <section id="celebration-of-life" className="relative overflow-hidden bg-bg-secondary py-24 md:py-36 lg:py-48">
+      <section id="celebration-of-life" className="relative overflow-hidden bg-bg-secondary py-16 md:py-24 lg:py-28 border-t border-border/60">
         <SectionReveal>
           <div className="container-wide max-w-3xl text-center relative z-10">
             <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
@@ -461,7 +456,7 @@ export default async function Home() {
       {/* ──────────────────── SECTION 7 — TESTIMONIALS ──────────────────── */}
       <section
         id="testimonials"
-        className="relative overflow-hidden py-20 md:py-28"
+        className="relative overflow-hidden py-16 md:py-20"
       >
         {/* Background image — swap the src to any image path you provide */}
         <div className="absolute inset-0 z-0">
@@ -481,14 +476,14 @@ export default async function Home() {
             Heard from our clients
           </h2>
 
-          <div className="mt-12">
+          <div className="mt-8">
             <TestimonialSlider dark />
           </div>
         </div>
       </section>
 
       {/* ──────────────────── SECTION 8 — GLOBAL REACH ──────────────────── */}
-      <section id="global" className="py-24 md:py-36 lg:py-48" style={{ backgroundColor: PANEL_TONES.mist.bg }}>
+      <section id="global" className="py-16 md:py-24 lg:py-28" style={{ backgroundColor: PANEL_TONES.mist.bg }}>
         <SectionReveal>
           <div className="container-wide">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -541,14 +536,14 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 10 — BLOG PREVIEW ──────────────────── */}
-      <section id="blog" className="py-24 md:py-36 lg:py-48 bg-bg-primary">
+      <section id="blog" className="py-16 md:py-24 lg:py-28 bg-bg-primary">
         <SectionReveal>
           <div className="container-wide">
             <h2 className="font-display text-display-lg text-text-heading">
               From the <em className="italic text-accent-gold">studio</em>
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
               {blogPosts.slice(0, 3).map((post, i) => (
                 <article key={post.id} data-delay={String(Math.min(i + 1, 5))}>
                   <Link href={`/blog/${post.slug}`} className="group block">

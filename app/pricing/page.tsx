@@ -84,7 +84,7 @@ export default function PricingPage() {
         </p>
       </HeroVideo>
 
-      <section className="border-t border-border bg-cat-bg py-24 md:py-36 transition-colors duration-500">
+      <section className="border-t border-border bg-cat-bg py-16 md:py-24 lg:py-28 transition-colors duration-500">
         <div className="container-wide">
           <SectionReveal>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.5fr_0.8fr]">

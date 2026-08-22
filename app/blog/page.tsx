@@ -41,7 +41,7 @@ export default async function BlogPage() {
 
       {/* Featured Post Section */}
       {featuredPost && (
-        <section className="bg-bg-primary py-24 md:py-36 border-t border-border">
+        <section className="bg-bg-primary py-16 md:py-24 lg:py-28 border-t border-border">
           <div className="container-wide">
             <SectionReveal>
               <div className="border border-border bg-bg-secondary p-8 md:p-12">
@@ -93,10 +93,10 @@ export default async function BlogPage() {
       )}
 
       {/* Grid of Remaining Posts */}
-      <section className="bg-bg-alternate py-24 md:py-36 border-t border-border">
+      <section className="bg-bg-alternate py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
-            <div className="mb-16">
+            <div className="mb-10">
               <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
                 Latest Publications
               </span>
@@ -157,7 +157,7 @@ export default async function BlogPage() {
       </section>
 
       {/* final CTA */}
-      <section className="bg-bg-primary py-24 md:py-36 border-t border-border text-center">
+      <section className="bg-bg-primary py-16 md:py-20 border-t border-border text-center">
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">
