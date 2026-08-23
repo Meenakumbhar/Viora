@@ -846,7 +846,17 @@ export default function PortfolioGrid({
                                 <div className="mt-4 flex items-center justify-between">
                                   <div className="flex items-center border border-[#D9D4CC]">
                                     <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity - 1))} className="h-9 w-9">−</button>
-                                    <span className="w-9 text-center font-mono text-xs">{item.quantity}</span>
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={item.quantity}
+                                      onChange={(e) => {
+                                        const parsed = parseInt(e.target.value, 10);
+                                        setCartItems(updatePortfolioCartQuantity(item.id, Number.isFinite(parsed) && parsed > 0 ? parsed : 1));
+                                      }}
+                                      aria-label="Quantity"
+                                      className="w-12 border-0 bg-transparent text-center font-mono text-xs [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                    />
                                     <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity + 1))} className="h-9 w-9">+</button>
                                   </div>
                                 </div>

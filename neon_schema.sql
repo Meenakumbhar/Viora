@@ -180,12 +180,16 @@ CREATE TABLE IF NOT EXISTS design_revisions (
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     version INTEGER NOT NULL,
     image_urls TEXT[] NOT NULL,
+    image_labels TEXT[],
     notes TEXT,
     status TEXT NOT NULL DEFAULT 'pending_proofreader_review' CHECK (status IN ('pending_proofreader_review', 'returned_to_designer', 'pending_review', 'changes_requested', 'approved')),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     UNIQUE (order_id, version)
 );
 CREATE INDEX IF NOT EXISTS idx_design_revisions_order_id ON design_revisions(order_id);
+ALTER TABLE design_revisions ADD COLUMN IF NOT EXISTS image_labels TEXT[];
+ALTER TABLE design_revisions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL;
 
 -- 8. Create Design Comments Table (pinned markup on a revision's image(s), left by
 -- either the customer during their review or the proofreader sending it back to the designer)
@@ -204,6 +208,18 @@ CREATE TABLE IF NOT EXISTS design_comments (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_design_comments_revision_id ON design_comments(revision_id);
+
+-- 8b. Generic append-only event log for the staff activity feed — distinct
+-- from order_status_history (which only logs order.status changes).
+CREATE TABLE IF NOT EXISTS staff_activity (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    detail TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_staff_activity_created_at ON staff_activity(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_staff_activity_order_id ON staff_activity(order_id);
 
 -- 9. A specific price for one actual portfolio piece, the same for every
 -- customer who doesn't have something more specific set for them.

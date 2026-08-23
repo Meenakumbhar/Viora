@@ -98,8 +98,8 @@ export default function ProcessPage() {
         </div>
       </section>
 
-      {/* final CTA */}
-      <section className="bg-bg-secondary border-t border-border py-16 md:py-20 text-center">
+      {/* final CTA — pale gold tint reserved for calls-to-action, consistent across pages */}
+      <section className="bg-bg-cta border-t border-border py-16 md:py-20 text-center">
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">

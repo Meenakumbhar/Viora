@@ -13,6 +13,8 @@ type ViewerRole = 'designer' | 'employee' | 'proofreader' | 'admin';
 
 interface DesignReviewCanvasProps {
   images: string[];
+  /** Positionally matched to images — e.g. "Thank You Card". Falls back to "Image N" per-slot when missing/blank. */
+  labels?: (string | null)[] | null;
   /** Persisted comments to render — pass [] in 'review'/'proofread' mode (a pending revision has none yet). */
   comments?: DesignComment[];
   /** 'review' = customer; 'proofread' = proofreader (adds marks, approves or bounces back to the designer); 'manage' = read-only + resolve toggles. */
@@ -55,6 +57,7 @@ const THEME = {
 
 export default function DesignReviewCanvas({
   images,
+  labels,
   comments = [],
   mode,
   theme = 'light',
@@ -113,9 +116,11 @@ export default function DesignReviewCanvas({
     );
   }
 
+  const labelFor = (i: number) => labels?.[i]?.trim() || `Image ${i + 1}`;
+
   return (
     <div className={`${t.panel} p-4 sm:p-6`}>
-      {images.length > 1 && (
+      {images.length > 1 ? (
         <div className="mb-4 flex flex-wrap gap-2">
           {images.map((_, i) => (
             <button
@@ -126,11 +131,15 @@ export default function DesignReviewCanvas({
                 i === activeImage ? t.tabActive : t.tab
               }`}
             >
-              Image {i + 1}
+              {labelFor(i)}
               {comments.filter((c) => c.image_index === i).length > 0 && ` · ${comments.filter((c) => c.image_index === i).length}`}
             </button>
           ))}
         </div>
+      ) : (
+        labels?.[0]?.trim() && (
+          <p className={`mb-3 font-mono text-[11px] uppercase tracking-widest ${t.muted}`}>{labels[0]!.trim()}</p>
+        )
       )}
 
       <div
@@ -141,7 +150,7 @@ export default function DesignReviewCanvas({
         <div className="relative aspect-[4/3] w-full">
           <Image
             src={images[activeImage]}
-            alt={`Design proof ${activeImage + 1}`}
+            alt={`Design proof — ${labelFor(activeImage)}`}
             fill
             className="object-contain"
           />

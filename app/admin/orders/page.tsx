@@ -33,7 +33,7 @@ export default async function AdminOrdersPage() {
       userLabel="Studio team"
       logoutSlot={<LogoutButton />}
     >
-      <div className="mb-10">
+      <div className="dash-legacy mb-10">
         <span className="font-mono text-[11px] uppercase tracking-widest text-[#C6A85C]">Orders</span>
         <h1 className="mt-2 font-display text-4xl font-light" style={{ letterSpacing: '-0.02em' }}>
           Orders

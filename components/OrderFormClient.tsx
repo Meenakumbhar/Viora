@@ -357,25 +357,33 @@ export default function OrderFormClient({
           </div>
 
           <div>
-            <div className="flex items-baseline justify-between">
+            <div className="flex items-baseline justify-between gap-4">
               <FieldLabel>Quantity</FieldLabel>
-              <span className="font-display text-2xl text-accent-gold">
-                {(data.quantity ?? QUANTITY_DEFAULT) >= QUANTITY_MAX ? `${QUANTITY_MAX}+` : data.quantity ?? QUANTITY_DEFAULT}
-              </span>
+              <input
+                type="number"
+                min={QUANTITY_MIN}
+                value={data.quantity ?? QUANTITY_DEFAULT}
+                onChange={(e) => {
+                  const parsed = parseInt(e.target.value, 10);
+                  setField('quantity', Number.isFinite(parsed) && parsed > 0 ? parsed : QUANTITY_MIN);
+                }}
+                aria-label="Exact quantity"
+                className="w-24 border-0 bg-transparent text-right font-display text-2xl text-accent-gold outline-none [appearance:textfield] focus:underline [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
             </div>
             <input
               type="range"
               min={QUANTITY_MIN}
               max={QUANTITY_MAX}
               step={5}
-              value={data.quantity ?? QUANTITY_DEFAULT}
+              value={Math.min(data.quantity ?? QUANTITY_DEFAULT, QUANTITY_MAX)}
               onChange={(e) => setField('quantity', Number(e.target.value))}
-              aria-label="Quantity"
+              aria-label="Quantity (drag for a quick estimate, or type an exact number above)"
               className="w-full accent-accent-gold"
             />
             <div className="flex justify-between font-mono text-[11px] text-text-muted">
               <span>{QUANTITY_MIN}</span>
-              <span>{QUANTITY_MAX}+</span>
+              <span>{QUANTITY_MAX}+ — need more? type the exact number above</span>
             </div>
           </div>
 

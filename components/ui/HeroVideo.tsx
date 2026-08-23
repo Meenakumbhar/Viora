@@ -46,7 +46,7 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
   const showPosterOnly = Boolean(src) && !videoFailed && reducedMotion && Boolean(poster);
 
   return (
-    <section className="relative h-[62vh] min-h-[440px] max-h-[600px] overflow-hidden">
+    <section className="relative flex min-h-[440px] flex-col justify-end overflow-hidden">
       {/* Background — video, poster (reduced motion), or animated warm light gradient */}
       {showVideo ? (
         <video
@@ -87,8 +87,10 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
         }}
       />
 
-      {/* Content positioned at bottom */}
-      <div className="absolute inset-x-0 bottom-0 z-10 px-6 pb-16 md:px-12 md:pb-24 lg:px-20 lg:pb-32">
+      {/* Content — bottom-aligned via the section's own flex layout, so it
+          grows the section instead of clipping when a heading wraps to two
+          lines (a fixed/capped height would push it up under the fixed nav). */}
+      <div className="relative z-10 px-6 pt-24 pb-16 md:px-12 md:pt-28 md:pb-24 lg:px-20 lg:pt-32 lg:pb-32">
         {children}
       </div>
 

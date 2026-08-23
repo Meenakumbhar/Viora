@@ -51,6 +51,7 @@ export default async function AdminPage() {
       logoutSlot={<LogoutButton />}
       analyticsSlot={<AnalyticsSidebar orders={orders} />}
     >
+    <div className="dash-legacy">
       {/* ── Page title ── */}
       <div className="mb-10">
         <span className="font-mono text-[11px] uppercase tracking-widest text-[#C6A85C]">Overview</span>
@@ -392,6 +393,7 @@ export default async function AdminPage() {
           <span className="text-white/10">Not indexed by search engines</span>
         </p>
       </footer>
+    </div>
     </DashboardShell>
   );
 }

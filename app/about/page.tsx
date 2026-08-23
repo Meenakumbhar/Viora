@@ -97,7 +97,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="bg-bg-primary py-16 md:py-24 lg:py-28 border-t border-border">
+      <section className="bg-bg-secondary py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
             <div className="text-center max-w-2xl mx-auto mb-10">
@@ -110,7 +110,7 @@ export default function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="border border-border p-8 bg-bg-secondary">
+              <div className="border border-border p-8 bg-bg-primary shadow-[0_12px_32px_rgba(0,0,0,0.05)]">
                 <h3 className="font-display text-2xl text-text-primary">
                   Uncompromising Quality
                 </h3>
@@ -119,7 +119,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="border border-border p-8 bg-bg-secondary">
+              <div className="border border-border p-8 bg-bg-primary shadow-[0_12px_32px_rgba(0,0,0,0.05)]">
                 <h3 className="font-display text-2xl text-text-primary">
                   Absolute Sensitivity
                 </h3>
@@ -128,7 +128,7 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="border border-border p-8 bg-bg-secondary">
+              <div className="border border-border p-8 bg-bg-primary shadow-[0_12px_32px_rgba(0,0,0,0.05)]">
                 <h3 className="font-display text-2xl text-text-primary">
                   Global Perspective
                 </h3>
@@ -142,7 +142,7 @@ export default function AboutPage() {
       </section>
 
       {/* Timeline Section */}
-      <section className="bg-bg-secondary py-16 md:py-24 lg:py-28 border-t border-border">
+      <section className="bg-bg-primary py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide max-w-4xl">
           <SectionReveal>
             <div className="text-center mb-10">
@@ -224,8 +224,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* final CTA */}
-      <section className="bg-bg-primary py-16 md:py-20 text-center">
+      {/* final CTA — pale gold tint reserved for calls-to-action, consistent across pages */}
+      <section className="bg-bg-cta py-16 md:py-20 text-center border-t border-border">
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">

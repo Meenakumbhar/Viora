@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import RegistrationBar from './RegistrationBar';
 import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
-import { STATUS_LABELS, STATUS_COLORS } from '@/lib/order-status';
-import type { DisplayStage } from '@/components/ui/OrderStepper';
+import { RAW_STATUS_LABELS, RAW_STATUS_COLORS, type RawOrderDisplayStatus } from '@/lib/order-status';
 import type { PaymentProvider } from '@/types/database';
 
 export interface MonthlySpend {
@@ -35,12 +34,12 @@ interface SpendSummaryProps {
   byMonth: MonthlySpend[];
   byCategory: CategorySpend[];
   byProvider: ProviderSpend[];
-  statusCounts: Partial<Record<DisplayStage, number>>;
+  statusCounts: Partial<Record<RawOrderDisplayStatus, number>>;
 }
 
 const CHART_HEIGHT = 140;
 const BAR_GAP = 4;
-const STATUS_ORDER: DisplayStage[] = ['placed', 'pending', 'in_progress', 'completed'];
+const STATUS_ORDER: RawOrderDisplayStatus[] = ['placed', 'pending', 'in_progress', 'completed'];
 
 function formatGBP(amount: number): string {
   return `£${amount.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -186,16 +185,16 @@ export default function SpendSummary({
               {STATUS_ORDER.filter((s) => (statusCounts[s] ?? 0) > 0).map((s) => (
                 <div
                   key={s}
-                  style={{ width: `${((statusCounts[s] ?? 0) / totalJobs) * 100}%`, backgroundColor: STATUS_COLORS[s] }}
-                  title={`${STATUS_LABELS[s]}: ${statusCounts[s]}`}
+                  style={{ width: `${((statusCounts[s] ?? 0) / totalJobs) * 100}%`, backgroundColor: RAW_STATUS_COLORS[s] }}
+                  title={`${RAW_STATUS_LABELS[s]}: ${statusCounts[s]}`}
                 />
               ))}
             </div>
             <ul className="mt-3 space-y-1.5">
               {STATUS_ORDER.filter((s) => (statusCounts[s] ?? 0) > 0).map((s) => (
                 <li key={s} className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-text-muted">
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: STATUS_COLORS[s] }} />
-                  {STATUS_LABELS[s]}
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: RAW_STATUS_COLORS[s] }} />
+                  {RAW_STATUS_LABELS[s]}
                   <span className="ml-auto text-text-heading">{statusCounts[s]}</span>
                 </li>
               ))}

@@ -60,6 +60,7 @@ export default async function StaffOrderDesignsPage({ params }: { params: Promis
       roleLabel={user.role}
       logoutSlot={<UserLogoutButton />}
     >
+    <div className="dash-legacy">
       <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">
         Order #{order.id.slice(0, 8).toUpperCase()}
       </p>
@@ -138,6 +139,7 @@ export default async function StaffOrderDesignsPage({ params }: { params: Promis
           />
         )}
       </div>
+    </div>
     </DashboardShell>
   );
 }

@@ -9,6 +9,7 @@ import {
   getEnquiriesByEmail,
   syncOrderPricingFromCatalog,
 } from '@/lib/db';
+import { deriveDisplayStage } from '@/lib/order-stage';
 import type { AccountRow } from '@/components/dashboard/CustomerOrderList';
 import type { User } from '@/types/database';
 
@@ -64,6 +65,20 @@ export async function loadAccountOrders(): Promise<{ user: User; rows: AccountRo
   return { user, rows };
 }
 
+// Mirrors the stepper's own derivation — an order an admin marked
+// "completed" out of step with reality (design not yet approved, or unpaid)
+// stays in the active list where the customer can still act on it, rather
+// than silently sitting in "Completed" with nothing left to do about it.
 export function isCompletedRow(row: AccountRow): boolean {
-  return row.kind === 'order' && row.order.status === 'completed';
+  if (row.kind !== 'order') return false;
+  const { order, latestRevision } = row;
+  return (
+    deriveDisplayStage({
+      isPlaced: false,
+      orderStatus: order.status,
+      paymentStatus: order.payment_status,
+      hasPaymentAmount: order.payment_amount !== null && order.payment_amount > 0,
+      latestRevisionStatus: latestRevision?.status,
+    }) === 'completed'
+  );
 }

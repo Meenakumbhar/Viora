@@ -5,6 +5,7 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 /**
  * Cloudflare R2 Client & Storage Utilities
@@ -36,6 +37,12 @@ export function getR2Client(): S3Client {
         accessKeyId: R2_ACCESS_KEY_ID,
         secretAccessKey: R2_SECRET_ACCESS_KEY,
       },
+      // The SDK's default ('WHEN_SUPPORTED') signs an x-amz-checksum-* param
+      // into presigned URLs computed against an empty body — since presigning
+      // has no access to the real file, the browser's actual upload bytes
+      // then fail signature validation against that baked-in empty checksum.
+      // 'WHEN_REQUIRED' only adds one when the operation demands it.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
     });
   }
 
@@ -89,6 +96,38 @@ export async function uploadToR2({
     key,
     url: getR2PublicUrl(key),
   };
+}
+
+export interface PresignedUploadOptions {
+  key: string;
+  contentType: string;
+  cacheControl?: string;
+  /** Seconds the URL stays valid — kept short since it's single-use, issued right before the browser uploads. */
+  expiresInSeconds?: number;
+}
+
+// Lets the browser PUT a file straight to R2, bypassing our own server
+// entirely for the file bytes — the only way to remove the hosting
+// platform's serverless request-body ceiling rather than just raising it.
+// The R2 secret key never leaves the server; the browser only ever holds
+// this single-use, short-lived, single-object URL.
+export async function getPresignedUploadUrl({
+  key,
+  contentType,
+  cacheControl = 'public, max-age=31536000, immutable',
+  expiresInSeconds = 300,
+}: PresignedUploadOptions): Promise<string> {
+  const client = getR2Client();
+  const bucket = getR2BucketName();
+
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+    CacheControl: cacheControl,
+  });
+
+  return getSignedUrl(client, command, { expiresIn: expiresInSeconds });
 }
 
 export async function deleteFromR2(key: string): Promise<void> {

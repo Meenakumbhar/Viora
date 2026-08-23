@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getOrderById } from '@/lib/db';
+import { getOrderById, getOrderPaymentGate } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { getUserById } from '@/lib/db';
 import { parseJsonBody } from '@/lib/validation';
@@ -79,6 +79,11 @@ export async function POST(request: NextRequest) {
 
     if (!order.payment_amount || order.payment_amount <= 0) {
       return NextResponse.json<ApiResponse>({ success: false, error: 'No payment amount set for this order yet.' }, { status: 400 });
+    }
+
+    const gate = await getOrderPaymentGate(order.id);
+    if (!gate.payable) {
+      return NextResponse.json<ApiResponse>({ success: false, error: gate.reason }, { status: 409 });
     }
 
     // Create PayPal order

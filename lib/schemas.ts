@@ -53,6 +53,10 @@ export const designUploadSchema = z.object({
     .array(z.string().trim().min(1).max(2000))
     .min(1, 'At least one image URL is required.')
     .max(50),
+  // Positionally matched to imageUrls, e.g. "Thank You Card" — lets a bundled
+  // order's proofs (several products in one upload) be told apart on the
+  // review tabs instead of just "Image 1, Image 2, ...".
+  imageLabels: z.array(z.string().trim().max(200).nullable()).max(50).nullish(),
   notes: z.string().trim().max(5000).nullish(),
 });
 

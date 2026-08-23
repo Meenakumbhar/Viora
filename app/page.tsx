@@ -7,9 +7,8 @@ import TestimonialSlider from '@/components/ui/TestimonialSlider';
 import AnimatedHeadline from '@/components/ui/AnimatedHeadline';
 import ImageRevealCard from '@/components/ui/ImageRevealCard';
 import { PANEL_TONES } from '@/components/ui/SplitHero';
-import { blogPosts } from '@/lib/data';
 import { ACTIVE_CATEGORIES } from '@/lib/active-services';
-import { getPortfolioItems } from '@/lib/db';
+import { getPortfolioItems, getBlogPosts } from '@/lib/db';
 import type { PortfolioItem } from '@/types/database';
 
 // Real studio work for the Featured Work strip — pulled live from the
@@ -73,6 +72,7 @@ const blogGradients: Record<string, string> = {
    ═══════════════════════════════════════════════════════════════════════════ */
 export default async function Home() {
   const { featured } = await getHomepagePortfolioData();
+  const recentPosts = await getBlogPosts(3);
 
   return (
     <main>
@@ -150,10 +150,10 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 2 — STUDIO INTRODUCTION ──────────────────── */}
-      <section id="about" className="py-16 md:py-24 lg:py-28 bg-bg-primary">
+      <section id="about" className="py-10 md:py-14 lg:py-16 bg-bg-primary">
         <SectionReveal>
           <div className="container-wide">
-            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
               {/* Divider line — centered in the gap between the two columns */}
               <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px -translate-x-1/2 bg-border lg:block" />
 
@@ -169,24 +169,24 @@ export default async function Home() {
                 <AnimatedHeadline
                   text="Designed with Intention"
                   accentWord="Intention"
-                  className="font-display text-display-lg text-text-heading mt-4"
+                  className="font-display text-display-md text-text-heading mt-3"
                 />
 
                 <div data-delay="3">
-                  <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
-                    Memories in Prints is a full-service design and print studio serving a global client base. 
-                    We create digital and printed materials for life&rsquo;s most meaningful occasions, 
+                  <p className="font-body text-body-lg text-text-muted mt-4 leading-relaxed">
+                    Memories in Prints is a full-service design and print studio serving a global client base.
+                    We create digital and printed materials for life&rsquo;s most meaningful occasions,
                     as well as brands and organisations that shape communities.
                   </p>
 
-                  <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
-                    With roots in funeral print, we bring precision, sensitivity and a commitment to quality to every project. 
+                  <p className="font-body text-body-lg text-text-muted mt-4 leading-relaxed">
+                    With roots in funeral print, we bring precision, sensitivity and a commitment to quality to every project.
                     From funeral stationery and weddings to events and organisations, every brief receives the same level of care.
                   </p>
                 </div>
 
                 <div data-delay="4">
-                  <Button variant="text" href="/about" className="mt-8">
+                  <Button variant="text" href="/about" className="mt-6">
                     Our Story →
                   </Button>
                 </div>
@@ -288,7 +288,7 @@ export default async function Home() {
       {/* ──────────────────── SECTION 5 — PHILOSOPHY / WHY US ──────────────────── */}
       <section
         id="philosophy"
-        className="relative overflow-hidden bg-bg-primary border-t border-border/60"
+        className="relative overflow-hidden border-t border-border/60 bg-bg-primary"
       >
         {/* Subtle decorative gradient accent */}
         <div
@@ -422,19 +422,19 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 6 — CELEBRATION OF LIFE ──────────────────── */}
-      <section id="celebration-of-life" className="relative overflow-hidden bg-bg-secondary py-16 md:py-24 lg:py-28 border-t border-border/60">
+      <section id="celebration-of-life" className="relative overflow-hidden pt-10 pb-28 md:pt-14 md:pb-36 lg:pt-16 lg:pb-44 border-t border-border/60 bg-bg-secondary">
         <SectionReveal>
           <div className="container-wide max-w-3xl text-center relative z-10">
             <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
               Gather &amp; Remember
             </span>
-            <h2 className="font-display text-display-lg text-text-heading mt-4">
+            <h2 className="font-display text-display-md text-text-heading mt-3">
               Celebration of <em className="italic text-accent-gold">Life</em>
             </h2>
-            <p className="mt-6 font-body text-body-lg text-text-muted leading-relaxed">
+            <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed">
               Some moments deserve to be gathered around, shared, and remembered. Whether you&apos;re celebrating a new beginning, honoring a loved one, or marking a special milestone, we help you create a gathering that feels personal, warm, and true to your story.
             </p>
-            <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed">
+            <p className="mt-3 font-body text-body-lg text-text-muted leading-relaxed">
               From flowers, music, food, and décor to photographs and those little details that mean the most, we&apos;ll help bring everything together with care. So you can spend less time worrying about the details and more time being present with the people who matter most.
             </p>
           </div>
@@ -483,10 +483,10 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 8 — GLOBAL REACH ──────────────────── */}
-      <section id="global" className="py-16 md:py-24 lg:py-28" style={{ backgroundColor: PANEL_TONES.mist.bg }}>
+      <section id="global" className="py-10 md:py-14 lg:py-16" style={{ backgroundColor: PANEL_TONES.mist.bg }}>
         <SectionReveal>
           <div className="container-wide">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
               {/* Left — modern delivery map */}
               <div className="flex items-center justify-center" data-delay="1">
                 <div className="w-full max-w-lg rounded-[2rem] border border-border/70 bg-[#f7efe6] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.08)] md:p-6">
@@ -504,18 +504,18 @@ export default async function Home() {
                   Delivery network
                 </span>
 
-                <h2 className="font-display text-display-lg text-text-heading mt-4">
+                <h2 className="font-display text-display-md text-text-heading mt-3">
                   Designed here.{' '}
                   <em className="italic text-accent-gold">Delivered everywhere.</em>
                 </h2>
 
-                <p className="font-body text-body-lg text-text-muted mt-6 leading-relaxed">
+                <p className="font-body text-body-lg text-text-muted mt-4 leading-relaxed">
                   We create custom print for families, planners, brands, and clubs across North
                   America, United Kingdom, Europe. Each order
                   ships tracked, with digital delivery available for clients who print locally.
                 </p>
 
-                <div className="mt-8 flex flex-wrap gap-3">
+                <div className="mt-6 flex flex-wrap gap-3">
                   {[
                     'United Kingdom',
                     'United States',
@@ -535,7 +535,12 @@ export default async function Home() {
         </SectionReveal>
       </section>
 
-      {/* ──────────────────── SECTION 10 — BLOG PREVIEW ──────────────────── */}
+      {/* ──────────────────── SECTION 10 — BLOG PREVIEW ────────────────────
+           Pulled live from the same posts table /blog reads from, so the
+           homepage never shows an article that isn't actually published —
+           and the whole section is skipped rather than padded with
+           placeholder cards when nothing's published yet. ──────────────── */}
+      {recentPosts.length > 0 && (
       <section id="blog" className="py-16 md:py-24 lg:py-28 bg-bg-primary">
         <SectionReveal>
           <div className="container-wide">
@@ -544,7 +549,7 @@ export default async function Home() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
-              {blogPosts.slice(0, 3).map((post, i) => (
+              {recentPosts.map((post, i) => (
                 <article key={post.id} data-delay={String(Math.min(i + 1, 5))}>
                   <Link href={`/blog/${post.slug}`} className="group block">
                     {/* Image placeholder */}
@@ -596,6 +601,7 @@ export default async function Home() {
           </div>
         </SectionReveal>
       </section>
+      )}
     </main>
   );
 }

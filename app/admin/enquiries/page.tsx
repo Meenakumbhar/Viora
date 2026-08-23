@@ -26,6 +26,7 @@ export default async function AdminEnquiriesPage() {
       userLabel="Studio team"
       logoutSlot={<LogoutButton />}
     >
+    <div className="dash-legacy">
       <div className="mb-10">
         <span className="font-mono text-[11px] uppercase tracking-widest text-[#C6A85C]">Enquiries</span>
         <h1 className="mt-2 font-display text-4xl font-light" style={{ letterSpacing: '-0.02em' }}>
@@ -105,6 +106,7 @@ export default async function AdminEnquiriesPage() {
           </div>
         )}
       </div>
+    </div>
     </DashboardShell>
   );
 }

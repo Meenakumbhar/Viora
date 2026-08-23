@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import OrderStepper, { type DisplayStage } from '@/components/ui/OrderStepper';
+import OrderStepper, { type DisplayStage, deriveDisplayStage } from '@/components/ui/OrderStepper';
 import OrderPaymentSection from '@/components/ui/OrderPaymentSection';
 import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
 import { accentForServiceType } from '@/lib/order-category';
-import { STATUS_LABELS, STATUS_COLORS } from '@/lib/order-status';
+import { STATUS_LABELS, STATUS_COLORS, RAW_STATUS_LABELS } from '@/lib/order-status';
 import type { Order, OrderStatusHistoryEntry, DesignRevision, Enquiry } from '@/types/database';
 
 // A quote that hasn't been turned into an order yet — no production work,
@@ -73,14 +73,14 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
                     <span className="hidden font-mono text-xs text-text-muted sm:inline">
                       {new Date(enquiry.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </span>
-                    <StatusTag status="placed" />
+                    <StatusTag status="enquiry_received" />
                   </div>
                 </button>
 
                 {isOpen && (
                   <div className="border-t border-dashed border-border px-5 py-6 sm:px-8">
                     <p className="font-body text-base text-text-muted">
-                      We&apos;ve received this request — it&apos;ll move to Pending once our studio begins work.
+                      We&apos;ve received this request — it&apos;ll move to Order Confirmed once our studio begins work.
                     </p>
 
                     {enquiry.quantity_estimate && (
@@ -108,7 +108,7 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
                     )}
 
                     <div className="mt-8">
-                      <OrderStepper status="placed" theme="light" />
+                      <OrderStepper stage="enquiry_received" theme="light" />
                     </div>
 
                     <div className="mt-8 border-t border-border pt-6">
@@ -127,6 +127,13 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
 
           const { order, history, latestRevision } = row;
           const accent = accentForServiceType(order.service_type);
+          const stage = deriveDisplayStage({
+            isPlaced: false,
+            orderStatus: order.status,
+            paymentStatus: order.payment_status,
+            hasPaymentAmount: order.payment_amount !== null && order.payment_amount > 0,
+            latestRevisionStatus: latestRevision?.status,
+          });
           return (
             <div key={row.id} className="border border-border" style={{ borderLeft: `4px solid ${accent}` }}>
               <button
@@ -154,7 +161,7 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
                     )}
                     {order.payment_amount !== null ? `£${order.payment_amount.toFixed(2)}` : '—'}
                   </span>
-                  <StatusTag status={order.status} />
+                  <StatusTag status={stage} />
                 </div>
               </button>
 
@@ -205,14 +212,14 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
                   )}
 
                   <div>
-                    <OrderPaymentSection order={order} />
+                    <OrderPaymentSection order={order} latestRevision={latestRevision} />
                   </div>
 
                   <div className="mt-8">
-                    <OrderStepper status={order.status} theme="light" />
+                    <OrderStepper stage={stage} theme="light" />
                   </div>
 
-                  {order.status === 'completed' && (
+                  {stage === 'completed' && (
                     <div className="mt-8 border-t border-border pt-6">
                       <Link
                         href={`/account/quote?service=${encodeURIComponent(order.service_type)}&details=${encodeURIComponent(`Reordering — similar to a previous ${order.service_type} order.`)}`}
@@ -241,7 +248,7 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
                         {[...history].reverse().map((entry) => (
                           <li key={entry.id} className="relative">
                             <span className="absolute -left-[25px] top-1 h-2.5 w-2.5 rounded-full bg-accent-gold" aria-hidden="true" />
-                            <p className="font-mono text-xs uppercase tracking-widest text-accent-gold">{STATUS_LABELS[entry.status]}</p>
+                            <p className="font-mono text-xs uppercase tracking-widest text-accent-gold">{RAW_STATUS_LABELS[entry.status]}</p>
                             <p className="font-mono text-xs text-text-muted">
                               {new Date(entry.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </p>

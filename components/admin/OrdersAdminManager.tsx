@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import OrderStepper from '@/components/ui/OrderStepper';
 import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
+import { deriveDisplayStage } from '@/lib/order-stage';
 import type { Order, OrderStatus, OrderWithHistory } from '@/types/database';
 
 const STATUSES: OrderStatus[] = ['pending', 'in_progress', 'completed'];
@@ -207,7 +208,7 @@ export default function OrdersAdminManager({ initialOrders }: { initialOrders: O
   const countFor = (status: OrderStatus) => orders.filter((o) => o.status === status).length;
 
   return (
-    <div>
+    <div className="dash-legacy">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -371,7 +372,15 @@ export default function OrdersAdminManager({ initialOrders }: { initialOrders: O
                                 )}
 
                                 <div className="mt-8">
-                                  <OrderStepper status={detailOrder.status} />
+                                  <OrderStepper
+                                    stage={deriveDisplayStage({
+                                      isPlaced: false,
+                                      orderStatus: detailOrder.status,
+                                      paymentStatus: detailOrder.payment_status,
+                                      hasPaymentAmount: detailOrder.payment_amount !== null && detailOrder.payment_amount > 0,
+                                      latestRevisionStatus: detailOrder.latestRevision?.status,
+                                    })}
+                                  />
                                 </div>
 
                                 {/* Payment amount */}

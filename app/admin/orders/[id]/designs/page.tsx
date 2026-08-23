@@ -31,6 +31,7 @@ export default async function AdminOrderDesignsPage({ params }: { params: Promis
       userLabel="Studio team"
       logoutSlot={<LogoutButton />}
     >
+      <div className="dash-legacy">
       <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">
         Order #{order.id.slice(0, 8).toUpperCase()} · {order.customer_name}
       </p>
@@ -38,6 +39,7 @@ export default async function AdminOrderDesignsPage({ params }: { params: Promis
         {order.service_type}
       </h1>
       <p className="mt-2 font-mono text-xs text-white/30">{order.customer_email}</p>
+      </div>
 
       <div className="mt-10">
         <DesignManager initialRevisions={revisions} apiBase={`/api/admin/orders/${order.id}/designs`} />

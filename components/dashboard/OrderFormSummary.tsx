@@ -42,7 +42,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enquiry; orderForm: OrderForm | null }) {
   if (!orderForm) {
     return (
-      <div className="border border-white/10 bg-white/[0.02] p-10 text-center font-mono text-xs text-white/30">
+      <div className="dash-legacy border border-white/10 bg-white/[0.02] p-10 text-center font-mono text-xs text-white/30">
         {enquiry.name} hasn&apos;t filled in an order form yet.
       </div>
     );
@@ -51,7 +51,7 @@ export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enqu
   const f = orderForm;
 
   return (
-    <div className="space-y-6">
+    <div className="dash-legacy space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <span
           className={`inline-flex items-center border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider ${
