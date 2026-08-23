@@ -140,6 +140,9 @@ export default function ProofreaderPanel({ initialRevisions, apiBase }: Proofrea
             submitting={submitting}
             allowApprove={!isRelayingChanges}
             requireMarksForSecondaryAction={!isRelayingChanges}
+            compareRevisions={sorted
+              .filter((r) => r.id !== current.id)
+              .map((r) => ({ version: r.version, label: r.image_labels?.[0] ?? null, image_urls: r.image_urls }))}
           />
         </div>
       ) : (
@@ -169,6 +172,9 @@ export default function ProofreaderPanel({ initialRevisions, apiBase }: Proofrea
                   theme="dark"
                   onToggleResolved={handleToggleResolved}
                   viewerRole="proofreader"
+                  compareRevisions={sorted
+                    .filter((r) => r.id !== revision.id)
+                    .map((r) => ({ version: r.version, label: r.image_labels?.[0] ?? null, image_urls: r.image_urls }))}
                 />
               </div>
             ))}

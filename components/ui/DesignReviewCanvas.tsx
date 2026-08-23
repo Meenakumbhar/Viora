@@ -1,8 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import type { DesignComment, DesignCommentInput, CommentResolutionField } from '@/types/database';
+import ZoomPanStage from './design-review/ZoomPanStage';
+import CommentPopover from './design-review/CommentPopover';
+import CommentSidebar from './design-review/CommentSidebar';
+import RevisionCompareToggle, { type CompareRevisionOption } from './design-review/RevisionCompareToggle';
+import { THEME } from './design-review/theme';
 
 interface DraftPin extends DesignCommentInput {
   tempId: string;
@@ -30,30 +36,55 @@ interface DesignReviewCanvasProps {
   /** 'proofread' mode only — false lets the secondary action fire with zero new marks (a customer's change request already carries its own). Default true. */
   requireMarksForSecondaryAction?: boolean;
   submitting?: boolean;
+  /** Other revisions of this same order, for the optional side-by-side "compare with" view. Omit/empty to hide the control entirely. */
+  compareRevisions?: CompareRevisionOption[];
 }
 
-const THEME = {
-  light: {
-    panel: 'border border-border bg-bg-primary',
-    tab: 'border-border text-text-muted',
-    tabActive: 'border-accent-gold text-accent-gold',
-    muted: 'text-text-muted',
-    heading: 'text-text-heading',
-    inputBg: 'bg-bg-primary border border-border text-text-heading',
-    button: 'bg-accent-gold text-bg-primary hover:opacity-90',
-    buttonOutline: 'border border-border text-text-muted hover:border-accent-gold hover:text-accent-gold',
-  },
-  dark: {
-    panel: 'border border-white/10 bg-[#151C24]',
-    tab: 'border-white/15 text-white/40',
-    tabActive: 'border-[#C6A85C] text-[#C6A85C]',
-    muted: 'text-white/40',
-    heading: 'text-white/90',
-    inputBg: 'bg-transparent border border-white/20 text-white',
-    button: 'bg-[#C6A85C] text-[#0E1117] hover:opacity-90',
-    buttonOutline: 'border border-white/20 text-white/50 hover:border-[#C6A85C] hover:text-[#C6A85C]',
-  },
-} as const;
+const EASE = [0.22, 1, 0.36, 1] as const;
+const PENDING_ANCHOR_ID = '__pending__';
+
+function Pin({
+  anchorId,
+  index,
+  x,
+  y,
+  color,
+  isActive,
+  interactive,
+  onClick,
+}: {
+  anchorId: string;
+  index: number;
+  x: number;
+  y: number;
+  color: string;
+  isActive: boolean;
+  interactive: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <span className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${x * 100}%`, top: `${y * 100}%` }}>
+      {isActive && <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#C6A85C]/60" />}
+      <motion.button
+        type="button"
+        data-pin-anchor={anchorId}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.25, ease: EASE }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick?.();
+        }}
+        className={`relative flex h-6 w-6 items-center justify-center rounded-full border-2 font-mono text-[11px] font-bold shadow-lg ${color} ${
+          interactive ? 'cursor-pointer' : 'cursor-default'
+        }`}
+      >
+        {index}
+      </motion.button>
+    </span>
+  );
+}
 
 export default function DesignReviewCanvas({
   images,
@@ -67,28 +98,57 @@ export default function DesignReviewCanvas({
   allowApprove = true,
   requireMarksForSecondaryAction = true,
   submitting = false,
+  compareRevisions = [],
 }: DesignReviewCanvasProps) {
   const t = THEME[theme];
   const canToggleDesigner = viewerRole === 'designer' || viewerRole === 'employee' || viewerRole === 'admin';
   const canToggleProofreader = viewerRole === 'proofreader' || viewerRole === 'admin';
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [activeImage, setActiveImage] = useState(0);
   const [drafts, setDrafts] = useState<DraftPin[]>([]);
   const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null);
   const [draftText, setDraftText] = useState('');
-  const [openPinId, setOpenPinId] = useState<string | null>(null);
+  const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
+  const [compareTarget, setCompareTarget] = useState<CompareRevisionOption | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   const persistedForImage = comments.filter((c) => c.image_index === activeImage);
   const draftsForImage = drafts.filter((d) => d.image_index === activeImage);
+  const selectedComment = persistedForImage.find((c) => c.id === selectedCommentId) ?? null;
+
+  // Each pin carries its own `data-pin-anchor` id; the popover looks up its
+  // anchor imperatively rather than through a component ref, since pins are
+  // `motion.button`s and framer-motion's ref forwarding here doesn't reliably
+  // hand back the DOM node for anchoring purposes.
+  const activeAnchorId = pendingPin ? PENDING_ANCHOR_ID : selectedCommentId;
+  useEffect(() => {
+    // Syncing from an external system (the DOM node a pin rendered to), not
+    // deriving from React state — the legitimate exception this rule allows for.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (!activeAnchorId) {
+      setAnchorEl(null);
+      return;
+    }
+    const el = rootRef.current?.querySelector<HTMLElement>(`[data-pin-anchor="${CSS.escape(activeAnchorId)}"]`) ?? null;
+    setAnchorEl(el);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [activeAnchorId, activeImage, compareTarget]);
 
   const canAddPins = mode === 'review' || mode === 'proofread';
 
-  function handleImageClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!canAddPins) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-    const y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
-    setPendingPin({ x, y });
-    setDraftText('');
+  const handleTap = useCallback(
+    (x: number, y: number) => {
+      if (!canAddPins) return;
+      setSelectedCommentId(null);
+      setPendingPin({ x, y });
+      setDraftText('');
+    },
+    [canAddPins]
+  );
+
+  function selectComment(id: string) {
+    setPendingPin(null);
+    setSelectedCommentId((prev) => (prev === id ? null : id));
   }
 
   function saveDraft() {
@@ -118,15 +178,61 @@ export default function DesignReviewCanvas({
 
   const labelFor = (i: number) => labels?.[i]?.trim() || `Image ${i + 1}`;
 
+  const borderClass = theme === 'dark' ? 'border-white/10' : 'border-border';
+
+  function renderPersistedPins() {
+    return persistedForImage.map((c, i) => {
+      const fullyResolved = c.designer_resolved && c.proofreader_resolved;
+      return (
+        <Pin
+          key={c.id}
+          anchorId={c.id}
+          index={i + 1}
+          x={c.x}
+          y={c.y}
+          isActive={selectedCommentId === c.id}
+          interactive
+          color={fullyResolved ? 'border-emerald-400 bg-emerald-500/90 text-white' : 'border-[#C6A85C] bg-[#C6A85C] text-[#0E1117]'}
+          onClick={() => selectComment(c.id)}
+        />
+      );
+    });
+  }
+
+  function renderDraftPins() {
+    return draftsForImage.map((d, i) => (
+      <Pin key={d.tempId} anchorId={`draft-${d.tempId}`} index={i + 1} x={d.x} y={d.y} isActive={false} interactive={false} color="border-red-400 bg-red-500 text-white" />
+    ));
+  }
+
+  function renderPendingPin() {
+    if (!pendingPin) return null;
+    return (
+      <Pin
+        anchorId={PENDING_ANCHOR_ID}
+        index={draftsForImage.length + 1}
+        x={pendingPin.x}
+        y={pendingPin.y}
+        isActive
+        interactive={false}
+        color="border-red-400 bg-red-500 text-white"
+      />
+    );
+  }
+
   return (
-    <div className={`${t.panel} p-4 sm:p-6`}>
+    <div ref={rootRef} className={`${t.panel} p-4 sm:p-6`}>
       {images.length > 1 ? (
         <div className="mb-4 flex flex-wrap gap-2">
           {images.map((_, i) => (
             <button
               key={i}
               type="button"
-              onClick={() => setActiveImage(i)}
+              onClick={() => {
+                setActiveImage(i);
+                setPendingPin(null);
+                setSelectedCommentId(null);
+              }}
               className={`border px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest transition-colors ${
                 i === activeImage ? t.tabActive : t.tab
               }`}
@@ -142,147 +248,106 @@ export default function DesignReviewCanvas({
         )
       )}
 
-      <div
-        className="relative w-full select-none overflow-hidden border"
-        style={{ borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : undefined }}
-        onClick={handleImageClick}
-      >
-        <div className="relative aspect-[4/3] w-full">
-          <Image
-            src={images[activeImage]}
-            alt={`Design proof — ${labelFor(activeImage)}`}
-            fill
-            className="object-contain"
-          />
-        </div>
+      <RevisionCompareToggle options={compareRevisions} active={compareTarget} onChange={setCompareTarget} theme={theme} />
 
-        {/* Persisted pins (admin view, or historical) */}
-        {persistedForImage.map((c, i) => {
-          const fullyResolved = c.designer_resolved && c.proofreader_resolved;
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpenPinId(openPinId === c.id ? null : c.id);
-              }}
-              className={`absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 font-mono text-[11px] font-bold shadow-lg ${
-                fullyResolved
-                  ? 'border-emerald-400 bg-emerald-500/90 text-white'
-                  : 'border-[#C6A85C] bg-[#C6A85C] text-[#0E1117]'
-              }`}
-              style={{ left: `${c.x * 100}%`, top: `${c.y * 100}%` }}
-            >
-              {i + 1}
-            </button>
-          );
-        })}
-
-        {/* Draft pins (customer, not yet submitted) */}
-        {draftsForImage.map((d, i) => (
-          <div
-            key={d.tempId}
-            className="absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-red-400 bg-red-500 font-mono text-[11px] font-bold text-white shadow-lg"
-            style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%` }}
-          >
-            {i + 1}
-          </div>
-        ))}
-
-        {/* In-progress pin being typed */}
-        {pendingPin && (
-          <div
-            className="absolute z-10 w-56 -translate-x-1/2 rounded border border-red-400 bg-white p-2 shadow-xl"
-            style={{ left: `${pendingPin.x * 100}%`, top: `${pendingPin.y * 100}%` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <textarea
-              autoFocus
-              value={draftText}
-              onChange={(e) => setDraftText(e.target.value)}
-              placeholder="What needs to change here?"
-              rows={2}
-              className="w-full resize-none border border-gray-300 p-1.5 font-body text-xs text-gray-900 outline-none"
-            />
-            <div className="mt-1.5 flex justify-end gap-2">
-              <button type="button" onClick={() => setPendingPin(null)} className="font-mono text-[11px] text-gray-400 hover:text-gray-700">
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={saveDraft}
-                disabled={!draftText.trim()}
-                className="bg-red-500 px-2 py-1 font-mono text-[11px] uppercase text-white disabled:opacity-40"
-              >
-                Pin it
-              </button>
+      <div className={`grid gap-4 ${compareTarget ? '' : 'lg:grid-cols-[1fr_320px]'}`}>
+        {compareTarget ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className={`mb-2 font-mono text-[10px] uppercase tracking-widest ${t.muted}`}>Current</p>
+              <ZoomPanStage onTap={canAddPins ? handleTap : undefined} borderClassName={borderClass}>
+                <Image src={images[activeImage]} alt={`Design proof — ${labelFor(activeImage)}`} fill className="object-contain" />
+                {renderPersistedPins()}
+                {renderDraftPins()}
+                {renderPendingPin()}
+              </ZoomPanStage>
+            </div>
+            <div>
+              <p className={`mb-2 font-mono text-[10px] uppercase tracking-widest ${t.muted}`}>
+                {compareTarget.label?.trim() || `v${compareTarget.version}`}
+              </p>
+              <ZoomPanStage borderClassName={borderClass}>
+                <Image
+                  src={compareTarget.image_urls[activeImage] ?? compareTarget.image_urls[0]}
+                  alt={`Design proof — ${compareTarget.label?.trim() || `v${compareTarget.version}`}`}
+                  fill
+                  className="object-contain"
+                />
+              </ZoomPanStage>
             </div>
           </div>
+        ) : (
+          <ZoomPanStage onTap={canAddPins ? handleTap : undefined} borderClassName={borderClass}>
+            <Image src={images[activeImage]} alt={`Design proof — ${labelFor(activeImage)}`} fill className="object-contain" />
+            {renderPersistedPins()}
+            {renderDraftPins()}
+            {renderPendingPin()}
+          </ZoomPanStage>
+        )}
+
+        {!compareTarget && (
+          <CommentSidebar
+            persisted={persistedForImage}
+            drafts={draftsForImage}
+            mode={mode}
+            theme={theme}
+            selectedCommentId={selectedCommentId}
+            onSelect={selectComment}
+            onRemoveDraft={removeDraft}
+            onToggleResolved={onToggleResolved}
+            canToggleDesigner={canToggleDesigner}
+            canToggleProofreader={canToggleProofreader}
+          />
         )}
       </div>
 
-      {canAddPins && (
-        <p className={`mt-2 font-mono text-[11px] uppercase tracking-widest ${t.muted}`}>
-          Click anywhere on the image to leave a comment
-        </p>
-      )}
+      <CommentPopover open={Boolean(pendingPin)} anchorEl={pendingPin ? anchorEl : null}>
+        <div className="w-56 rounded border border-gray-300 bg-white p-2 shadow-xl">
+          <textarea
+            autoFocus
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
+            placeholder="What needs to change here?"
+            rows={2}
+            className="w-full resize-none border border-gray-300 p-1.5 font-body text-xs text-gray-900 outline-none"
+          />
+          <div className="mt-1.5 flex justify-end gap-2">
+            <button type="button" onClick={() => setPendingPin(null)} className="font-mono text-[11px] text-gray-400 hover:text-gray-700">
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={saveDraft}
+              disabled={!draftText.trim()}
+              className="bg-red-500 px-2 py-1 font-mono text-[11px] uppercase text-white disabled:opacity-40"
+            >
+              Pin it
+            </button>
+          </div>
+        </div>
+      </CommentPopover>
 
-      {/* Comment list */}
-      {(persistedForImage.length > 0 || draftsForImage.length > 0) && (
-        <ul className="mt-4 space-y-2">
-          {persistedForImage.map((c, i) => {
-            const fullyResolved = c.designer_resolved && c.proofreader_resolved;
-            return (
-              <li key={c.id} className={`flex items-start justify-between gap-3 border-b pb-2 ${theme === 'dark' ? 'border-white/5' : 'border-border'}`}>
-                <div className="flex gap-2">
-                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold ${fullyResolved ? 'bg-emerald-500 text-white' : 'bg-[#C6A85C] text-[#0E1117]'}`}>
-                    {i + 1}
-                  </span>
-                  <div>
-                    <span className={`font-mono text-[10px] uppercase tracking-widest ${c.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
-                      {c.author_role === 'proofreader' ? 'Proofreader' : 'Customer'}
-                    </span>
-                    <p className={`font-body text-sm ${t.heading} ${fullyResolved ? 'line-through opacity-50' : ''}`}>{c.comment}</p>
-                  </div>
-                </div>
-                {mode === 'manage' && onToggleResolved && (
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <button
-                      type="button"
-                      disabled={!canToggleDesigner}
-                      onClick={() => onToggleResolved(c.id, 'designer_resolved', !c.designer_resolved)}
-                      className={`font-mono text-[10px] uppercase tracking-widest ${canToggleDesigner ? 'cursor-pointer' : 'cursor-default opacity-60'} ${c.designer_resolved ? 'text-emerald-500' : t.muted}`}
-                    >
-                      Designer: {c.designer_resolved ? 'Fixed' : 'Pending'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!canToggleProofreader}
-                      onClick={() => onToggleResolved(c.id, 'proofreader_resolved', !c.proofreader_resolved)}
-                      className={`font-mono text-[10px] uppercase tracking-widest ${canToggleProofreader ? 'cursor-pointer' : 'cursor-default opacity-60'} ${c.proofreader_resolved ? 'text-emerald-500' : t.muted}`}
-                    >
-                      Proofreader: {c.proofreader_resolved ? 'Confirmed' : 'Pending'}
-                    </button>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-          {draftsForImage.map((d, i) => (
-            <li key={d.tempId} className="flex items-start justify-between gap-3 border-b border-red-500/20 pb-2">
-              <div className="flex gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 font-mono text-[11px] font-bold text-white">
-                  {i + 1}
-                </span>
-                <p className={`font-body text-sm ${t.heading}`}>{d.comment}</p>
-              </div>
-              <button type="button" onClick={() => removeDraft(d.tempId)} className="shrink-0 font-mono text-[11px] uppercase tracking-widest text-red-400 hover:text-red-500">
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
+      <CommentPopover open={Boolean(selectedComment)} anchorEl={selectedComment ? anchorEl : null}>
+        {selectedComment && (
+          <div className={`w-60 rounded border p-3 shadow-xl ${t.popoverBg}`}>
+            <span className={`font-mono text-[10px] uppercase tracking-widest ${selectedComment.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
+              {selectedComment.author_role === 'proofreader' ? 'Proofreader' : 'Customer'}
+            </span>
+            <p className="mt-1 font-body text-sm">{selectedComment.comment}</p>
+            {mode === 'manage' && (
+              <p className={`mt-2 font-mono text-[10px] uppercase tracking-widest ${t.muted}`}>
+                Designer: {selectedComment.designer_resolved ? 'Fixed' : 'Pending'} · Proofreader:{' '}
+                {selectedComment.proofreader_resolved ? 'Confirmed' : 'Pending'}
+              </p>
+            )}
+          </div>
+        )}
+      </CommentPopover>
+
+      {canAddPins && !compareTarget && (
+        <p className={`mt-2 font-mono text-[11px] uppercase tracking-widest ${t.muted}`}>
+          Tap the image to leave a comment · scroll or pinch to zoom
+        </p>
       )}
 
       {canAddPins && onSubmitReview && (
