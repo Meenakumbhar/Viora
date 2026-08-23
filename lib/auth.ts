@@ -5,6 +5,7 @@ import type { NextResponse } from "next/server";
 import { getDrizzle } from "@/db/client";
 import { user, session, account, verification } from "@/db/auth-schema";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/resend";
+import { SITE_URL } from "@/lib/site-url";
 
 const db = getDrizzle();
 if (!db) {
@@ -14,7 +15,11 @@ if (!db) {
 }
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000/",
+  // BETTER_AUTH_URL is an optional explicit override; otherwise this uses
+  // the same SITE_URL every other transactional email link in the app
+  // already points to, so verification/reset links go to the deployed site
+  // rather than silently falling back to localhost when unset.
+  baseURL: process.env.BETTER_AUTH_URL ?? SITE_URL,
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
