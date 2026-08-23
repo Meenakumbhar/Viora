@@ -23,8 +23,14 @@ export default function PortfolioPageContent({
       {/* Hero Section — dynamically changes with category filter */}
       <PortfolioHero activeCategory={activeCategory} />
 
-      {/* Grid Section */}
-      <section className="bg-cat-bg py-24 md:py-36 border-t border-border transition-colors duration-500">
+      {/* Grid Section — top padding trimmed down from the bottom's: the hero
+          already ends in ~128px of its own bottom padding + gradient fade,
+          so a full py-24/36 here on top of that read as a dead gap. No
+          border-t here either — the "Refine this collection" block right
+          below already carries its own top border, and with the padding
+          this tight the two rules sat close enough to read as a doubled
+          line with nothing between them. */}
+      <section className="bg-cat-bg pt-12 pb-24 md:pt-16 md:pb-36 transition-colors duration-500">
         <div className="container-wide">
           <SectionReveal>
             <PortfolioGrid

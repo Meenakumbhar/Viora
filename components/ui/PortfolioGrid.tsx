@@ -213,17 +213,17 @@ const PortfolioCard = memo(function PortfolioCard({
       </PortfolioVisual>
 
       {/* Caption */}
-      <div className="px-5 py-4">
-        <h3 className="font-display text-xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
+      <div className="px-4 py-3">
+        <h3 className="font-display text-lg text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
           {item.title}
         </h3>
         {item.description && (
-          <p className="mt-2 font-body text-sm text-cat-body line-clamp-2 leading-relaxed">
+          <p className="mt-1.5 font-body text-sm text-cat-body line-clamp-2 leading-relaxed">
             {item.description}
           </p>
         )}
 
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
           <span className="font-mono text-[11px] text-cat-muted uppercase tracking-wider">
             {item.location || 'Worldwide'}
           </span>
@@ -319,7 +319,7 @@ export default function PortfolioGrid({
 
   const filterOptions = useMemo(() => {
     const groups: Record<keyof PortfolioFilters, Map<string, number>> = {
-      style: new Map(), passion: new Map(), religion: new Map(), colour: new Map(), tribute: new Map(), children: new Map(),
+      style: new Map(), religion: new Map(), colour: new Map(), children: new Map(),
     };
     categoryItems.forEach((item) => {
       (Object.keys(groups) as (keyof PortfolioFilters)[]).forEach((group) => {
@@ -451,7 +451,7 @@ export default function PortfolioGrid({
     Object.values(activeFilters).some((values) => (values?.length ?? 0) > 0) || selectedTemplates.length > 0;
 
   const filterLabels: Record<keyof PortfolioFilters, string> = {
-    style: 'Style', passion: 'Passion', religion: 'Religion', colour: 'Colour', tribute: 'Tribute', children: 'Children',
+    style: 'Style', religion: 'Religion', colour: 'Colour', children: 'Children',
   };
 
   // Template numbers are numeric strings ("9", "10", "100") — a plain string
@@ -741,7 +741,7 @@ export default function PortfolioGrid({
       {/* Masonry grid */}
       <div
         ref={gridRef}
-        className="columns-1 gap-4 md:columns-2 lg:columns-3"
+        className="columns-1 gap-4 md:columns-2 lg:columns-3 xl:columns-4"
       >
         {visible.map((item, i) => (
           <PortfolioCard

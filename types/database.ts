@@ -414,13 +414,8 @@ export interface PortfolioItem {
 
 export interface PortfolioFilters {
   style?: string[];
-  passion?: string[];
   religion?: string[];
   colour?: string[];
-  tribute?: string[];
-  // A dedicated axis for child/children memorials — deliberately separate
-  // from `tribute` (where "baby"/infant tags already live) since a customer
-  // looking for one isn't necessarily looking for the other.
   children?: string[];
 }
 

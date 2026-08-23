@@ -41,7 +41,7 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,252,250,0.6) 65%, #FDFCFA 100%)',
   },
   funeral: {
-    eyebrow: 'Funeral Stationery',
+    eyebrow: '',
     headline: 'Print that honours a',
     headlineAccent: 'life',
     description:
@@ -52,7 +52,7 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(248,247,253,0.6) 65%, #F8F7FD 100%)',
   },
   wedding: {
-    eyebrow: 'Wedding Stationery',
+    eyebrow: '',
     headline: 'Stationery for your',
     headlineAccent: 'forever',
     description:
@@ -154,7 +154,7 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
   return (
     <section
       data-category={activeCategory.toLowerCase()}
-      className="relative min-h-[70vh] overflow-hidden bg-cat-bg transition-colors duration-700"
+      className="relative min-h-[max(70vh,34rem)] overflow-hidden bg-cat-bg transition-colors duration-700"
     >
       {/* Background layers start below the fixed nav (h-20) plus a little
           breathing room, matching the homepage hero — so the nav always sits
