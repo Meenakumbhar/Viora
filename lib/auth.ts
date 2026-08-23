@@ -36,7 +36,7 @@ export const auth = betterAuth({
       await sendVerificationEmail({ email: user.email, name: user.name, url });
     },
   },
-  plugins: [dash()],
+  plugins: [dash({ apiKey: process.env.BETTER_AUTH_API_KEY })],
 });
 
 // Better Auth's `asResponse: true` calls (signInEmail, signOut,
