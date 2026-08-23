@@ -30,8 +30,15 @@ export default function CommentPopover({ open, anchorEl, children }: CommentPopo
     <FloatingPortal>
       <AnimatePresence>
         {open && anchorEl && (
+          // z-[10000]: DashboardShell renders as a position:fixed, z-index:9999
+          // full-viewport layer (components/dashboard/DashboardShell.tsx) — a
+          // stacking context that elevates its entire subtree (including a
+          // plain, unstyled <img>) above anything portaled to document.body
+          // at a lower z-index, however high that z-index looks in isolation.
+          // Matches the z-[10000] already used by this codebase's other
+          // top-of-everything overlays (e.g. admin delete-confirm modals).
           // eslint-disable-next-line react-hooks/refs -- `refs.setFloating` is floating-ui's documented callback-ref setter, not a `.current` read.
-          <div ref={refs.setFloating} style={floatingStyles} className="z-50">
+          <div ref={refs.setFloating} style={floatingStyles} className="z-[10000]">
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

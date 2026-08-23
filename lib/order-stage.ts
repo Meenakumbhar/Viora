@@ -21,7 +21,12 @@ export type DisplayStage =
   | 'in_progress'
   | 'awaiting_review'
   | 'payment'
-  | 'completed';
+  | 'completed'
+  // Terminal, customer-initiated — deliberately not part of STAGES below,
+  // since it's not a step in the normal linear progression (a cancelled
+  // enquiry never had an order, payment, or design review to progress
+  // through). Only reachable from 'enquiry_received', via isCancelled.
+  | 'cancelled';
 
 export const STAGES: DisplayStage[] = [
   'enquiry_received',
@@ -33,8 +38,10 @@ export const STAGES: DisplayStage[] = [
 ];
 
 export interface DeriveStageInput {
-  /** True for a quote/enquiry that hasn't been turned into a real order yet — every other field is ignored. */
+  /** True for a quote/enquiry that hasn't been turned into a real order yet — every other field is ignored (except isCancelled). */
   isPlaced: boolean;
+  /** The customer withdrew this enquiry while it was still just a placed quote — takes priority over every other field. */
+  isCancelled?: boolean;
   orderStatus?: OrderStatus;
   paymentStatus?: PaymentStatus;
   /** Whether a price has actually been set — payment can't be "next" if there's nothing to pay yet. */
@@ -45,11 +52,13 @@ export interface DeriveStageInput {
 
 export function deriveDisplayStage({
   isPlaced,
+  isCancelled,
   orderStatus,
   paymentStatus,
   hasPaymentAmount,
   latestRevisionStatus,
 }: DeriveStageInput): DisplayStage {
+  if (isPlaced && isCancelled) return 'cancelled';
   if (isPlaced) return 'enquiry_received';
 
   const hasRevision = latestRevisionStatus !== undefined;

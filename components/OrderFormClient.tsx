@@ -162,8 +162,8 @@ function toFormState(orderForm: OrderForm | null): FormState {
 
 const PAGE_OPTIONS = ['4', '8', '12', '16'];
 const QUANTITY_MIN = 20;
-const QUANTITY_MAX = 200;
 const QUANTITY_DEFAULT = 50;
+const QUANTITY_PRESETS = [20, 25, 30, 40, 50, 75, 100, 150, 200];
 
 export default function OrderFormClient({
   enquiry,
@@ -357,8 +357,24 @@ export default function OrderFormClient({
           </div>
 
           <div>
-            <div className="flex items-baseline justify-between gap-4">
-              <FieldLabel>Quantity</FieldLabel>
+            <FieldLabel>Quantity</FieldLabel>
+            <div className="flex items-center gap-3">
+              <select
+                value={QUANTITY_PRESETS.includes(data.quantity ?? QUANTITY_DEFAULT) ? String(data.quantity ?? QUANTITY_DEFAULT) : 'custom'}
+                onChange={(e) => {
+                  if (e.target.value === 'custom') return;
+                  setField('quantity', Number(e.target.value));
+                }}
+                aria-label="Quantity"
+                className="w-full border border-border bg-cat-surface px-4 py-3 text-cat-heading font-body text-body-base outline-none transition-all duration-200 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+              >
+                {QUANTITY_PRESETS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+                <option value="custom">Other — enter exact number</option>
+              </select>
               <input
                 type="number"
                 min={QUANTITY_MIN}
@@ -368,22 +384,8 @@ export default function OrderFormClient({
                   setField('quantity', Number.isFinite(parsed) && parsed > 0 ? parsed : QUANTITY_MIN);
                 }}
                 aria-label="Exact quantity"
-                className="w-24 border-0 bg-transparent text-right font-display text-2xl text-accent-gold outline-none [appearance:textfield] focus:underline [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="w-24 shrink-0 border border-border bg-cat-surface px-3 py-3 text-center font-display text-lg text-accent-gold outline-none [appearance:textfield] focus:border-accent-gold focus:ring-1 focus:ring-accent-gold [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
-            </div>
-            <input
-              type="range"
-              min={QUANTITY_MIN}
-              max={QUANTITY_MAX}
-              step={5}
-              value={Math.min(data.quantity ?? QUANTITY_DEFAULT, QUANTITY_MAX)}
-              onChange={(e) => setField('quantity', Number(e.target.value))}
-              aria-label="Quantity (drag for a quick estimate, or type an exact number above)"
-              className="w-full accent-accent-gold"
-            />
-            <div className="flex justify-between font-mono text-[11px] text-text-muted">
-              <span>{QUANTITY_MIN}</span>
-              <span>{QUANTITY_MAX}+ — need more? type the exact number above</span>
             </div>
           </div>
 

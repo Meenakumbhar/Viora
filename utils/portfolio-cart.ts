@@ -10,6 +10,12 @@ export interface PortfolioCartItem {
   // The quote-form service label this item implies (e.g. 'Funeral & Memorial')
   // — lets a quote raised from this item skip asking for it again.
   serviceType?: string;
+  // Present only for product cart entries — the real products.id, distinct
+  // from `id` above (which stays the display/dedup composite
+  // `slug::size::templateNumber`). Lets pricing lookups (see
+  // app/pricing/page.tsx) use a real FK instead of parsing that string.
+  // `size` above already carries the size's label for these entries.
+  productId?: string;
 }
 
 const CART_KEY = 'viora-portfolio-cart';

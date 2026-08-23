@@ -43,7 +43,10 @@ export default function ZoomPanStage({ onTap, contentRefOut, children, borderCla
       {scale !== 1 && (
         <button
           type="button"
-          onClick={reset}
+          onClick={(e) => {
+            e.stopPropagation();
+            reset();
+          }}
           onPointerDown={(e) => e.stopPropagation()}
           className="absolute right-2 top-2 z-10 border border-white/20 bg-black/50 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-white backdrop-blur-sm hover:border-[#C6A85C] hover:text-[#C6A85C]"
         >

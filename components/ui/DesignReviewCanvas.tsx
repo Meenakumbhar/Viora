@@ -357,7 +357,7 @@ export default function DesignReviewCanvas({
               type="button"
               onClick={handleApprove}
               disabled={submitting}
-              className={`px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest transition-opacity disabled:opacity-40 ${t.button}`}
+              className="bg-emerald-600 px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest text-white transition-colors hover:bg-emerald-500 disabled:opacity-40"
             >
               {mode === 'proofread' ? 'Approve — send to client' : 'Approve design'}
             </button>
@@ -366,9 +366,7 @@ export default function DesignReviewCanvas({
             type="button"
             onClick={handleRequestChanges}
             disabled={submitting || (requireMarksForSecondaryAction && drafts.length === 0)}
-            className={`px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest transition-colors disabled:opacity-40 ${
-              allowApprove ? t.buttonOutline : t.button
-            }`}
+            className="bg-orange-600 px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest text-white transition-colors hover:bg-orange-500 disabled:opacity-40"
           >
             {mode === 'proofread' ? (allowApprove ? 'Return to designer' : 'Forward to designer') : 'Request changes'}{' '}
             {drafts.length > 0 && `(${drafts.length})`}

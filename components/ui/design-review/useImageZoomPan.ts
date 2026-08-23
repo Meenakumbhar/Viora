@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
 const DOUBLE_TAP_SCALE = 2.5;
-const TAP_MAX_DURATION_MS = 300;
 const TAP_MAX_TRAVEL_PX = 8;
 
 interface Point {
@@ -14,7 +13,6 @@ interface Point {
 }
 
 interface Gesture {
-  startTime: number;
   startPoint: Point;
   startTranslate: Point;
   travel: number;
@@ -24,7 +22,7 @@ interface Gesture {
 }
 
 interface UseImageZoomPanOptions {
-  /** Fired only for a genuine tap — single pointer, short, near-stationary. Coordinates are normalized 0..1 against the image's current on-screen box, so they stay correct at any zoom/pan. */
+  /** Fired for a genuine tap/click — not a drag or pinch. Coordinates are normalized 0..1 against the image's current on-screen box, so they stay correct at any zoom/pan. */
   onTap: (normalizedX: number, normalizedY: number) => void;
 }
 
@@ -34,9 +32,14 @@ function distance(a: Point, b: Point) {
 
 // Zoom/pan is hand-rolled rather than pulled from a library: pin coordinates
 // are normalized against the image's live (post-transform) bounding rect, so
-// tap detection, panning, and pinch-zoom all need to share pointer-event
-// bookkeeping with the pin-drop logic below — a black-box gesture library
-// would own pointer events and fight that.
+// panning and pinch-zoom need to share pointer-event bookkeeping with the
+// pin-drop logic below — a black-box gesture library would own pointer
+// events and fight that. Tap-to-pin itself, though, is a plain `onClick` —
+// the browser's own tap/click synthesis is more reliable across real
+// touch hardware than reimplementing "was this a tap" from raw pointer
+// timing (an earlier duration/travel-based version, combined with
+// setPointerCapture, hung real touch interactions in testing — the browser
+// already solves this correctly on both mouse and touch).
 export function useImageZoomPan({ onTap }: UseImageZoomPanOptions) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -46,6 +49,10 @@ export function useImageZoomPan({ onTap }: UseImageZoomPanOptions) {
 
   const pointers = useRef<Map<number, Point>>(new Map());
   const gesture = useRef<Gesture | null>(null);
+  // Set whenever a pointer sequence moves enough (or involves a pinch) to
+  // count as a drag/zoom rather than a tap — checked by onClick, which
+  // fires right after pointerup, to decide whether to drop a pin.
+  const suppressNextClick = useRef(false);
 
   const clampTranslate = useCallback((next: Point, forScale: number) => {
     const stage = stageRef.current;
@@ -66,20 +73,10 @@ export function useImageZoomPan({ onTap }: UseImageZoomPanOptions) {
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
-      // Capture failure (e.g. an id the platform never registered as active)
-      // must not abort the rest of the gesture — tap/pan tracking below is
-      // what actually matters, capture is just a nice-to-have for drags that
-      // leave the element's bounds.
-      try {
-        (e.target as Element).setPointerCapture?.(e.pointerId);
-      } catch {
-        // ignore
-      }
       pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
       if (pointers.current.size === 1) {
         gesture.current = {
-          startTime: Date.now(),
           startPoint: { x: e.clientX, y: e.clientY },
           startTranslate: translate,
           travel: 0,
@@ -92,6 +89,7 @@ export function useImageZoomPan({ onTap }: UseImageZoomPanOptions) {
         gesture.current.isPinch = true;
         gesture.current.pinchStartDistance = distance(a, b);
         gesture.current.pinchStartScale = scale;
+        suppressNextClick.current = true;
         setIsInteracting(true);
       }
     },
@@ -118,6 +116,7 @@ export function useImageZoomPan({ onTap }: UseImageZoomPanOptions) {
         const dy = e.clientY - g.startPoint.y;
         g.travel = Math.hypot(dx, dy);
         if (scale > 1 || g.travel > TAP_MAX_TRAVEL_PX) {
+          suppressNextClick.current = true;
           setIsInteracting(true);
           setTranslate(clampTranslate({ x: g.startTranslate.x + dx, y: g.startTranslate.y + dy }, scale));
         }
@@ -128,32 +127,18 @@ export function useImageZoomPan({ onTap }: UseImageZoomPanOptions) {
 
   const endPointer = useCallback(
     (e: React.PointerEvent) => {
-      const g = gesture.current;
       const wasTracked = pointers.current.has(e.pointerId);
       pointers.current.delete(e.pointerId);
       if (!wasTracked) return;
-
-      if (g && !g.isPinch && pointers.current.size === 0) {
-        const duration = Date.now() - g.startTime;
-        if (duration < TAP_MAX_DURATION_MS && g.travel < TAP_MAX_TRAVEL_PX) {
-          const rect = contentRef.current?.getBoundingClientRect();
-          if (rect && rect.width > 0 && rect.height > 0) {
-            const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-            const y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
-            onTap(x, y);
-          }
-        }
-      }
 
       if (pointers.current.size === 0) {
         gesture.current = null;
         setIsInteracting(false);
       } else if (pointers.current.size === 1) {
         // Downgrading from a pinch (or a stray extra pointer) back to one
-        // finger — treat the remainder as an in-progress pan, never a tap.
+        // finger — treat the remainder as an in-progress pan.
         const [remaining] = Array.from(pointers.current.values());
         gesture.current = {
-          startTime: Date.now(),
           startPoint: remaining,
           startTranslate: translate,
           travel: TAP_MAX_TRAVEL_PX + 1,
@@ -161,9 +146,25 @@ export function useImageZoomPan({ onTap }: UseImageZoomPanOptions) {
           pinchStartDistance: null,
           pinchStartScale: scale,
         };
+        suppressNextClick.current = true;
       }
     },
-    [translate, scale, onTap]
+    [translate, scale]
+  );
+
+  const onClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (suppressNextClick.current) {
+        suppressNextClick.current = false;
+        return;
+      }
+      const rect = contentRef.current?.getBoundingClientRect();
+      if (!rect || rect.width === 0 || rect.height === 0) return;
+      const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      const y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+      onTap(x, y);
+    },
+    [onTap]
   );
 
   // React attaches JSX `onWheel` as a passive listener, so `preventDefault()`
@@ -212,6 +213,7 @@ export function useImageZoomPan({ onTap }: UseImageZoomPanOptions) {
       onPointerMove,
       onPointerUp: endPointer,
       onPointerCancel: endPointer,
+      onClick,
       onDoubleClick,
     },
   };

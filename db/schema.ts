@@ -276,3 +276,41 @@ export const customerItemPrices = pgTable('customer_item_prices', {
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [unique('customer_item_prices_user_item_key').on(table.user_id, table.portfolio_item_id)]);
+
+// A specific price for one (product, size) pair, the same for every
+// customer who doesn't have something more specific set for them (see
+// customerProductPrices below). A product's sizes are a jsonb array with no
+// id of their own (see products.sizes / ProductSize in types/database.ts) —
+// size_label (the size's `label`) is the only stable identifier, so it's
+// part of the key alongside product_id, same idea as portfolioItemPrices
+// above but one level deeper.
+export const productPrices = pgTable('product_prices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  product_id: uuid('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
+  size_label: text('size_label').notNull(),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').notNull().default('GBP'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [unique('product_prices_product_id_size_label_key').on(table.product_id, table.size_label)]);
+
+// The genuinely per-customer, per-(product,size) price — most specific,
+// always wins first over productPrices' shared baseline (see
+// getEffectiveProductPrice in lib/db.ts). No set_by column, same reasoning
+// as customerItemPrices above.
+export const customerProductPrices = pgTable('customer_product_prices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  product_id: uuid('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
+  size_label: text('size_label').notNull(),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').notNull().default('GBP'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [unique('customer_product_prices_user_product_size_key').on(table.user_id, table.product_id, table.size_label)]);

@@ -14,6 +14,8 @@ import {
   staffActivity as staffActivityTable,
   portfolioItemPrices as portfolioItemPricesTable,
   customerItemPrices as customerItemPricesTable,
+  productPrices as productPricesTable,
+  customerProductPrices as customerProductPricesTable,
 } from '@/db/schema';
 import { user as usersTable } from '@/db/auth-schema';
 import type {
@@ -45,6 +47,8 @@ import type {
   OrderFormProduct,
   PortfolioItemPrice,
   CustomerItemPrice,
+  ProductPrice,
+  CustomerProductPrice,
   EffectivePrice,
   StaffActivityEvent,
   StaffActivityEventType,
@@ -489,6 +493,24 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return null;
 }
 
+export async function getProductById(id: string): Promise<Product | null> {
+  const db = getDrizzle();
+  if (db) {
+    try {
+      const rows = await db
+        .select()
+        .from(productsTable)
+        .where(and(eq(productsTable.id, id), eq(productsTable.published, true)))
+        .limit(1);
+      if (rows.length > 0) return normalizeProduct(rows[0]);
+    } catch (err) {
+      console.error(`[db] getProductById(${id}) error:`, err);
+    }
+  }
+
+  return null;
+}
+
 export async function getRelatedProducts(slugs: string[]): Promise<Product[]> {
   if (slugs.length === 0) return [];
   const db = getDrizzle();
@@ -688,6 +710,24 @@ export async function getEnquiryById(id: string): Promise<Enquiry | null> {
   if (!db) return null;
 
   const rows = await db.select().from(enquiriesTable).where(eq(enquiriesTable.id, id)).limit(1);
+
+  return rows.length > 0 ? normalizeEnquiry(rows[0]) : null;
+}
+
+// A customer withdrawing their own placed enquiry — only meaningful while
+// it's still just a quote (see deriveDisplayStage: 'enquiry_received' only
+// applies pre-order). The caller (API route) is responsible for the
+// ownership check and for confirming it hasn't already been converted to an
+// order — this just flips the status.
+export async function cancelEnquiry(id: string): Promise<Enquiry | null> {
+  const db = getDrizzle();
+  if (!db) return null;
+
+  const rows = await db
+    .update(enquiriesTable)
+    .set({ status: 'cancelled' })
+    .where(eq(enquiriesTable.id, id))
+    .returning();
 
   return rows.length > 0 ? normalizeEnquiry(rows[0]) : null;
 }
@@ -987,6 +1027,171 @@ export async function getEffectivePrice(userId: string | null, portfolioItemId: 
   return null;
 }
 
+// ─── Product pricing (a specific price for one (product, size) pair) ──────────
+
+function normalizeProductPrice(row: any): ProductPrice {
+  return {
+    id: String(row.id),
+    product_id: String(row.product_id),
+    size_label: String(row.size_label),
+    price: Number(row.price),
+    currency: String(row.currency),
+    created_at: toIsoTimestampString(row.created_at),
+    updated_at: toIsoTimestampString(row.updated_at),
+  };
+}
+
+export async function getProductPrice(productId: string, sizeLabel: string): Promise<ProductPrice | null> {
+  const db = getDrizzle();
+  if (!db) return null;
+
+  const rows = await db
+    .select()
+    .from(productPricesTable)
+    .where(and(eq(productPricesTable.product_id, productId), eq(productPricesTable.size_label, sizeLabel)))
+    .limit(1);
+
+  return rows.length > 0 ? normalizeProductPrice(rows[0]) : null;
+}
+
+// For the admin pricing table — every product price at once, joined
+// client-side against getAllProductsForAdmin() rather than a per-item round trip.
+export async function getAllProductPrices(): Promise<ProductPrice[]> {
+  const db = getDrizzle();
+  if (!db) return [];
+
+  const rows = await db.select().from(productPricesTable);
+
+  return rows.map(normalizeProductPrice);
+}
+
+// For a single product's detail page — narrower than getAllProductPrices()
+// so rendering one product doesn't pull every product's prices.
+export async function getProductPricesForProduct(productId: string): Promise<ProductPrice[]> {
+  const db = getDrizzle();
+  if (!db) return [];
+
+  const rows = await db.select().from(productPricesTable).where(eq(productPricesTable.product_id, productId));
+
+  return rows.map(normalizeProductPrice);
+}
+
+export async function upsertProductPrice(
+  productId: string,
+  sizeLabel: string,
+  price: number,
+  currency: string
+): Promise<ProductPrice> {
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const rows = await db
+    .insert(productPricesTable)
+    .values({ product_id: productId, size_label: sizeLabel, price: price.toString(), currency })
+    .onConflictDoUpdate({
+      target: [productPricesTable.product_id, productPricesTable.size_label],
+      set: { price: price.toString(), currency, updated_at: new Date() },
+    })
+    .returning();
+
+  return normalizeProductPrice(rows[0]);
+}
+
+// ─── Customer × product pricing (the same product+size, priced differently per customer) ─
+
+function normalizeCustomerProductPrice(row: any): CustomerProductPrice {
+  return {
+    id: String(row.id),
+    user_id: String(row.user_id),
+    product_id: String(row.product_id),
+    size_label: String(row.size_label),
+    price: Number(row.price),
+    currency: String(row.currency),
+    created_at: toIsoTimestampString(row.created_at),
+    updated_at: toIsoTimestampString(row.updated_at),
+  };
+}
+
+export async function getCustomerProductPrice(userId: string, productId: string, sizeLabel: string): Promise<CustomerProductPrice | null> {
+  const db = getDrizzle();
+  if (!db) return null;
+
+  const rows = await db
+    .select()
+    .from(customerProductPricesTable)
+    .where(
+      and(
+        eq(customerProductPricesTable.user_id, userId),
+        eq(customerProductPricesTable.product_id, productId),
+        eq(customerProductPricesTable.size_label, sizeLabel)
+      )
+    )
+    .limit(1);
+
+  return rows.length > 0 ? normalizeCustomerProductPrice(rows[0]) : null;
+}
+
+// For the admin UI — every customer/product override at once, filtered
+// client-side to whichever customer is currently selected.
+export async function getAllCustomerProductPrices(): Promise<CustomerProductPrice[]> {
+  const db = getDrizzle();
+  if (!db) return [];
+
+  const rows = await db.select().from(customerProductPricesTable);
+
+  return rows.map(normalizeCustomerProductPrice);
+}
+
+export async function upsertCustomerProductPrice(
+  userId: string,
+  productId: string,
+  sizeLabel: string,
+  price: number,
+  currency: string
+): Promise<CustomerProductPrice> {
+  const db = getDrizzle();
+  if (!db) throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
+
+  const rows = await db
+    .insert(customerProductPricesTable)
+    .values({ user_id: userId, product_id: productId, size_label: sizeLabel, price: price.toString(), currency })
+    .onConflictDoUpdate({
+      target: [customerProductPricesTable.user_id, customerProductPricesTable.product_id, customerProductPricesTable.size_label],
+      set: { price: price.toString(), currency, updated_at: new Date() },
+    })
+    .returning();
+
+  return normalizeCustomerProductPrice(rows[0]);
+}
+
+// What a logged-in customer/the product page sees for a given (product,
+// size), most specific first — mirrors getEffectivePrice above exactly,
+// one level deeper:
+// 1. Their price for this exact (product, size) (customerProductPrices).
+// 2. That size's shared baseline, regardless of customer (productPrices).
+// Returns null if neither exists.
+export async function getEffectiveProductPrice(
+  userId: string | null,
+  productId: string | null,
+  sizeLabel: string | null
+): Promise<EffectivePrice | null> {
+  if (userId && productId && sizeLabel) {
+    const customerPrice = await getCustomerProductPrice(userId, productId, sizeLabel);
+    if (customerPrice) {
+      return { price: customerPrice.price, currency: customerPrice.currency, negotiated: true };
+    }
+  }
+
+  if (productId && sizeLabel) {
+    const productPrice = await getProductPrice(productId, sizeLabel);
+    if (productPrice) {
+      return { price: productPrice.price, currency: productPrice.currency, negotiated: false };
+    }
+  }
+
+  return null;
+}
+
 // Keeps an order's payment_amount in sync with the current pricing catalog
 // (this customer's price for the specific piece the order references, or
 // that piece's shared baseline) so nobody has to manually re-type it every
@@ -1151,6 +1356,18 @@ export async function getOrderById(id: string): Promise<Order | null> {
   if (!db) return null;
 
   const rows = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+
+  return rows.length > 0 ? normalizeOrder(rows[0]) : null;
+}
+
+// Whether this enquiry has already been converted to a real order — used to
+// block cancelling an enquiry that's moved past the point cancellation
+// makes sense (see cancelEnquiry's caller, app/api/account/enquiries/[id]/cancel).
+export async function getOrderByEnquiryId(enquiryId: string): Promise<Order | null> {
+  const db = getDrizzle();
+  if (!db) return null;
+
+  const rows = await db.select().from(ordersTable).where(eq(ordersTable.enquiry_id, enquiryId)).limit(1);
 
   return rows.length > 0 ? normalizeOrder(rows[0]) : null;
 }
