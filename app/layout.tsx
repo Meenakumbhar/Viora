@@ -106,6 +106,15 @@ export const metadata: Metadata = {
    ROOT LAYOUT
    ═══════════════════════════════════════════════════════════════════════════ */
 
+// Every route renders Nav with live `products` from the DB (see below), so
+// there's no page in this app that's actually static — including the
+// Next-generated /_not-found route, which still renders through this layout
+// during build-time prerendering. Forcing dynamic here skips that
+// prerender pass entirely (render happens per-request instead), which is
+// what fixes a build failing on "Error occurred prerendering page
+// /_not-found" when the DB isn't reachable from the build environment.
+export const dynamic = 'force-dynamic';
+
 export default async function RootLayout({
   children,
 }: Readonly<{
