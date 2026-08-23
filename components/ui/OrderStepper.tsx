@@ -1,11 +1,12 @@
 'use client';
 
 import { STAGES, type DisplayStage } from '@/lib/order-stage';
+import { formatDuration, formatDateTime } from '@/lib/format';
 
 // Re-exported for existing callers' convenience — the derivation itself
 // lives in lib/order-stage.ts (plain, server-safe) since server code like
 // lib/account-orders.ts needs it too and shouldn't import a 'use client' file.
-export { type DisplayStage, deriveDisplayStage } from '@/lib/order-stage';
+export { type DisplayStage, deriveDisplayStage, deriveStageSince } from '@/lib/order-stage';
 
 const STAGE_LABELS: Record<DisplayStage, string> = {
   enquiry_received: 'Enquiry Received',
@@ -20,10 +21,13 @@ const STAGE_LABELS: Record<DisplayStage, string> = {
 export default function OrderStepper({
   stage,
   theme = 'dark',
+  since,
 }: {
   stage: DisplayStage;
   /** 'dark' matches the admin dashboard; 'light' matches the public site. */
   theme?: 'dark' | 'light';
+  /** When the order entered its current stage — see deriveStageSince in lib/order-stage.ts. Shown as "X in this stage" under the current step; omitted entirely if not provided. */
+  since?: string;
 }) {
   // Not a step in the normal linear progression (see the type's own comment
   // in lib/order-stage.ts) — show a plain terminal marker instead of a
@@ -48,7 +52,8 @@ export default function OrderStepper({
   const reachedText = isDark ? 'text-[#0E1117]' : 'text-text-heading';
 
   return (
-    <div className="flex items-center overflow-x-auto">
+    <div>
+      <div className="flex items-center overflow-x-auto">
       {STAGES.map((s, i) => {
         const reached = i <= currentIndex;
         // The current (not-yet-completed) step gets its own look — a solid
@@ -84,6 +89,13 @@ export default function OrderStepper({
           </div>
         );
       })}
+      </div>
+      {since && (
+        <p className={`mt-3 font-mono text-[11px] uppercase tracking-widest ${mutedText}`} title={formatDateTime(since)}>
+          {stage === 'completed' ? 'Completed' : `${STAGE_LABELS[stage]} for`} {formatDuration(since)}
+          {stage !== 'completed' && ' so far'}
+        </p>
+      )}
     </div>
   );
 }

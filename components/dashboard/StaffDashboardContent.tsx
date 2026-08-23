@@ -128,6 +128,7 @@ export default function StaffDashboardContent({
           <StaffQueueList
             rows={queue}
             isDesigner={isDesigner}
+            role={role}
             actionLabel={isDesigner ? 'Returned to you' : 'Needs your review'}
             designerNamesById={designerNamesById}
             emptyLabel={isDesigner ? 'Nothing assigned to you yet.' : 'No orders yet.'}

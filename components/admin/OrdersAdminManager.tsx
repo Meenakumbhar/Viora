@@ -3,7 +3,7 @@
 import { Fragment, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import OrderStepper from '@/components/ui/OrderStepper';
+import OrderStepper, { deriveStageSince } from '@/components/ui/OrderStepper';
 import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
 import { deriveDisplayStage } from '@/lib/order-stage';
 import type { Order, OrderStatus, OrderWithHistory } from '@/types/database';
@@ -17,9 +17,9 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
-  pending: 'text-amber-400 border-amber-500/30',
-  in_progress: 'text-blue-400 border-blue-500/30',
-  completed: 'text-emerald-400 border-emerald-500/30',
+  pending: 'bg-amber-500 text-white',
+  in_progress: 'bg-blue-500 text-white',
+  completed: 'bg-emerald-500 text-white',
 };
 
 // Mirrors the service/quantity options on the public quote form (components/ui/QuoteForm.tsx)
@@ -288,7 +288,7 @@ export default function OrdersAdminManager({ initialOrders }: { initialOrders: O
                         {new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className={`inline-flex items-center border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${STATUS_COLORS[order.status]}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${STATUS_COLORS[order.status]}`}>
                           {STATUS_LABELS[order.status]}
                         </span>
                         {order.payment_status === 'paid' && (
@@ -379,6 +379,14 @@ export default function OrdersAdminManager({ initialOrders }: { initialOrders: O
                                       paymentStatus: detailOrder.payment_status,
                                       hasPaymentAmount: detailOrder.payment_amount !== null && detailOrder.payment_amount > 0,
                                       latestRevisionStatus: detailOrder.latestRevision?.status,
+                                    })}
+                                    since={deriveStageSince({
+                                      orderCreatedAt: detailOrder.created_at,
+                                      latestOrderStatusHistoryAt:
+                                        detailOrder.history.length > 0
+                                          ? detailOrder.history[detailOrder.history.length - 1].created_at
+                                          : null,
+                                      latestRevisionUpdatedAt: detailOrder.latestRevision?.updated_at ?? null,
                                     })}
                                   />
                                 </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import DesignReviewCanvas from '@/components/ui/DesignReviewCanvas';
+import { timeAgo, formatDateTime } from '@/lib/format';
 import type { DesignRevision, DesignCommentInput, CommentResolutionField } from '@/types/database';
 
 const STATUS_LABELS: Record<DesignRevision['status'], string> = {
@@ -123,6 +124,12 @@ export default function ProofreaderPanel({ initialRevisions, apiBase }: Proofrea
               {STATUS_LABELS[current.status]}
             </span>
           </div>
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-white/30" title={formatDateTime(current.created_at)}>
+            Uploaded {timeAgo(current.created_at)}
+            {current.updated_at !== current.created_at && (
+              <span title={formatDateTime(current.updated_at)}> · Updated {timeAgo(current.updated_at)}</span>
+            )}
+          </p>
           {current.notes && <p className="mb-3 font-body text-sm text-white/50">{current.notes}</p>}
           {isRelayingChanges && (
             <p className="mb-3 font-mono text-xs text-white/40">
@@ -163,6 +170,12 @@ export default function ProofreaderPanel({ initialRevisions, apiBase }: Proofrea
                     {STATUS_LABELS[revision.status]}
                   </span>
                 </div>
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-white/30" title={formatDateTime(revision.created_at)}>
+                  Uploaded {timeAgo(revision.created_at)}
+                  {revision.updated_at !== revision.created_at && (
+                    <span title={formatDateTime(revision.updated_at)}> · Updated {timeAgo(revision.updated_at)}</span>
+                  )}
+                </p>
                 {revision.notes && <p className="mb-3 font-body text-sm text-white/50">{revision.notes}</p>}
                 <DesignReviewCanvas
                   images={revision.image_urls}

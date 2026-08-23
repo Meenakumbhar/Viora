@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import StaffQueueCard from './StaffQueueCard';
 import { PANEL_THEME, type DashboardTheme } from '@/lib/dashboard-theme';
+import { bucketFor, bucketInfoForRole, filterBucketsForRole, type WorkflowBucket } from '@/lib/staff-workflow-labels';
 import type { DesignRevision, Order } from '@/types/database';
 
 export interface QueueRow {
@@ -12,35 +13,12 @@ export interface QueueRow {
   actionable: boolean;
 }
 
-type FilterKey = 'all' | 'action' | 'no_proof' | DesignRevision['status'];
-
-const FILTER_LABELS: Record<Exclude<FilterKey, 'all' | 'action'>, string> = {
-  no_proof: 'No proof yet',
-  pending_proofreader_review: 'With proofreader',
-  returned_to_designer: 'Returned to designer',
-  pending_review: 'With customer',
-  changes_requested: 'Changes requested',
-  approved: 'Approved',
-};
-
-// Order they appear in as filter pills — roughly the order an order moves
-// through, so the row reads left-to-right as a rough timeline.
-const FILTER_ORDER: Exclude<FilterKey, 'all' | 'action'>[] = [
-  'no_proof',
-  'pending_proofreader_review',
-  'returned_to_designer',
-  'changes_requested',
-  'pending_review',
-  'approved',
-];
-
-function statusKey(row: QueueRow): Exclude<FilterKey, 'all' | 'action'> {
-  return row.latest?.status ?? 'no_proof';
-}
+type FilterKey = 'all' | 'action' | WorkflowBucket;
 
 export default function StaffQueueList({
   rows,
   isDesigner,
+  role,
   actionLabel,
   designerNamesById,
   emptyLabel,
@@ -49,6 +27,8 @@ export default function StaffQueueList({
   /** Pre-sorted (urgency, then oldest-waiting) — filtering never re-sorts. */
   rows: QueueRow[];
   isDesigner: boolean;
+  /** Decides which filter pills are offered — see filterBucketsForRole in lib/staff-workflow-labels.ts. */
+  role: string;
   /** e.g. "Needs your review" (proofreader) or "Returned to you" (designer) — label for the quick "action" filter pill. Omit to hide that pill. */
   actionLabel?: string;
   /** Plain object, not a Map — Server → Client props must be serializable. */
@@ -58,11 +38,12 @@ export default function StaffQueueList({
 }) {
   const p = PANEL_THEME[theme];
   const [filter, setFilter] = useState<FilterKey>('all');
+  const filterBuckets = filterBucketsForRole(role);
 
   const counts = useMemo(() => {
     const c: Partial<Record<FilterKey, number>> = { all: rows.length, action: rows.filter((r) => r.actionable).length };
     for (const row of rows) {
-      const key = statusKey(row);
+      const key = bucketFor(row.latest);
       c[key] = (c[key] ?? 0) + 1;
     }
     return c;
@@ -71,7 +52,7 @@ export default function StaffQueueList({
   const filtered = useMemo(() => {
     if (filter === 'all') return rows;
     if (filter === 'action') return rows.filter((r) => r.actionable);
-    return rows.filter((row) => statusKey(row) === filter);
+    return rows.filter((row) => bucketFor(row.latest) === filter);
   }, [rows, filter]);
 
   const inactivePill =
@@ -84,8 +65,8 @@ export default function StaffQueueList({
     `shrink-0 rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
       active
         ? urgent
-          ? 'border-red-500/50 bg-red-500/15 text-red-400'
-          : 'border-[#C6A85C] bg-[#C6A85C]/15 text-[#C6A85C]'
+          ? 'border-red-500/50 bg-red-500 text-white'
+          : 'border-[#C6A85C] bg-[#C6A85C] text-[#0E1117]'
         : inactivePill
     }`;
 
@@ -93,18 +74,29 @@ export default function StaffQueueList({
     <div>
       <div className={`flex gap-2 overflow-x-auto border-b ${p.panelBorder} px-4 py-3`}>
         <button type="button" onClick={() => setFilter('all')} className={pillClass(filter === 'all')}>
-          All <span className={countTextInactive}>· {counts.all ?? 0}</span>
+          All <span className={filter === 'all' ? 'opacity-70' : countTextInactive}>· {counts.all ?? 0}</span>
         </button>
         {actionLabel && (counts.action ?? 0) > 0 && (
           <button type="button" onClick={() => setFilter('action')} className={pillClass(filter === 'action', true)}>
-            {actionLabel} <span className={filter === 'action' ? 'text-red-400/70' : countTextInactive}>· {counts.action}</span>
+            {actionLabel} <span className={filter === 'action' ? 'text-white/80' : countTextInactive}>· {counts.action}</span>
           </button>
         )}
-        {FILTER_ORDER.filter((key) => (counts[key] ?? 0) > 0).map((key) => (
-          <button key={key} type="button" onClick={() => setFilter(key)} className={pillClass(filter === key)}>
-            {FILTER_LABELS[key]} <span className={countTextInactive}>· {counts[key]}</span>
-          </button>
-        ))}
+        {filterBuckets
+          .filter((key) => (counts[key] ?? 0) > 0)
+          .map((key) => {
+            const info = bucketInfoForRole(key, role);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilter(key)}
+                title={info.description}
+                className={pillClass(filter === key)}
+              >
+                {info.label} <span className={filter === key ? 'opacity-70' : countTextInactive}>· {counts[key]}</span>
+              </button>
+            );
+          })}
       </div>
 
       {filtered.length === 0 ? (
@@ -120,6 +112,7 @@ export default function StaffQueueList({
               latest={latest}
               href={`/staff/orders/${order.id}`}
               theme={theme}
+              role={role}
               assignedToName={
                 isDesigner ? undefined : order.assigned_designer_id ? (designerNamesById[order.assigned_designer_id] ?? 'Unknown') : null
               }

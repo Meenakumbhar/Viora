@@ -109,6 +109,17 @@ export default async function StaffOrderDesignsPage({ params }: { params: Promis
         </div>
       </div>
 
+      {order.enquiry_id && (
+        <div className="mt-4">
+          <Link
+            href={`/staff/order-form/${order.enquiry_id}`}
+            className="inline-flex items-center gap-2 border border-[#C6A85C] px-4 py-2 font-mono text-[11px] uppercase tracking-widest text-[#C6A85C] transition-colors hover:bg-[#C6A85C] hover:text-[#0E1117]"
+          >
+            View order form →
+          </Link>
+        </div>
+      )}
+
       {order.details && (
         <p className="mt-4 border-l-2 border-white/10 pl-4 font-body text-sm text-white/60">{order.details}</p>
       )}

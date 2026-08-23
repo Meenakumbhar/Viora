@@ -2,18 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { accentForServiceType } from '@/lib/order-category';
 import { PANEL_THEME, type DashboardTheme } from '@/lib/dashboard-theme';
+import { bucketFor, bucketInfoForRole } from '@/lib/staff-workflow-labels';
 import type { DesignRevision, Order } from '@/types/database';
-
-// All but one entry are solid semantic colors — legible against both panel
-// surfaces. Only "with customer" (a deliberately neutral, non-urgent tag)
-// needs a theme-specific muted pair.
-const STATUS_TAGS: Partial<Record<DesignRevision['status'] | 'no_proof', { label: string; className: string }>> = {
-  returned_to_designer: { label: 'Returned to you', className: 'text-red-400 border-red-500/30 bg-red-500/10' },
-  changes_requested: { label: 'Changes requested', className: 'text-red-400 border-red-500/30 bg-red-500/10' },
-  pending_proofreader_review: { label: 'Needs your review', className: 'text-[#C6A85C] border-[#C6A85C]/40 bg-[#C6A85C]/10' },
-  approved: { label: 'Approved', className: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' },
-  no_proof: { label: 'New assignment', className: 'text-[#C6A85C] border-[#C6A85C]/40 bg-[#C6A85C]/10' },
-};
 
 function daysWaiting(since: string): string {
   const ms = Date.now() - new Date(since).getTime();
@@ -28,6 +18,7 @@ export default function StaffQueueCard({
   href,
   assignedToName,
   theme,
+  role,
 }: {
   order: Order;
   latest?: DesignRevision;
@@ -35,10 +26,11 @@ export default function StaffQueueCard({
   /** Shown when viewer sees orders beyond just their own (proofreader/admin) — who it's currently routed to, if anyone. */
   assignedToName?: string | null;
   theme: DashboardTheme;
+  /** Same taxonomy the filter pills use (lib/staff-workflow-labels.ts) — so this tag is worded identically to whichever pill it belongs under. */
+  role: string;
 }) {
   const p = PANEL_THEME[theme];
-  const neutralTag = theme === 'dark' ? 'text-white/40 border-white/15' : 'text-text-muted border-border';
-  const tag = latest ? (STATUS_TAGS[latest.status] ?? { label: 'With customer', className: neutralTag }) : STATUS_TAGS.no_proof;
+  const tag = bucketInfoForRole(bucketFor(latest), role);
   const waitingSince = latest?.updated_at ?? order.created_at;
   const thumbSrc = latest?.image_urls?.[0];
   const accent = accentForServiceType(order.service_type);
@@ -63,11 +55,12 @@ export default function StaffQueueCard({
           {latest && ` · v${latest.version}`}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          {tag && (
-            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-wider ${tag.className}`}>
-              {tag.label}
-            </span>
-          )}
+          <span
+            title={tag.description}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-wider ${tag.fill}`}
+          >
+            {tag.label}
+          </span>
           {assignedToName !== undefined && (
             <span className={`font-mono text-[9.5px] uppercase tracking-wider ${p.faint}`}>
               {assignedToName ? `→ ${assignedToName}` : 'Unassigned'}

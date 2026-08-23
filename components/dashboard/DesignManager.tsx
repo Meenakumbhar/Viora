@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import DesignReviewCanvas from '@/components/ui/DesignReviewCanvas';
 import { uploadFileDirect } from '@/utils/presigned-upload';
+import { timeAgo, formatDateTime } from '@/lib/format';
 import type { DesignRevision, CommentResolutionField } from '@/types/database';
 
 const STATUS_LABELS: Record<DesignRevision['status'], string> = {
@@ -230,6 +231,12 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
                   {STATUS_LABELS[revision.status]}
                 </span>
               </div>
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-white/30" title={formatDateTime(revision.created_at)}>
+                Uploaded {timeAgo(revision.created_at)}
+                {revision.updated_at !== revision.created_at && (
+                  <span title={formatDateTime(revision.updated_at)}> · Updated {timeAgo(revision.updated_at)}</span>
+                )}
+              </p>
               {revision.notes && <p className="mb-3 font-body text-sm text-white/50">{revision.notes}</p>}
               <DesignReviewCanvas
                 images={revision.image_urls}
