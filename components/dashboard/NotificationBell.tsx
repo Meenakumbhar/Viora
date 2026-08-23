@@ -42,7 +42,7 @@ export default function NotificationBell() {
         />
         <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 font-mono text-[9px] font-bold leading-none text-white">
+      <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 font-mono text-base font-bold leading-none text-white">
         {count > 9 ? '9+' : count}
       </span>
     </Link>

@@ -43,18 +43,26 @@ export default function PortfolioPageContent({
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section — swapped back to a light panel with the accent (now a
+          pale champagne gold) carried on the button instead of the
+          background, so the colour actually reads instead of being buried
+          under white-on-dark text. */}
       <section className="bg-cat-surface border-t border-border py-24 md:py-36 text-center transition-colors duration-500">
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-cat-heading">
-              Have a project <em className="italic text-accent-gold">in mind?</em>
+              Have a project <em className="not-italic font-semibold text-accent-gold">in mind?</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-cat-body leading-relaxed">
               We work closely with individuals, couples, brands, and organizers to create premium design and print assets.
             </p>
             <div className="mt-10">
-              <Button variant="primary" size="lg" href="/contact">
+              <Button
+                variant="primary"
+                size="lg"
+                href="/contact"
+                className="!text-cat-heading hover:!bg-cat-accent-dark hover:!text-white"
+              >
                 Start a Project
               </Button>
             </div>

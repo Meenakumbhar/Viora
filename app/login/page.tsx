@@ -82,7 +82,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
             <div>
-              <label htmlFor="login-email" className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+              <label htmlFor="login-email" className="block font-mono text-base uppercase tracking-wider text-text-muted">
                 Email
               </label>
               <input
@@ -96,10 +96,10 @@ export default function LoginPage() {
             </div>
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="login-password" className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+                <label htmlFor="login-password" className="block font-mono text-base uppercase tracking-wider text-text-muted">
                   Password
                 </label>
-                <Link href="/forgot-password" className="font-mono text-[11px] uppercase tracking-wider text-accent-gold link-underline">
+                <Link href="/forgot-password" className="font-mono text-base uppercase tracking-wider text-accent-gold link-underline">
                   Forgot password?
                 </Link>
               </div>
@@ -115,13 +115,13 @@ export default function LoginPage() {
 
             {error && (
               <div>
-                <p className="font-body text-sm text-accent-blush" role="alert">{error}</p>
+                <p className="font-body text-base text-accent-blush" role="alert">{error}</p>
                 {needsVerification && (
                   <button
                     type="button"
                     onClick={handleResend}
                     disabled={resendState !== 'idle'}
-                    className="mt-2 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline disabled:opacity-50"
+                    className="mt-2 font-mono text-base uppercase tracking-wider text-accent-gold underline disabled:opacity-50"
                   >
                     {resendState === 'sent' ? 'Verification link sent' : resendState === 'sending' ? 'Sending…' : 'Resend verification email'}
                   </button>
@@ -138,7 +138,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-8 font-body text-sm text-text-muted">
+          <p className="mt-8 font-body text-base text-text-muted">
             Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-accent-gold link-underline">Sign up</Link>
           </p>

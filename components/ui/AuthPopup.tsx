@@ -40,8 +40,8 @@ function BackgroundDoodles() {
 }
 
 const inputClass =
-  'mt-1.5 w-full rounded-xl border border-border bg-bg-primary px-4 py-2.5 font-body text-sm text-text-heading outline-none transition-colors focus:border-accent-gold';
-const labelClass = 'block font-mono text-[10px] uppercase tracking-wider text-text-muted';
+  'mt-1.5 w-full rounded-xl border border-border bg-bg-primary px-4 py-2.5 font-body text-base text-text-heading outline-none transition-colors focus:border-accent-gold';
+const labelClass = 'block font-mono text-base uppercase tracking-wider text-text-muted';
 
 function EyeIcon() {
   return (
@@ -87,7 +87,7 @@ function PasswordField({ id, label, value, onChange, minLength, rightSlot }: Pas
           minLength={minLength}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-xl border border-border bg-bg-primary px-4 py-2.5 pr-11 font-body text-sm text-text-heading outline-none transition-colors focus:border-accent-gold"
+          className="w-full rounded-xl border border-border bg-bg-primary px-4 py-2.5 pr-11 font-body text-base text-text-heading outline-none transition-colors focus:border-accent-gold"
         />
         <button
           type="button"
@@ -211,7 +211,7 @@ export default function AuthPopup({ onClose }: AuthPopupProps) {
             <div>
               <span className="font-mono text-label uppercase tracking-wider text-accent-gold">Almost there</span>
               <h2 className="mt-2 font-display text-xl text-text-heading">Check your email</h2>
-              <p className="mt-2 font-body text-sm text-text-muted">{regMessage}</p>
+              <p className="mt-2 font-body text-base text-text-muted">{regMessage}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -277,7 +277,7 @@ export default function AuthPopup({ onClose }: AuthPopupProps) {
                   />
 
                   {regError && (
-                    <p className="font-body text-xs text-accent-blush" role="alert">{regError}</p>
+                    <p className="font-body text-base text-accent-blush" role="alert">{regError}</p>
                   )}
 
                   <button
@@ -310,7 +310,7 @@ export default function AuthPopup({ onClose }: AuthPopupProps) {
                       <Link
                         href="/forgot-password"
                         onClick={onClose}
-                        className="font-mono text-[10px] uppercase tracking-wider text-accent-gold link-underline"
+                        className="font-mono text-base uppercase tracking-wider text-accent-gold link-underline"
                       >
                         Forgot?
                       </Link>
@@ -319,13 +319,13 @@ export default function AuthPopup({ onClose }: AuthPopupProps) {
 
                   {loginError && (
                     <div>
-                      <p className="font-body text-xs text-accent-blush" role="alert">{loginError}</p>
+                      <p className="font-body text-base text-accent-blush" role="alert">{loginError}</p>
                       {needsVerification && (
                         <button
                           type="button"
                           onClick={handleResend}
                           disabled={resendState !== 'idle'}
-                          className="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-accent-gold underline disabled:opacity-50"
+                          className="mt-1.5 font-mono text-base uppercase tracking-wider text-accent-gold underline disabled:opacity-50"
                         >
                           {resendState === 'sent' ? 'Verification link sent' : resendState === 'sending' ? 'Sending…' : 'Resend verification email'}
                         </button>

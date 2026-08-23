@@ -56,7 +56,7 @@ export default async function ReviewDesignPage({ params }: { params: Promise<{ i
       userLabel={user.name ?? user.email}
       logoutSlot={<UserLogoutButton />}
     >
-      <span className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">{order.service_type}</span>
+      <span className="font-mono text-base uppercase tracking-widest text-accent-gold">{order.service_type}</span>
       <h1 className="mt-2 font-display text-4xl font-light text-text-heading" style={{ letterSpacing: '-0.02em' }}>
         Review your design
       </h1>
@@ -88,8 +88,8 @@ export default async function ReviewDesignPage({ params }: { params: Promise<{ i
           <ul className="mt-6 space-y-3">
             {sorted.map((r) => (
               <li key={r.id} className="flex items-center justify-between border border-border px-4 py-3">
-                <span className="font-mono text-xs text-text-heading">Proof v{r.version}</span>
-                <span className="font-mono text-[11px] uppercase tracking-widest text-text-muted">{STATUS_LABELS[r.status]}</span>
+                <span className="font-mono text-base text-text-heading">Proof v{r.version}</span>
+                <span className="font-mono text-base uppercase tracking-widest text-text-muted">{STATUS_LABELS[r.status]}</span>
               </li>
             ))}
           </ul>

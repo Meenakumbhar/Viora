@@ -142,7 +142,7 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
           {latest ? `Upload proof v${latest.version + 1}` : 'Upload the first proof'}
         </h2>
         {!canUploadNext && latest && (
-          <p className="mt-2 font-mono text-xs text-amber-400">
+          <p className="mt-2 font-mono text-base text-amber-400">
             v{latest.version} is {WAITING_ON[latest.status]} — a new upload isn't possible until the proofreader routes it back to you.
           </p>
         )}
@@ -156,17 +156,17 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
               setFiles(next);
               setLabels(next.map(() => ''));
             }}
-            className="block w-full font-mono text-xs text-white/60 file:mr-4 file:border file:border-white/20 file:bg-transparent file:px-4 file:py-2 file:font-mono file:text-[10px] file:uppercase file:tracking-widest file:text-white/70"
+            className="block w-full font-mono text-base text-white/60 file:mr-4 file:border file:border-white/20 file:bg-transparent file:px-4 file:py-2 file:font-mono file:text-base file:uppercase file:tracking-widest file:text-white/70"
           />
 
           {files.length > 0 && (
             <div className="space-y-2 border border-white/10 bg-black/20 p-3">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+              <p className="font-mono text-base uppercase tracking-widest text-white/40">
                 Label each proof (optional) — helps the customer tell them apart when reviewing
               </p>
               {files.map((file, i) => (
                 <div key={`${file.name}-${i}`} className="flex items-center gap-3">
-                  <span className="w-1/3 truncate font-mono text-[11px] text-white/50" title={file.name}>
+                  <span className="w-1/3 truncate font-mono text-base text-white/50" title={file.name}>
                     {file.name}
                   </span>
                   <input
@@ -181,7 +181,7 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
                     }
                     placeholder="e.g. Thank You Card"
                     maxLength={200}
-                    className="flex-1 border border-white/15 bg-transparent px-3 py-1.5 text-xs text-white outline-none focus:border-[#C6A85C]"
+                    className="flex-1 border border-white/15 bg-transparent px-3 py-1.5 text-base text-white outline-none focus:border-[#C6A85C]"
                   />
                 </div>
               ))}
@@ -193,14 +193,14 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Note to the customer (optional) — e.g. what changed since last time"
             rows={2}
-            className="w-full border border-white/15 bg-transparent px-4 py-2.5 text-sm text-white outline-none focus:border-[#C6A85C]"
+            className="w-full border border-white/15 bg-transparent px-4 py-2.5 text-base text-white outline-none focus:border-[#C6A85C]"
           />
-          {error && <p className="font-mono text-xs text-red-400">{error}</p>}
+          {error && <p className="font-mono text-base text-red-400">{error}</p>}
           <button
             type="button"
             onClick={handleUpload}
             disabled={uploading || files.length === 0}
-            className="bg-[#C6A85C] px-5 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-[#0E1117] transition-opacity hover:opacity-90 disabled:opacity-40"
+            className="bg-[#C6A85C] px-5 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-[#0E1117] transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {uploading ? 'Uploading…' : 'Send for review'}
           </button>
@@ -209,35 +209,35 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
 
       {/* Revision history */}
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-mono text-[10px] uppercase tracking-widest text-white/40">Revisions</h3>
+        <h3 className="font-mono text-base uppercase tracking-widest text-white/40">Revisions</h3>
         <button
           type="button"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="font-mono text-[10px] uppercase tracking-widest text-white/40 transition-colors hover:text-[#C6A85C] disabled:opacity-40"
+          className="font-mono text-base uppercase tracking-widest text-white/40 transition-colors hover:text-[#C6A85C] disabled:opacity-40"
         >
           {refreshing ? 'Refreshing…' : '↻ Refresh'}
         </button>
       </div>
       {sorted.length === 0 ? (
-        <p className="font-mono text-xs text-white/30">No proofs uploaded yet.</p>
+        <p className="font-mono text-base text-white/30">No proofs uploaded yet.</p>
       ) : (
         <div className="space-y-10">
           {sorted.map((revision) => (
             <div key={revision.id}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h3 className="font-display text-xl font-light">Proof v{revision.version}</h3>
-                <span className={`inline-flex items-center border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest ${STATUS_COLORS[revision.status]}`}>
+                <span className={`inline-flex items-center border px-2.5 py-0.5 font-mono text-base uppercase tracking-widest ${STATUS_COLORS[revision.status]}`}>
                   {STATUS_LABELS[revision.status]}
                 </span>
               </div>
-              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-white/30" title={formatDateTime(revision.created_at)}>
+              <p className="mb-3 font-mono text-base uppercase tracking-widest text-white/30" title={formatDateTime(revision.created_at)}>
                 Uploaded {timeAgo(revision.created_at)}
                 {revision.updated_at !== revision.created_at && (
                   <span title={formatDateTime(revision.updated_at)}> · Updated {timeAgo(revision.updated_at)}</span>
                 )}
               </p>
-              {revision.notes && <p className="mb-3 font-body text-sm text-white/50">{revision.notes}</p>}
+              {revision.notes && <p className="mb-3 font-body text-base text-white/50">{revision.notes}</p>}
               <DesignReviewCanvas
                 images={revision.image_urls}
                 labels={revision.image_labels}

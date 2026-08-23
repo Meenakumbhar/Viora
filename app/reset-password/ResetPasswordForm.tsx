@@ -47,7 +47,7 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
         <p className="mt-3 font-body text-body-base text-text-muted">
           This password reset link is missing its token. Please request a new one.
         </p>
-        <Link href="/forgot-password" className="mt-8 inline-block font-mono text-[11px] uppercase tracking-wider text-accent-gold link-underline">
+        <Link href="/forgot-password" className="mt-8 inline-block font-mono text-base uppercase tracking-wider text-accent-gold link-underline">
           Request a new link
         </Link>
       </div>
@@ -69,7 +69,7 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
         <p className="mt-3 font-body text-body-base text-text-muted">
           Your password has been changed. You&apos;ve been logged out of every other session for your security.
         </p>
-        <Link href="/login" className="mt-8 inline-block font-mono text-[11px] uppercase tracking-wider text-accent-gold link-underline">
+        <Link href="/login" className="mt-8 inline-block font-mono text-base uppercase tracking-wider text-accent-gold link-underline">
           Log in
         </Link>
       </div>
@@ -83,7 +83,7 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
         <div>
-          <label htmlFor="reset-password" className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+          <label htmlFor="reset-password" className="block font-mono text-base uppercase tracking-wider text-text-muted">
             New password
           </label>
           <input
@@ -95,10 +95,10 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
             onChange={(e) => setPassword(e.target.value)}
             className="mt-2 w-full border border-border bg-bg-primary px-4 py-2.5 font-body text-text-heading outline-none transition-colors focus:border-accent-gold"
           />
-          <p className="mt-1.5 font-mono text-[11px] text-text-muted">At least 8 characters.</p>
+          <p className="mt-1.5 font-mono text-base text-text-muted">At least 8 characters.</p>
         </div>
         <div>
-          <label htmlFor="reset-confirm-password" className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+          <label htmlFor="reset-confirm-password" className="block font-mono text-base uppercase tracking-wider text-text-muted">
             Confirm new password
           </label>
           <input
@@ -113,7 +113,7 @@ export default function ResetPasswordForm({ token }: { token: string | null }) {
         </div>
 
         {error && (
-          <p className="font-body text-sm text-accent-blush" role="alert">{error}</p>
+          <p className="font-body text-base text-accent-blush" role="alert">{error}</p>
         )}
 
         <button

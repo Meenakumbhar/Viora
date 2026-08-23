@@ -42,7 +42,7 @@ const portfolioGradients: Record<string, string> = {
   wedding:
     'linear-gradient(160deg, #FDF7F5 0%, #F5E6DF 40%, #E8D5C4 80%, #C4958F 100%)',
   funeral:
-    'linear-gradient(160deg, #F8F7FD 0%, #EDEAF8 40%, #D6D3EE 80%, #8B82C4 100%)',
+    'linear-gradient(160deg, #FBF7EE 0%, #F7EFDA 40%, #F3E7C9 80%, #E5CB90 100%)',
   sports:
     'linear-gradient(160deg, #F4FAF0 0%, #E2F0DB 40%, #C2DCBB 80%, #7D9B76 100%)',
   branding:
@@ -58,7 +58,7 @@ const blogGradients: Record<string, string> = {
   'Wedding Guides':
     'linear-gradient(135deg, #FDF7F5 0%, #E8D5C4 60%, #C4958F 100%)',
   'Funeral Advice':
-    'linear-gradient(135deg, #F8F7FD 0%, #D6D3EE 60%, #8B82C4 100%)',
+    'linear-gradient(135deg, #FBF7EE 0%, #F3E7C9 60%, #E5CB90 100%)',
   'Design Tips':
     'linear-gradient(135deg, #F4FAF0 0%, #C2DCBB 60%, #7D9B76 100%)',
   'Studio News':
@@ -157,7 +157,25 @@ export default async function Home() {
       </section>
 
       {/* ──────────────────── SECTION 2 — STUDIO INTRODUCTION ──────────────────── */}
-      <section id="about" className="py-10 md:py-14 lg:py-16 bg-bg-primary">
+      <section id="about" className="relative overflow-hidden py-10 md:py-14 lg:py-16 bg-bg-primary">
+        {/* The hero ends flush into this section's own top padding, which was
+            sitting as a plain empty cream band before any content appeared —
+            a small hand-drawn sprig (the same motif used elsewhere on the
+            site) fills that strip instead of leaving it bare. */}
+        <svg
+          className="pointer-events-none absolute left-1/2 top-0 h-24 w-24 -translate-x-1/2 text-accent-gold opacity-[0.12] md:h-28 md:w-28"
+          viewBox="0 0 100 100"
+          fill="none"
+          aria-hidden="true"
+        >
+          <g stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M50,95 C48,70 46,45 45,10" />
+            <path d="M48,80 C60,75 65,65 55,58 C50,65 46,72 48,80 Z" />
+            <path d="M46,60 C34,55 28,45 38,38 C43,45 47,52 46,60 Z" />
+            <path d="M45,38 C57,33 62,23 52,16 C47,23 43,30 45,38 Z" />
+          </g>
+        </svg>
+
         <SectionReveal>
           <div className="container-wide">
             <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
@@ -267,19 +285,19 @@ export default async function Home() {
                         {item.title}
                       </h3>
                       {item.description && (
-                        <p className="mt-3 font-body text-sm text-cat-body line-clamp-2 leading-relaxed">
+                        <p className="mt-3 font-body text-base text-cat-body line-clamp-2 leading-relaxed">
                           {item.description}
                         </p>
                       )}
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between">
-                      <span className="font-mono text-[11px] text-cat-muted uppercase tracking-wider">
+                      <span className="font-mono text-base text-cat-muted uppercase tracking-wider">
                         {item.location || 'Worldwide'}
                       </span>
                       <Link
                         href={`/portfolio/${item.id}`}
-                        className="inline-flex items-center gap-1 font-body text-xs font-semibold uppercase tracking-wider text-cat-accent-dark"
+                        className="inline-flex items-center gap-1 font-body text-base font-semibold uppercase tracking-wider text-cat-accent-dark"
                       >
                         View Project <span aria-hidden="true">&rarr;</span>
                       </Link>
@@ -313,7 +331,7 @@ export default async function Home() {
           </span>
 
           <h2 className="font-display text-display-lg text-text-heading mt-3">
-            Where craft meets <em className="italic text-accent-gold">care</em>
+            Where craft meets <em className="not-italic font-semibold text-accent-gold">care</em>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 w-full">
@@ -436,7 +454,7 @@ export default async function Home() {
               Gather &amp; Remember
             </span>
             <h2 className="font-display text-display-md text-text-heading mt-3">
-              Celebration of <em className="italic text-accent-gold">Life</em>
+              Celebration of <em className="not-italic font-semibold text-accent-gold">Life</em>
             </h2>
             <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed">
               Some moments deserve to be gathered around, shared, and remembered. Whether you&apos;re celebrating a new beginning, honoring a loved one, or marking a special milestone, we help you create a gathering that feels personal, warm, and true to your story.
@@ -496,7 +514,7 @@ export default async function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
               {/* Left — modern delivery map */}
               <div className="flex items-center justify-center" data-delay="1">
-                <div className="w-full max-w-lg rounded-[2rem] border border-border/70 bg-[#f7efe6] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.08)] md:p-6">
+                <div className="w-full max-w-lg rounded-[2rem] bg-[#f7efe6] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.08)] md:p-6">
                   <img
                     src="/world_map.png"
                     alt="World map showing delivery coverage"
@@ -513,7 +531,7 @@ export default async function Home() {
 
                 <h2 className="font-display text-display-md text-text-heading mt-3">
                   Designed here.{' '}
-                  <em className="italic text-accent-gold">Delivered everywhere.</em>
+                  <em className="not-italic font-semibold text-accent-gold">Delivered everywhere.</em>
                 </h2>
 
                 <p className="font-body text-body-lg text-text-muted mt-4 leading-relaxed">
@@ -552,7 +570,7 @@ export default async function Home() {
         <SectionReveal>
           <div className="container-wide">
             <h2 className="font-display text-display-lg text-text-heading">
-              From the <em className="italic text-accent-gold">studio</em>
+              From the <em className="not-italic font-semibold text-accent-gold">studio</em>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">

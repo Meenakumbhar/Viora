@@ -34,7 +34,7 @@ export default function OrderStepper({
   // stepper with every step stuck at "unreached".
   if (stage === 'cancelled') {
     return (
-      <div className={`flex items-center gap-2 font-mono text-xs uppercase tracking-widest ${theme === 'dark' ? 'text-white/40' : 'text-text-muted'}`}>
+      <div className={`flex items-center gap-2 font-mono text-base uppercase tracking-widest ${theme === 'dark' ? 'text-white/40' : 'text-text-muted'}`}>
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-[#7A4A44] text-[#7A4A44]" aria-hidden="true">
           ✕
         </span>
@@ -64,7 +64,7 @@ export default function OrderStepper({
           <div key={s} className="flex flex-1 items-center last:flex-none">
             <div className="flex flex-col items-center">
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 font-mono text-xs transition-colors ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 font-mono text-base transition-colors ${
                   isCurrent
                     ? 'border-accent-gold bg-transparent text-accent-gold'
                     : reached
@@ -76,7 +76,7 @@ export default function OrderStepper({
                 {reached && !isCurrent ? '✓' : i + 1}
               </div>
               <span
-                className={`mt-2 whitespace-nowrap font-mono text-[11px] uppercase tracking-widest ${
+                className={`mt-2 whitespace-nowrap font-mono text-base uppercase tracking-widest ${
                   reached ? 'text-accent-gold' : mutedText
                 }`}
               >
@@ -91,7 +91,7 @@ export default function OrderStepper({
       })}
       </div>
       {since && (
-        <p className={`mt-3 font-mono text-[11px] uppercase tracking-widest ${mutedText}`} title={formatDateTime(since)}>
+        <p className={`mt-3 font-mono text-base uppercase tracking-widest ${mutedText}`} title={formatDateTime(since)}>
           {stage === 'completed' ? 'Completed' : `${STAGE_LABELS[stage]} for`} {formatDuration(since)}
           {stage !== 'completed' && ' so far'}
         </p>

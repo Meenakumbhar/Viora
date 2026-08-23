@@ -28,7 +28,7 @@ interface OrderRowData {
 export type AccountRow = PlacedRow | OrderRowData;
 
 function JobNumber({ id }: { id: string }) {
-  return <p className="font-mono text-xs text-text-muted">Order #{id.slice(0, 8).toUpperCase()}</p>;
+  return <p className="font-mono text-base text-text-muted">Order #{id.slice(0, 8).toUpperCase()}</p>;
 }
 
 // Solid fill, not a faint tint — a low-opacity background on a stage like
@@ -42,7 +42,7 @@ function StatusTag({ status }: { status: DisplayStage }) {
   const textColor = status === 'awaiting_review' || status === 'payment' ? '#1C2530' : '#FFFFFF';
   return (
     <span
-      className="inline-flex items-center px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider"
+      className="inline-flex items-center px-2.5 py-1 font-mono text-base font-semibold uppercase tracking-wider"
       style={{ color: textColor, backgroundColor: color }}
     >
       {STATUS_LABELS[status]}
@@ -75,12 +75,12 @@ function CancelEnquiryControl({ enquiryId, onCancelled }: { enquiryId: string; o
   if (confirming) {
     return (
       <div className="flex flex-wrap items-center gap-3">
-        <span className="font-mono text-xs uppercase tracking-widest text-[#7A4A44]">Cancel this enquiry?</span>
+        <span className="font-mono text-base uppercase tracking-widest text-[#7A4A44]">Cancel this enquiry?</span>
         <button
           type="button"
           onClick={handleCancel}
           disabled={cancelling}
-          className="border border-[#7A4A44] px-4 py-2 font-mono text-xs uppercase tracking-widest text-[#7A4A44] transition-colors hover:bg-[#7A4A44] hover:text-white disabled:opacity-50"
+          className="border border-[#7A4A44] px-4 py-2 font-mono text-base uppercase tracking-widest text-[#7A4A44] transition-colors hover:bg-[#7A4A44] hover:text-white disabled:opacity-50"
         >
           {cancelling ? 'Cancelling…' : 'Yes, cancel it'}
         </button>
@@ -88,7 +88,7 @@ function CancelEnquiryControl({ enquiryId, onCancelled }: { enquiryId: string; o
           type="button"
           onClick={() => setConfirming(false)}
           disabled={cancelling}
-          className="font-mono text-xs uppercase tracking-widest text-text-muted hover:text-text-heading"
+          className="font-mono text-base uppercase tracking-widest text-text-muted hover:text-text-heading"
         >
           Never mind
         </button>
@@ -101,11 +101,11 @@ function CancelEnquiryControl({ enquiryId, onCancelled }: { enquiryId: string; o
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="font-mono text-xs uppercase tracking-widest text-[#7A4A44] underline transition-colors hover:text-[#5c3833]"
+        className="font-mono text-base uppercase tracking-widest text-[#7A4A44] underline transition-colors hover:text-[#5c3833]"
       >
         Cancel this enquiry
       </button>
-      {error && <p className="mt-2 font-mono text-xs text-[#7A4A44]" role="alert">{error}</p>}
+      {error && <p className="mt-2 font-mono text-base text-[#7A4A44]" role="alert">{error}</p>}
     </div>
   );
 }
@@ -143,14 +143,14 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                   className={`flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-black/[0.02] ${isOpen ? 'bg-black/[0.02]' : ''}`}
                 >
                   <div className="flex min-w-0 items-center gap-4">
-                    <span className={`shrink-0 font-mono text-sm text-text-muted transition-transform ${isOpen ? 'rotate-90 text-accent-gold' : ''}`}>▸</span>
+                    <span className={`shrink-0 font-mono text-base text-text-muted transition-transform ${isOpen ? 'rotate-90 text-accent-gold' : ''}`}>▸</span>
                     <div className="min-w-0">
                       <JobNumber id={enquiry.id} />
                       <p className="mt-0.5 truncate font-display text-lg text-text-heading">{enquiry.service_type}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="hidden font-mono text-xs text-text-muted sm:inline">
+                    <span className="hidden font-mono text-base text-text-muted sm:inline">
                       {new Date(enquiry.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </span>
                     <StatusTag status={placedStage} />
@@ -166,7 +166,7 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                     </p>
 
                     {enquiry.quantity_estimate && (
-                      <p className="mt-4 font-mono text-xs uppercase tracking-widest text-text-muted">
+                      <p className="mt-4 font-mono text-base uppercase tracking-widest text-text-muted">
                         Estimated quantity <span className="normal-case text-text-heading">{enquiry.quantity_estimate}</span>
                       </p>
                     )}
@@ -177,7 +177,7 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                           <Link
                             key={item.id}
                             href={`/portfolio/${item.id}`}
-                            className="border border-border px-3 py-1.5 font-mono text-xs text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
+                            className="border border-border px-3 py-1.5 font-mono text-base text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
                           >
                             {item.title}
                           </Link>
@@ -232,20 +232,20 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                 className={`flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-black/[0.02] ${isOpen ? 'bg-black/[0.02]' : ''}`}
               >
                 <div className="flex min-w-0 items-center gap-4">
-                  <span className={`shrink-0 font-mono text-sm text-text-muted transition-transform ${isOpen ? 'rotate-90 text-accent-gold' : ''}`}>▸</span>
+                  <span className={`shrink-0 font-mono text-base text-text-muted transition-transform ${isOpen ? 'rotate-90 text-accent-gold' : ''}`}>▸</span>
                   <div className="min-w-0">
                     <JobNumber id={order.id} />
                     <p className="mt-0.5 truncate font-display text-lg text-text-heading">{order.service_type}</p>
                     {latestRevision && latestRevision.status === 'pending_review' && (
-                      <p className="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-accent-gold">Proof ready to review</p>
+                      <p className="mt-0.5 font-mono text-base uppercase tracking-widest text-accent-gold">Proof ready to review</p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="hidden font-mono text-xs text-text-muted sm:inline">
+                  <span className="hidden font-mono text-base text-text-muted sm:inline">
                     {new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
                   </span>
-                  <span className="hidden items-center gap-2 font-mono text-sm text-text-heading sm:flex">
+                  <span className="hidden items-center gap-2 font-mono text-base text-text-heading sm:flex">
                     {order.payment_status === 'paid' && order.payment_provider && (
                       <PaymentProviderIcon provider={order.payment_provider} />
                     )}
@@ -262,22 +262,22 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                       href={`/account/orders/${order.id}/review`}
                       className="flex items-center justify-between border border-accent-gold/40 bg-accent-gold/5 px-4 py-3 transition-colors hover:bg-accent-gold/10"
                     >
-                      <span className="font-mono text-sm uppercase tracking-widest text-accent-gold">
+                      <span className="font-mono text-base uppercase tracking-widest text-accent-gold">
                         Your design (v{latestRevision.version}) is ready to review
                       </span>
-                      <span className="font-mono text-sm text-accent-gold">→</span>
+                      <span className="font-mono text-base text-accent-gold">→</span>
                     </Link>
                   )}
                   {latestRevision && latestRevision.status === 'changes_requested' && (
                     <div className="border border-border bg-white/[0.02] px-4 py-3">
-                      <span className="font-mono text-sm uppercase tracking-widest text-text-muted">
+                      <span className="font-mono text-base uppercase tracking-widest text-text-muted">
                         Changes requested on v{latestRevision.version} — the studio is working on a revised proof
                       </span>
                     </div>
                   )}
                   {latestRevision && latestRevision.status === 'approved' && (
                     <div className="border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
-                      <span className="font-mono text-sm uppercase tracking-widest text-emerald-600">
+                      <span className="font-mono text-base uppercase tracking-widest text-emerald-600">
                         Design v{latestRevision.version} approved ✓
                       </span>
                     </div>
@@ -289,7 +289,7 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                         <Link
                           key={item.id}
                           href={`/portfolio/${item.id}`}
-                          className="border border-border px-3 py-1.5 font-mono text-xs text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
+                          className="border border-border px-3 py-1.5 font-mono text-base text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
                         >
                           {item.title}
                         </Link>
@@ -313,7 +313,7 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                     <div className="mt-8 border-t border-border pt-6">
                       <Link
                         href={`/account/quote?service=${encodeURIComponent(order.service_type)}&details=${encodeURIComponent(`Reordering — similar to a previous ${order.service_type} order.`)}`}
-                        className="inline-block border border-accent-gold px-5 py-2.5 font-mono text-sm uppercase tracking-widest text-accent-gold transition-colors hover:bg-accent-gold hover:text-bg-primary"
+                        className="inline-block border border-accent-gold px-5 py-2.5 font-mono text-base uppercase tracking-widest text-accent-gold transition-colors hover:bg-accent-gold hover:text-bg-primary"
                       >
                         Request similar
                       </Link>
@@ -324,7 +324,7 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                     <div className="mt-8 border-t border-border pt-6">
                       <Link
                         href={`/order-form/${order.enquiry_id}`}
-                        className="font-mono text-xs uppercase tracking-wider text-text-muted underline transition-colors hover:text-accent-gold"
+                        className="font-mono text-base uppercase tracking-wider text-text-muted underline transition-colors hover:text-accent-gold"
                       >
                         View order form
                       </Link>
@@ -333,13 +333,13 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
 
                   {history.length > 0 && (
                     <div className="mt-8 border-t border-border pt-6">
-                      <p className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">History</p>
+                      <p className="mb-3 font-mono text-base uppercase tracking-widest text-text-muted">History</p>
                       <ul className="space-y-4 border-l border-border pl-5">
                         {[...history].reverse().map((entry) => (
                           <li key={entry.id} className="relative">
                             <span className="absolute -left-[25px] top-1 h-2.5 w-2.5 rounded-full bg-accent-gold" aria-hidden="true" />
-                            <p className="font-mono text-xs uppercase tracking-widest text-accent-gold">{RAW_STATUS_LABELS[entry.status]}</p>
-                            <p className="font-mono text-xs text-text-muted">
+                            <p className="font-mono text-base uppercase tracking-widest text-accent-gold">{RAW_STATUS_LABELS[entry.status]}</p>
+                            <p className="font-mono text-base text-text-muted">
                               {new Date(entry.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </p>
                             {entry.note && <p className="mt-1 font-body text-base text-text-heading">{entry.note}</p>}

@@ -19,12 +19,13 @@ const STUDIO_LINKS: FooterLink[] = [
 const SUPPORT_LINKS: FooterLink[] = [
   { label: 'Contact Us', href: '/contact' },
   { label: 'Turnaround Times', href: '/process' },
+  { label: 'FAQ', href: '/faq' },
 ];
 
 const LEGAL_LINKS: FooterLink[] = [
   { label: 'Privacy Policy', href: '/privacy' },
   { label: 'Terms & Conditions', href: '/terms' },
-  { label: 'Sitemap', href: '/sitemap.xml' },
+  { label: 'Cookies Policy', href: '/cookies' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -191,7 +192,7 @@ export default function Footer() {
 
         {/* ── Bottom Bar ─────────────────────────────────────────────── */}
         <div className="border-t border-dark-border mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="font-body text-sm text-dark-text-muted">
+          <p className="font-body text-base text-dark-text-muted">
             &copy; 2026 Memories in Prints &middot; Worldwide design &amp; print
           </p>
           <p className="font-mono text-label text-dark-text-muted">

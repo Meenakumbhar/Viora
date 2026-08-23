@@ -17,7 +17,7 @@ import type {
 
 function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
-    <p className="mb-2 font-body text-sm text-text-muted uppercase tracking-wider">
+    <p className="mb-2 font-body text-base text-text-muted uppercase tracking-wider">
       {children}
       {hint && <span className="ml-2 normal-case text-text-muted/70">({hint})</span>}
     </p>
@@ -83,7 +83,7 @@ function PillChip({
       type="button"
       onClick={onClick}
       className={[
-        'px-4 py-2.5 border font-body text-sm transition-all duration-200 text-left',
+        'px-4 py-2.5 border font-body text-base transition-all duration-200 text-left',
         'hover:border-accent-gold hover:text-accent-gold',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold',
         selected
@@ -100,7 +100,7 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle?: 
   return (
     <div className="border border-border bg-cat-surface p-6 md:p-8">
       <h2 className="font-display text-2xl text-cat-heading">{title}</h2>
-      {subtitle && <p className="mt-1 font-body text-sm text-cat-body">{subtitle}</p>}
+      {subtitle && <p className="mt-1 font-body text-base text-cat-body">{subtitle}</p>}
       <div className="mt-6 space-y-6">{children}</div>
     </div>
   );
@@ -264,7 +264,7 @@ export default function OrderFormClient({
       <div className="container-wide pt-32 pb-12">
         <span className="font-mono text-label uppercase tracking-wider text-accent-gold">Order Form</span>
         <h1 className="mt-3 font-display text-display-lg text-text-heading max-w-xl">
-          Tell us about the <em className="italic text-accent-gold">service</em>
+          Tell us about the <em className="not-italic font-semibold text-accent-gold">service</em>
         </h1>
         <p className="mt-4 font-body text-body-lg text-text-muted max-w-lg">
           A few details for your {enquiry.service_type.toLowerCase()} enquiry so we can prepare the design and print specification. Save your progress any time — nothing here is timed.
@@ -398,7 +398,7 @@ export default function OrderFormClient({
             />
             <span>
               <span className="block font-body text-body-base text-cat-heading">This is a bespoke design</span>
-              <span className="block font-body text-sm text-text-muted">Your client wants to create their own custom design rather than choosing from our templates.</span>
+              <span className="block font-body text-base text-text-muted">Your client wants to create their own custom design rather than choosing from our templates.</span>
             </span>
           </label>
 
@@ -428,9 +428,9 @@ export default function OrderFormClient({
                         const existing = selectedForProduct.find((p) => p.size === size.label);
                         return (
                           <div key={size.label} className="flex items-center justify-between gap-4">
-                            <span className="font-body text-sm text-cat-body">
+                            <span className="font-body text-base text-cat-body">
                               {size.label !== 'Standard' ? size.label : product.title}
-                              <span className="ml-2 font-mono text-[11px] text-text-muted">{size.dimensions}</span>
+                              <span className="ml-2 font-mono text-base text-text-muted">{size.dimensions}</span>
                             </span>
                             <input
                               type="number"
@@ -438,7 +438,7 @@ export default function OrderFormClient({
                               value={existing?.quantity ?? ''}
                               onChange={(e) => setProductQuantity(product.slug, product.title, size.label, Math.max(0, Number(e.target.value) || 0))}
                               placeholder="0"
-                              className="w-20 border border-border bg-cat-bg px-3 py-1.5 text-center font-mono text-sm text-cat-heading outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
+                              className="w-20 border border-border bg-cat-bg px-3 py-1.5 text-center font-mono text-base text-cat-heading outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold"
                             />
                           </div>
                         );
@@ -532,7 +532,7 @@ export default function OrderFormClient({
         </SectionCard>
 
         {status === 'error' && errorMessage && (
-          <p className="font-body text-sm text-accent-blush" role="alert">
+          <p className="font-body text-base text-accent-blush" role="alert">
             {errorMessage}
           </p>
         )}
@@ -555,7 +555,7 @@ export default function OrderFormClient({
           </button>
         </div>
 
-        <p className="font-mono text-[11px] text-text-muted">
+        <p className="font-mono text-base text-text-muted">
           Questions about your order?{' '}
           <Link href="/contact" className="text-accent-gold link-underline">Contact us</Link>.
         </p>

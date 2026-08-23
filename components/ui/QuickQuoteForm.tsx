@@ -183,7 +183,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
 
         {enquiryId && (
           <div className="mt-8 w-full max-w-md rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-6 text-left">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">Next step</p>
+            <p className="font-mono text-base uppercase tracking-widest text-accent-gold">Next step</p>
             <p className="mt-2 font-body text-body-base text-text-heading">
               Fill out your order form now so we can start on the design straight away — you don&apos;t need to wait for our reply.
             </p>
@@ -196,7 +196,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
         >
           {enquiryId ? 'Fill out order form now' : 'Go to your orders now'} &rarr;
         </Link>
-        <p className="mt-3 font-mono text-[11px] uppercase tracking-wider text-text-muted">
+        <p className="mt-3 font-mono text-base uppercase tracking-wider text-text-muted">
           Taking you there automatically&hellip;
         </p>
       </div>
@@ -209,13 +209,13 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
     <form onSubmit={handleSubmit} noValidate className="space-y-8">
       {/* ── Ordering-as summary — contact details are already on file ──── */}
       <div className="flex items-center justify-between gap-4 border border-border bg-cat-surface px-5 py-3">
-        <p className="font-body text-sm text-text-muted">
+        <p className="font-body text-base text-text-muted">
           Ordering as <span className="text-text-heading">{user.name || user.email}</span>
           {user.name && <span className="text-text-muted"> &middot; {user.email}</span>}
         </p>
         <Link
           href="/account/profile"
-          className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+          className="shrink-0 font-mono text-base uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
         >
           Edit details
         </Link>
@@ -225,10 +225,10 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
       {cartItems.length > 0 && includeCartItems && (
         <div className="flex items-start justify-between gap-4 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
+            <p className="font-mono text-base uppercase tracking-widest text-accent-gold">
               Requesting a quote for {cartItems.length} item{cartItems.length === 1 ? '' : 's'} from your cart
             </p>
-            <p className="mt-1.5 font-body text-sm text-text-muted">
+            <p className="mt-1.5 font-body text-base text-text-muted">
               {cartItems.map((item) => item.title).join(', ')}
             </p>
           </div>
@@ -238,7 +238,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
               setIncludeCartItems(false);
               if (derivedServiceType) setField('serviceType', '');
             }}
-            className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
+            className="shrink-0 font-mono text-base uppercase tracking-wider text-text-muted underline hover:text-text-heading"
           >
             Not about this
           </button>
@@ -250,20 +250,20 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
         {derivedServiceType && !serviceOverride ? (
           <div className="flex items-center justify-between gap-4 border border-border bg-cat-surface px-4 py-3">
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">Service</p>
+              <p className="font-mono text-base uppercase tracking-widest text-text-muted">Service</p>
               <p className="mt-1 font-body text-cat-heading">{derivedServiceType}</p>
             </div>
             <button
               type="button"
               onClick={() => setServiceOverride(true)}
-              className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+              className="shrink-0 font-mono text-base uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
             >
               Change
             </button>
           </div>
         ) : (
           <>
-            <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+            <p className="mb-3 font-body text-base text-text-muted uppercase tracking-wider">
               Service type<span className="text-accent-gold ml-0.5">*</span>
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -284,7 +284,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
 
       {/* ── Date ─────────────────────────────────────────────────────────── */}
       <div>
-        <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+        <p className="mb-3 font-body text-base text-text-muted uppercase tracking-wider">
           Delivery Date
         </p>
         <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
@@ -292,7 +292,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
 
       {/* ── Address — defaults to the saved profile address, like Amazon ──── */}
       <div>
-        <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+        <p className="mb-3 font-body text-base text-text-muted uppercase tracking-wider">
           Delivery or venue address
         </p>
         {hasSavedAddress && !useDifferentAddress ? (
@@ -301,7 +301,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
             <button
               type="button"
               onClick={() => setUseDifferentAddress(true)}
-              className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+              className="shrink-0 font-mono text-base uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
             >
               Use a different address
             </button>
@@ -321,7 +321,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
               <button
                 type="button"
                 onClick={() => { setUseDifferentAddress(false); setField('address', ''); }}
-                className="mt-2 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+                className="mt-2 font-mono text-base uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
               >
                 Use my saved address instead
               </button>
@@ -343,7 +343,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
 
       {/* ── Error message ────────────────────────────────────────────────── */}
       {state === 'error' && errorMessage && (
-        <p className="text-sm text-accent-blush" role="alert">
+        <p className="text-base text-accent-blush" role="alert">
           {errorMessage}
         </p>
       )}

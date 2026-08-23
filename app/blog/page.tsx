@@ -32,7 +32,7 @@ export default async function BlogPage() {
           Studio Journal
         </span>
         <h1 className="mt-4 font-display text-display-xl text-text-primary max-w-4xl">
-          Stories & print <em className="italic text-accent-gold">guides</em>
+          Stories & print <em className="not-italic font-semibold text-accent-gold">guides</em>
         </h1>
         <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
           Technical advice on preparing artwork, guides on choosing paper stocks, and stories behind our custom print designs.
@@ -45,7 +45,7 @@ export default async function BlogPage() {
           <div className="container-wide">
             <SectionReveal>
               <div className="border border-border bg-bg-secondary p-8 md:p-12">
-                <span className="block font-mono text-xs text-accent-gold uppercase tracking-wider mb-6">
+                <span className="block font-mono text-base text-accent-gold uppercase tracking-wider mb-6">
                   Featured Article
                 </span>
                 
@@ -59,7 +59,7 @@ export default async function BlogPage() {
                   {/* Right Column: Details */}
                   <div className="lg:col-span-5 flex flex-col justify-between">
                     <div>
-                      <span className="font-mono text-xs text-text-muted uppercase tracking-wider">
+                      <span className="font-mono text-base text-text-muted uppercase tracking-wider">
                         {featuredPost.category}
                         {featuredPost.published_at
                           ? ` · ${new Date(featuredPost.published_at).toLocaleDateString('en-GB', {
@@ -101,7 +101,7 @@ export default async function BlogPage() {
                 Latest Publications
               </span>
               <h2 className="mt-4 font-display text-display-lg text-text-primary">
-                Latest <em className="italic text-accent-gold">articles</em>
+                Latest <em className="not-italic font-semibold text-accent-gold">articles</em>
               </h2>
             </div>
 
@@ -119,7 +119,7 @@ export default async function BlogPage() {
                     {/* Details */}
                     <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
                       <div>
-                        <span className="font-mono text-xs text-text-muted uppercase tracking-wider">
+                        <span className="font-mono text-base text-text-muted uppercase tracking-wider">
                           {post.category}
                           {post.published_at
                             ? ` · ${new Date(post.published_at).toLocaleDateString('en-GB', {
@@ -161,7 +161,7 @@ export default async function BlogPage() {
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">
-              Stay in the <em className="italic text-accent-gold">loop</em>
+              Stay in the <em className="not-italic font-semibold text-accent-gold">loop</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-text-muted leading-relaxed">
               We send updates from our studio including print tutorials, project showcases, and paper announcements once a month.

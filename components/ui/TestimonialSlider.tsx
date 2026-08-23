@@ -94,7 +94,7 @@ export default function TestimonialSlider({ dark = false }: { dark?: boolean }) 
         {/* Location badge */}
         <span
           className={[
-            'mt-3 inline-flex items-center gap-1.5 rounded-full border border-accent-gold/60 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-accent-gold',
+            'mt-3 inline-flex items-center gap-1.5 rounded-full border border-accent-gold/60 px-3 py-1 font-mono text-base uppercase tracking-widest text-accent-gold',
             'transition-all duration-300 ease-in-out',
             transitioning ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100',
           ].join(' ')}

@@ -38,7 +38,7 @@ export default function ProcessPage() {
           Studio Workflow
         </span>
         <h1 className="mt-4 font-display text-display-xl text-text-primary max-w-4xl">
-          Simple from start to <em className="italic text-accent-gold">delivery</em>
+          Simple from start to <em className="not-italic font-semibold text-accent-gold">delivery</em>
         </h1>
         <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
           We manage the design, coordination, and print details so you can focus on the event itself. Here is how we bring your project to life.
@@ -64,7 +64,7 @@ export default function ProcessPage() {
                     className="relative flex flex-col gap-6 pl-16 md:flex-row md:gap-12 md:pl-28 lg:flex-col lg:items-center lg:gap-0 lg:pl-0 lg:text-center"
                   >
                     {/* Circle counter */}
-                    <div className="absolute left-2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-bg-primary font-mono text-xs font-bold text-accent-gold md:left-8 lg:static lg:translate-x-0">
+                    <div className="absolute left-2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-bg-primary font-mono text-base font-bold text-accent-gold md:left-8 lg:static lg:translate-x-0">
                       {step.number}
                     </div>
 
@@ -73,12 +73,12 @@ export default function ProcessPage() {
                         <h2 className="font-display text-3xl text-text-primary lg:text-xl">
                           {step.title}
                         </h2>
-                        <span className="font-mono text-[11px] text-text-muted uppercase tracking-widest border border-border px-2 py-0.5 bg-bg-secondary">
+                        <span className="font-mono text-base text-text-muted uppercase tracking-widest border border-border px-2 py-0.5 bg-bg-secondary">
                           {step.timeframe}
                         </span>
                       </div>
 
-                      <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed max-w-2xl lg:mt-2 lg:text-sm">
+                      <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed max-w-2xl lg:mt-2 lg:text-base">
                         {step.description}
                       </p>
                     </div>
@@ -99,7 +99,7 @@ export default function ProcessPage() {
                 Support
               </span>
               <h2 className="mt-4 font-display text-display-lg text-text-primary">
-                Process & production <em className="italic text-accent-gold">FAQs</em>
+                Process & production <em className="not-italic font-semibold text-accent-gold">FAQs</em>
               </h2>
             </div>
 
@@ -113,7 +113,7 @@ export default function ProcessPage() {
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">
-              Ready to <em className="italic text-accent-gold">start?</em>
+              Ready to <em className="not-italic font-semibold text-accent-gold">start?</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-text-muted leading-relaxed">
               Fill in our brief form and we will review your requirements and respond with a detailed quote within 24 hours.

@@ -120,7 +120,7 @@ export default function FileUpload({
   return (
     <div className="w-full space-y-2">
       {label && (
-        <label className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+        <label className="block font-mono text-base uppercase tracking-wider text-text-muted">
           {label}
         </label>
       )}
@@ -158,7 +158,7 @@ export default function FileUpload({
                     <line x1="16" y1="17" x2="8" y2="17" />
                     <polyline points="10 9 9 9 8 9" />
                   </svg>
-                  <span className="mt-1 font-mono text-[9px] uppercase">PDF</span>
+                  <span className="mt-1 font-mono text-base uppercase">PDF</span>
                 </div>
               ) : (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-text-muted">
@@ -174,11 +174,11 @@ export default function FileUpload({
                 href={value}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block truncate font-mono text-xs text-text-heading hover:text-accent-gold hover:underline"
+                className="block truncate font-mono text-base text-text-heading hover:text-accent-gold hover:underline"
               >
                 {value.split('/').pop() || 'Uploaded File'}
               </a>
-              <p className="mt-1 truncate font-mono text-[10px] text-text-muted">
+              <p className="mt-1 truncate font-mono text-base text-text-muted">
                 {value}
               </p>
 
@@ -187,7 +187,7 @@ export default function FileUpload({
                   href={value}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs text-accent-gold hover:underline"
+                  className="font-mono text-base text-accent-gold hover:underline"
                 >
                   View / download
                 </a>
@@ -196,7 +196,7 @@ export default function FileUpload({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={disabled || isUploading}
-                  className="font-mono text-xs text-accent-gold hover:underline"
+                  className="font-mono text-base text-accent-gold hover:underline"
                 >
                   Replace file
                 </button>
@@ -205,7 +205,7 @@ export default function FileUpload({
                   type="button"
                   onClick={handleRemove}
                   disabled={disabled || isUploading}
-                  className="font-mono text-xs text-red-400 hover:underline"
+                  className="font-mono text-base text-red-400 hover:underline"
                 >
                   Remove
                 </button>
@@ -231,7 +231,7 @@ export default function FileUpload({
           {isUploading ? (
             <div className="w-full max-w-xs space-y-3">
               <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-accent-gold border-t-transparent" />
-              <p className="font-mono text-xs text-accent-gold">
+              <p className="font-mono text-base text-accent-gold">
                 Uploading... {progress}%
               </p>
               {/* Progress bar */}
@@ -255,11 +255,11 @@ export default function FileUpload({
                 />
               </div>
 
-              <p className="font-body text-sm text-text-heading">
+              <p className="font-body text-base text-text-heading">
                 <span className="font-semibold text-accent-gold">Click to upload</span>{' '}
                 or drag & drop
               </p>
-              <p className="mt-1 font-mono text-[10px] text-text-muted">{helperText}</p>
+              <p className="mt-1 font-mono text-base text-text-muted">{helperText}</p>
             </>
           )}
         </div>
@@ -267,7 +267,7 @@ export default function FileUpload({
 
       {/* Error notification */}
       {errorMessage && (
-        <p className="font-mono text-xs text-red-400" role="alert">
+        <p className="font-mono text-base text-red-400" role="alert">
           {errorMessage}
         </p>
       )}

@@ -332,15 +332,16 @@ body {
 }
 
 [data-category="funeral"] {
-  --cat-bg:         #F8F7FD;   /* Lavender Mist */
-  --cat-surface:    #D6D3EE;   /* Periwinkle */
-  --cat-accent:     #8B82C4;   /* Muted Violet */
-  --cat-accent-dark:#534AB7;
-  --cat-heading:    #26215C;   /* Deep Violet */
-  --cat-body:       #4A4560;
-  --cat-muted:      #7A7590;
-  --cat-pill-bg:    #8B82C422;
-  --cat-pill-text:  #534AB7;
+  --cat-bg:         #FBF7EE;   /* Champagne Mist */
+  --cat-surface:    #F3E7C9;   /* Gold Mist */
+  --cat-accent:     #E5CB90;   /* Champagne Gold */
+  --cat-accent-dark:#8A6F35;   /* Antique Bronze — deep companion, used
+                                   wherever accent needs to carry white text */
+  --cat-heading:    #332B16;   /* Deep Umber */
+  --cat-body:       #5C4F30;
+  --cat-muted:      #93855E;
+  --cat-pill-bg:    #E5CB9033;
+  --cat-pill-text:  #6B5629;
 
   --color-accent-gold: var(--cat-accent);
   --color-accent-gold-hover: var(--cat-accent-dark);

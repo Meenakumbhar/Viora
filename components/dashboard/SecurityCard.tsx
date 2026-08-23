@@ -59,17 +59,17 @@ export default function SecurityCard() {
 
   return (
     <div className="border border-border p-6 sm:p-7">
-      <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-heading">Security</p>
+      <p className="font-mono text-base uppercase tracking-[0.18em] text-text-heading">Security</p>
 
       {message && (
-        <p className="mt-4 border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 font-body text-sm text-emerald-700">{message}</p>
+        <p className="mt-4 border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 font-body text-base text-emerald-700">{message}</p>
       )}
 
       <div className="mt-5 border-t border-dashed border-border pt-5">
         {changingPassword ? (
           <div className="space-y-4">
             <div>
-              <label htmlFor="current-password" className="block font-mono text-[11px] uppercase tracking-widest text-text-muted">
+              <label htmlFor="current-password" className="block font-mono text-base uppercase tracking-widest text-text-muted">
                 Current password
               </label>
               <input
@@ -81,7 +81,7 @@ export default function SecurityCard() {
               />
             </div>
             <div>
-              <label htmlFor="new-password" className="block font-mono text-[11px] uppercase tracking-widest text-text-muted">
+              <label htmlFor="new-password" className="block font-mono text-base uppercase tracking-widest text-text-muted">
                 New password
               </label>
               <input
@@ -92,10 +92,10 @@ export default function SecurityCard() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="mt-1.5 w-full border border-border bg-bg-primary px-3 py-2.5 font-body text-base text-text-heading outline-none transition-colors focus:border-accent-gold"
               />
-              <p className="mt-1.5 font-mono text-[11px] text-text-muted">At least 8 characters.</p>
+              <p className="mt-1.5 font-mono text-base text-text-muted">At least 8 characters.</p>
             </div>
             <div>
-              <label htmlFor="confirm-new-password" className="block font-mono text-[11px] uppercase tracking-widest text-text-muted">
+              <label htmlFor="confirm-new-password" className="block font-mono text-base uppercase tracking-widest text-text-muted">
                 Confirm new password
               </label>
               <input
@@ -108,14 +108,14 @@ export default function SecurityCard() {
               />
             </div>
 
-            {error && <p className="font-body text-sm text-accent-blush" role="alert">{error}</p>}
+            {error && <p className="font-body text-base text-accent-blush" role="alert">{error}</p>}
 
             <div className="flex gap-3 pt-1">
               <button
                 type="button"
                 onClick={handleChangePassword}
                 disabled={saving}
-                className="bg-accent-gold px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="bg-accent-gold px-5 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {saving ? 'Saving…' : 'Change password'}
               </button>
@@ -123,7 +123,7 @@ export default function SecurityCard() {
                 type="button"
                 onClick={() => setChangingPassword(false)}
                 disabled={saving}
-                className="font-mono text-xs uppercase tracking-widest text-text-muted hover:text-text-heading"
+                className="font-mono text-base uppercase tracking-widest text-text-muted hover:text-text-heading"
               >
                 Cancel
               </button>
@@ -135,7 +135,7 @@ export default function SecurityCard() {
             <button
               type="button"
               onClick={() => setChangingPassword(true)}
-              className="font-mono text-xs uppercase tracking-widest text-accent-gold link-underline"
+              className="font-mono text-base uppercase tracking-widest text-accent-gold link-underline"
             >
               Change
             </button>
@@ -147,18 +147,18 @@ export default function SecurityCard() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-body text-base text-text-heading">Other devices</p>
-            <p className="mt-1 font-body text-sm text-text-muted">Sign out everywhere except this browser.</p>
+            <p className="mt-1 font-body text-base text-text-muted">Sign out everywhere except this browser.</p>
           </div>
           <button
             type="button"
             onClick={handleRevokeOtherSessions}
             disabled={revoking}
-            className="border border-border px-4 py-2 font-mono text-xs uppercase tracking-widest text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold disabled:opacity-50"
+            className="border border-border px-4 py-2 font-mono text-base uppercase tracking-widest text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold disabled:opacity-50"
           >
             {revoking ? 'Signing out…' : 'Sign out other devices'}
           </button>
         </div>
-        {revokeMessage && <p className="mt-3 font-mono text-xs text-text-muted">{revokeMessage}</p>}
+        {revokeMessage && <p className="mt-3 font-mono text-base text-text-muted">{revokeMessage}</p>}
       </div>
     </div>
   );

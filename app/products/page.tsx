@@ -23,7 +23,7 @@ export default async function ProductsPage() {
           What We Offer
         </span>
         <h1 className="mt-4 font-display text-display-xl text-cat-heading max-w-4xl">
-          Our <em className="italic text-accent-gold">products</em>
+          Our <em className="not-italic font-semibold text-accent-gold">products</em>
         </h1>
         <p className="mt-6 font-body text-body-lg text-cat-body max-w-2xl leading-relaxed">
           A collection of memorial keepsakes and stationery, each designed to be thoughtfully personalised and produced with care.
@@ -64,17 +64,17 @@ export default async function ProductsPage() {
                       <h2 className="font-display text-xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
                         {group.type_label}
                       </h2>
-                      <p className="mt-2 font-body text-sm text-cat-body leading-relaxed line-clamp-3">
+                      <p className="mt-2 font-body text-base text-cat-body leading-relaxed line-clamp-3">
                         {representative.subtitle}
                       </p>
-                      <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-cat-muted">
+                      <p className="mt-4 font-mono text-base uppercase tracking-widest text-cat-muted">
                         {group.products.length > 1
                           ? `${group.products.length} designs available`
                           : representative.sizes.length > 1
                             ? `${representative.sizes.length} sizes available`
                             : representative.sizes[0]?.dimensions}
                       </p>
-                      <span className="mt-auto pt-6 font-mono text-[11px] uppercase tracking-wider text-cat-accent-dark">
+                      <span className="mt-auto pt-6 font-mono text-base uppercase tracking-wider text-cat-accent-dark">
                         View details &rarr;
                       </span>
                     </div>
@@ -90,7 +90,7 @@ export default async function ProductsPage() {
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-cat-heading">
-              Don&apos;t see what you&apos;re <em className="italic text-accent-gold">looking for?</em>
+              Don&apos;t see what you&apos;re <em className="not-italic font-semibold text-accent-gold">looking for?</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-cat-body leading-relaxed">
               We create bespoke memorial stationery too — share your ideas and we&apos;ll bring them to life.

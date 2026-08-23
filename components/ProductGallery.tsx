@@ -56,7 +56,7 @@ export default function ProductGallery({ images, title }: ProductGalleryProps) {
           >
             →
           </button>
-          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-white backdrop-blur">
+          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-3 py-1 font-mono text-base uppercase tracking-wider text-white backdrop-blur">
             {active + 1} / {gallery.length}
           </span>
         </>

@@ -10,7 +10,7 @@ export default function UserLogoutButton() {
     <button
       type="button"
       onClick={handleLogout}
-      className="font-mono text-[11px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
+      className="font-mono text-base uppercase tracking-wider text-text-muted underline hover:text-text-heading"
     >
       Log out
     </button>

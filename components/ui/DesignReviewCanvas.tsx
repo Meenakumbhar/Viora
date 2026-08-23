@@ -77,7 +77,7 @@ function Pin({
           e.stopPropagation();
           onClick?.();
         }}
-        className={`relative flex h-6 w-6 items-center justify-center rounded-full border-2 font-mono text-[11px] font-bold shadow-lg ${color} ${
+        className={`relative flex h-6 w-6 items-center justify-center rounded-full border-2 font-mono text-base font-bold shadow-lg ${color} ${
           interactive ? 'cursor-pointer' : 'cursor-default'
         }`}
       >
@@ -234,7 +234,7 @@ export default function DesignReviewCanvas({
                 setPendingPin(null);
                 setSelectedCommentId(null);
               }}
-              className={`border px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest transition-colors ${
+              className={`border px-3 py-1.5 font-mono text-base uppercase tracking-widest transition-colors ${
                 i === activeImage ? t.tabActive : t.tab
               }`}
             >
@@ -245,7 +245,7 @@ export default function DesignReviewCanvas({
         </div>
       ) : (
         labels?.[0]?.trim() && (
-          <p className={`mb-3 font-mono text-[11px] uppercase tracking-widest ${t.muted}`}>{labels[0]!.trim()}</p>
+          <p className={`mb-3 font-mono text-base uppercase tracking-widest ${t.muted}`}>{labels[0]!.trim()}</p>
         )
       )}
 
@@ -255,7 +255,7 @@ export default function DesignReviewCanvas({
         {compareTarget ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className={`mb-2 font-mono text-[10px] uppercase tracking-widest ${t.muted}`}>Current</p>
+              <p className={`mb-2 font-mono text-base uppercase tracking-widest ${t.muted}`}>Current</p>
               <ZoomPanStage onTap={canAddPins ? handleTap : undefined} borderClassName={borderClass}>
                 <Image src={images[activeImage]} alt={`Design proof — ${labelFor(activeImage)}`} fill className="object-contain" />
                 {renderPersistedPins()}
@@ -264,7 +264,7 @@ export default function DesignReviewCanvas({
               </ZoomPanStage>
             </div>
             <div>
-              <p className={`mb-2 font-mono text-[10px] uppercase tracking-widest ${t.muted}`}>
+              <p className={`mb-2 font-mono text-base uppercase tracking-widest ${t.muted}`}>
                 {compareTarget.label?.trim() || `v${compareTarget.version}`}
               </p>
               <ZoomPanStage borderClassName={borderClass}>
@@ -310,17 +310,17 @@ export default function DesignReviewCanvas({
             onChange={(e) => setDraftText(e.target.value)}
             placeholder="What needs to change here?"
             rows={2}
-            className="w-full resize-none border border-gray-300 p-1.5 font-body text-xs text-gray-900 outline-none"
+            className="w-full resize-none border border-gray-300 p-1.5 font-body text-base text-gray-900 outline-none"
           />
           <div className="mt-1.5 flex justify-end gap-2">
-            <button type="button" onClick={() => setPendingPin(null)} className="font-mono text-[11px] text-gray-400 hover:text-gray-700">
+            <button type="button" onClick={() => setPendingPin(null)} className="font-mono text-base text-gray-400 hover:text-gray-700">
               Cancel
             </button>
             <button
               type="button"
               onClick={saveDraft}
               disabled={!draftText.trim()}
-              className="bg-red-500 px-2 py-1 font-mono text-[11px] uppercase text-white disabled:opacity-40"
+              className="bg-red-500 px-2 py-1 font-mono text-base uppercase text-white disabled:opacity-40"
             >
               Pin it
             </button>
@@ -331,15 +331,15 @@ export default function DesignReviewCanvas({
       <CommentPopover open={Boolean(selectedComment)} anchorEl={selectedComment ? anchorEl : null}>
         {selectedComment && (
           <div className={`w-60 rounded border p-3 shadow-xl ${t.popoverBg}`}>
-            <span className={`font-mono text-[10px] uppercase tracking-widest ${selectedComment.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
+            <span className={`font-mono text-base uppercase tracking-widest ${selectedComment.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
               {selectedComment.author_role === 'proofreader' ? 'Proofreader' : 'Customer'}
             </span>
-            <span className={`ml-2 font-mono text-[10px] normal-case ${t.muted}`} title={formatDateTime(selectedComment.created_at)}>
+            <span className={`ml-2 font-mono text-base normal-case ${t.muted}`} title={formatDateTime(selectedComment.created_at)}>
               {timeAgo(selectedComment.created_at)}
             </span>
-            <p className="mt-1 font-body text-sm">{selectedComment.comment}</p>
+            <p className="mt-1 font-body text-base">{selectedComment.comment}</p>
             {mode === 'manage' && (
-              <p className={`mt-2 font-mono text-[10px] uppercase tracking-widest ${t.muted}`}>
+              <p className={`mt-2 font-mono text-base uppercase tracking-widest ${t.muted}`}>
                 Designer: {selectedComment.designer_resolved ? 'Fixed' : 'Pending'} · Proofreader:{' '}
                 {selectedComment.proofreader_resolved ? 'Confirmed' : 'Pending'}
               </p>
@@ -349,7 +349,7 @@ export default function DesignReviewCanvas({
       </CommentPopover>
 
       {canAddPins && !compareTarget && (
-        <p className={`mt-2 font-mono text-[11px] uppercase tracking-widest ${t.muted}`}>
+        <p className={`mt-2 font-mono text-base uppercase tracking-widest ${t.muted}`}>
           Tap the image to leave a comment · scroll or pinch to zoom
         </p>
       )}
@@ -361,7 +361,7 @@ export default function DesignReviewCanvas({
               type="button"
               onClick={handleApprove}
               disabled={submitting}
-              className="bg-emerald-600 px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest text-white transition-colors hover:bg-emerald-500 disabled:opacity-40"
+              className="bg-emerald-600 px-5 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-white transition-colors hover:bg-emerald-500 disabled:opacity-40"
             >
               {mode === 'proofread' ? 'Approve — send to client' : 'Approve design'}
             </button>
@@ -370,7 +370,7 @@ export default function DesignReviewCanvas({
             type="button"
             onClick={handleRequestChanges}
             disabled={submitting || (requireMarksForSecondaryAction && drafts.length === 0)}
-            className="bg-orange-600 px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest text-white transition-colors hover:bg-orange-500 disabled:opacity-40"
+            className="bg-orange-600 px-5 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-white transition-colors hover:bg-orange-500 disabled:opacity-40"
           >
             {mode === 'proofread' ? (allowApprove ? 'Return to designer' : 'Forward to designer') : 'Request changes'}{' '}
             {drafts.length > 0 && `(${drafts.length})`}

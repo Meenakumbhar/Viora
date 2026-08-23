@@ -123,7 +123,7 @@ function FloatingInput({
         htmlFor={id}
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-1.5 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-1.5 text-base uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         {label}
@@ -212,7 +212,7 @@ function CountryCombobox({
         htmlFor="quote-country"
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-1.5 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-1.5 text-base uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         Country (optional)
@@ -324,7 +324,7 @@ function EmailInput({
         htmlFor="quote-email"
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-1.5 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-1.5 text-base uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         Email<span className="text-accent-gold ml-0.5">*</span>
@@ -340,7 +340,7 @@ function EmailInput({
                 key={d}
                 onMouseDown={() => selectDomain(d)}
                 className={[
-                  'px-4 py-2.5 font-mono text-sm cursor-pointer flex items-center gap-1 transition-colors',
+                  'px-4 py-2.5 font-mono text-base cursor-pointer flex items-center gap-1 transition-colors',
                   i === highlighted ? 'bg-accent-gold/10 text-accent-gold' : 'text-cat-heading hover:bg-bg-secondary',
                 ].join(' ')}
               >
@@ -534,7 +534,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
 
         {enquiryId && (
           <div className="mt-8 w-full max-w-md rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-6 text-left">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">Next step</p>
+            <p className="font-mono text-base uppercase tracking-widest text-accent-gold">Next step</p>
             <p className="mt-2 font-body text-body-base text-text-heading">
               Fill out your order form now so we can start on the design straight away — you don&apos;t need to wait for our reply.
             </p>
@@ -569,10 +569,10 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
       {cartItems.length > 0 && includeCartItems && (
         <div className="mb-8 flex items-start justify-between gap-4 rounded-2xl border border-accent-gold/40 bg-accent-gold/5 px-5 py-4 animate-fadeIn">
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
+            <p className="font-mono text-base uppercase tracking-widest text-accent-gold">
               Requesting a quote for {cartItems.length} item{cartItems.length === 1 ? '' : 's'} from your cart
             </p>
-            <p className="mt-1.5 font-body text-sm text-text-muted">
+            <p className="mt-1.5 font-body text-base text-text-muted">
               {cartItems.map((item) => item.title).join(', ')}
             </p>
           </div>
@@ -584,7 +584,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
               // applies either — back to asking, like a guest enquiry.
               if (derivedServiceType) setField('serviceType', '');
             }}
-            className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-text-muted underline hover:text-text-heading"
+            className="shrink-0 font-mono text-base uppercase tracking-wider text-text-muted underline hover:text-text-heading"
           >
             Not about this
           </button>
@@ -639,20 +639,20 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
           {derivedServiceType && !serviceOverride ? (
             <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-cat-surface px-4 py-3">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">Service</p>
+                <p className="font-mono text-base uppercase tracking-widest text-text-muted">Service</p>
                 <p className="mt-1 font-body text-cat-heading">{derivedServiceType}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setServiceOverride(true)}
-                className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
+                className="shrink-0 font-mono text-base uppercase tracking-wider text-accent-gold underline hover:text-accent-gold-dark"
               >
                 Change
               </button>
             </div>
           ) : (
             <>
-              <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+              <p className="mb-3 font-body text-base text-text-muted uppercase tracking-wider">
                 Service type<span className="text-accent-gold ml-0.5">*</span>
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -673,7 +673,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
 
         {/* Date */}
         <div>
-          <p className="mb-3 font-body text-sm text-text-muted uppercase tracking-wider">
+          <p className="mb-3 font-body text-base text-text-muted uppercase tracking-wider">
             Delivery Date
           </p>
           <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
@@ -697,7 +697,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
 
       {/* ── Error message ─────────────────────────────────────────────── */}
       {state === 'error' && errorMessage && (
-        <p className="mt-4 text-sm text-accent-blush" role="alert">
+        <p className="mt-4 text-base text-accent-blush" role="alert">
           {errorMessage}
         </p>
       )}

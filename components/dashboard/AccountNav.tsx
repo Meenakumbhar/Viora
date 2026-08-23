@@ -33,7 +33,7 @@ export default function AccountNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 font-mono text-xs uppercase tracking-widest transition-colors lg:border-b-0 lg:border-l-2 lg:px-4 ${
+            className={`shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 font-mono text-base uppercase tracking-widest transition-colors lg:border-b-0 lg:border-l-2 lg:px-4 ${
               active
                 ? 'border-accent-gold text-accent-gold'
                 : 'border-transparent text-text-muted hover:text-text-heading'
