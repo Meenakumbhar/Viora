@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DesignReviewCanvas from './DesignReviewCanvas';
+import type { CompareRevisionOption } from './design-review/RevisionCompareToggle';
 import type { DesignCommentInput } from '@/types/database';
 
 interface DesignReviewSubmitProps {
@@ -11,9 +12,11 @@ interface DesignReviewSubmitProps {
   images: string[];
   labels?: (string | null)[] | null;
   version: number;
+  /** Other revisions of this same order, for the optional "compare with" view. */
+  otherRevisions?: CompareRevisionOption[];
 }
 
-export default function DesignReviewSubmit({ orderId, revisionId, images, labels, version }: DesignReviewSubmitProps) {
+export default function DesignReviewSubmit({ orderId, revisionId, images, labels, version, otherRevisions }: DesignReviewSubmitProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<'approved' | 'changes_requested' | null>(null);
@@ -76,6 +79,7 @@ export default function DesignReviewSubmit({ orderId, revisionId, images, labels
         theme="light"
         onSubmitReview={handleSubmit}
         submitting={submitting}
+        compareRevisions={otherRevisions}
       />
     </div>
   );

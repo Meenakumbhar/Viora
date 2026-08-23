@@ -239,6 +239,9 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
                 theme="dark"
                 onToggleResolved={handleToggleResolved}
                 viewerRole={viewerRole}
+                compareRevisions={sorted
+                  .filter((r) => r.id !== revision.id)
+                  .map((r) => ({ version: r.version, label: r.image_labels?.[0] ?? null, image_urls: r.image_urls }))}
               />
             </div>
           ))}

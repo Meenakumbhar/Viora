@@ -69,6 +69,9 @@ export default async function ReviewDesignPage({ params }: { params: Promise<{ i
             images={pending.image_urls}
             labels={pending.image_labels}
             version={pending.version}
+            otherRevisions={sorted
+              .filter((r) => r.id !== pending.id)
+              .map((r) => ({ version: r.version, label: r.image_labels?.[0] ?? null, image_urls: r.image_urls }))}
           />
         </div>
       ) : (

@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { dash } from "@better-auth/infra";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { NextResponse } from "next/server";
 import { getDrizzle } from "@/db/client";
@@ -35,6 +36,7 @@ export const auth = betterAuth({
       await sendVerificationEmail({ email: user.email, name: user.name, url });
     },
   },
+  plugins: [dash()],
 });
 
 // Better Auth's `asResponse: true` calls (signInEmail, signOut,
