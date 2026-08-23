@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { DesignComment, CommentResolutionField } from '@/types/database';
+import { timeAgo, formatDateTime } from '@/lib/format';
 import { THEME } from './theme';
 
 interface DraftItem {
@@ -80,6 +81,9 @@ export default function CommentSidebar({
               <div>
                 <span className={`font-mono text-[10px] uppercase tracking-widest ${c.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
                   {c.author_role === 'proofreader' ? 'Proofreader' : 'Customer'}
+                </span>
+                <span className={`ml-2 font-mono text-[10px] normal-case ${t.muted}`} title={formatDateTime(c.created_at)}>
+                  {timeAgo(c.created_at)}
                 </span>
                 <p className={`font-body text-sm ${t.heading} ${fullyResolved ? 'line-through opacity-50' : ''}`}>{c.comment}</p>
               </div>

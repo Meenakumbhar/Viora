@@ -1,4 +1,5 @@
 import { PANEL_THEME, type DashboardTheme } from '@/lib/dashboard-theme';
+import { timeAgo } from '@/lib/format';
 import type { StaffActivityEvent, StaffActivityEventType } from '@/types/database';
 
 // All solid, semantic colors — legible against both the dark and light panel
@@ -32,18 +33,6 @@ function eventText(event: StaffActivityEvent): string {
     default:
       return who;
   }
-}
-
-function timeAgo(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(ms / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }
 
 export default function StaffActivityFeed({ events, theme }: { events: StaffActivityEvent[]; theme: DashboardTheme }) {

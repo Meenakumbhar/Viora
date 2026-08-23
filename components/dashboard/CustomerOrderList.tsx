@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import OrderStepper, { type DisplayStage, deriveDisplayStage } from '@/components/ui/OrderStepper';
+import OrderStepper, { type DisplayStage, deriveDisplayStage, deriveStageSince } from '@/components/ui/OrderStepper';
 import OrderPaymentSection from '@/components/ui/OrderPaymentSection';
 import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
 import { accentForServiceType } from '@/lib/order-category';
@@ -31,12 +31,19 @@ function JobNumber({ id }: { id: string }) {
   return <p className="font-mono text-xs text-text-muted">Order #{id.slice(0, 8).toUpperCase()}</p>;
 }
 
+// Solid fill, not a faint tint — a low-opacity background on a stage like
+// "Awaiting Your Review" (the one status that means "you have something to
+// do") was easy to miss entirely against the rest of the row.
 function StatusTag({ status }: { status: DisplayStage }) {
   const color = STATUS_COLORS[status];
+  // The gold used for awaiting_review/payment is light enough that dark text
+  // reads better on it than white — every other status color here is dark
+  // enough for white text.
+  const textColor = status === 'awaiting_review' || status === 'payment' ? '#1C2530' : '#FFFFFF';
   return (
     <span
-      className="inline-flex items-center border px-2.5 py-1 font-mono text-xs uppercase tracking-wider"
-      style={{ color, borderColor: `${color}55`, backgroundColor: `${color}0D` }}
+      className="inline-flex items-center px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider"
+      style={{ color: textColor, backgroundColor: color }}
     >
       {STATUS_LABELS[status]}
     </span>
@@ -183,7 +190,7 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                     )}
 
                     <div className="mt-8">
-                      <OrderStepper stage={placedStage} theme="light" />
+                      <OrderStepper stage={placedStage} theme="light" since={enquiry.created_at} />
                     </div>
 
                     {!isCancelled && (
@@ -211,6 +218,11 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
             paymentStatus: order.payment_status,
             hasPaymentAmount: order.payment_amount !== null && order.payment_amount > 0,
             latestRevisionStatus: latestRevision?.status,
+          });
+          const stageSince = deriveStageSince({
+            orderCreatedAt: order.created_at,
+            latestOrderStatusHistoryAt: history.length > 0 ? history[history.length - 1].created_at : null,
+            latestRevisionUpdatedAt: latestRevision?.updated_at ?? null,
           });
           return (
             <div key={row.id} className="border border-border" style={{ borderLeft: `4px solid ${accent}` }}>
@@ -294,7 +306,7 @@ export default function CustomerOrderList({ rows: initialRows }: { rows: Account
                   </div>
 
                   <div className="mt-8">
-                    <OrderStepper stage={stage} theme="light" />
+                    <OrderStepper stage={stage} theme="light" since={stageSince} />
                   </div>
 
                   {stage === 'completed' && (

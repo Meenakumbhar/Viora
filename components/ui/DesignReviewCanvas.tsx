@@ -9,6 +9,7 @@ import CommentPopover from './design-review/CommentPopover';
 import CommentSidebar from './design-review/CommentSidebar';
 import RevisionCompareToggle, { type CompareRevisionOption } from './design-review/RevisionCompareToggle';
 import { THEME } from './design-review/theme';
+import { timeAgo, formatDateTime } from '@/lib/format';
 
 interface DraftPin extends DesignCommentInput {
   tempId: string;
@@ -332,6 +333,9 @@ export default function DesignReviewCanvas({
           <div className={`w-60 rounded border p-3 shadow-xl ${t.popoverBg}`}>
             <span className={`font-mono text-[10px] uppercase tracking-widest ${selectedComment.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
               {selectedComment.author_role === 'proofreader' ? 'Proofreader' : 'Customer'}
+            </span>
+            <span className={`ml-2 font-mono text-[10px] normal-case ${t.muted}`} title={formatDateTime(selectedComment.created_at)}>
+              {timeAgo(selectedComment.created_at)}
             </span>
             <p className="mt-1 font-body text-sm">{selectedComment.comment}</p>
             {mode === 'manage' && (

@@ -84,3 +84,29 @@ export function deriveDisplayStage({
   // reality (e.g. "completed" before approval/payment) can never jump ahead.
   return orderStatus === 'completed' ? 'completed' : 'in_progress';
 }
+
+// A best-guess "since when has this order been sitting in its current
+// stage" — not a precise per-stage audit trail (payment_status changes
+// aren't timestamped anywhere, and awaiting_review/payment/in_progress are
+// all derived rather than read off one column, so there's no single source
+// of truth to point at). Instead: whichever of "the order's own status last
+// changed" or "the latest design revision last changed" happened most
+// recently is what actually put the order in its current stage — pick the
+// newer of the two, falling back to when the order was first created if
+// neither has happened yet (still sitting at enquiry_received/order_confirmed).
+export function deriveStageSince({
+  orderCreatedAt,
+  latestOrderStatusHistoryAt,
+  latestRevisionUpdatedAt,
+}: {
+  orderCreatedAt: string;
+  /** created_at of the most recent order_status_history entry, if any. */
+  latestOrderStatusHistoryAt?: string | null;
+  latestRevisionUpdatedAt?: string | null;
+}): string {
+  const candidates = [latestOrderStatusHistoryAt, latestRevisionUpdatedAt].filter(
+    (v): v is string => Boolean(v)
+  );
+  if (candidates.length === 0) return orderCreatedAt;
+  return candidates.reduce((latest, c) => (new Date(c) > new Date(latest) ? c : latest));
+}

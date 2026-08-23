@@ -1,4 +1,5 @@
 import RegistrationBar from './RegistrationBar';
+import NotificationBell from './NotificationBell';
 
 interface JobTicketProps {
   name: string;
@@ -21,7 +22,10 @@ export default function JobTicket({ name, memberSince, logoutSlot }: JobTicketPr
             {name}
           </h1>
         </div>
-        <RegistrationBar className="mt-1 hidden sm:flex" />
+        <div className="flex shrink-0 items-start gap-4">
+          <NotificationBell />
+          <RegistrationBar className="mt-2.5 hidden sm:flex" />
+        </div>
       </div>
 
       {/* Perforation — a dashed tear line with notches cut into each edge */}

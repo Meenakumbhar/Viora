@@ -24,8 +24,11 @@ export default function PricingPage() {
   const [loggedIn, setLoggedIn] = useState(false);
   // A logged-in customer sees a price here once one exists — their own
   // negotiated price, or the price set on the exact piece in their cart.
-  // Logged-out visitors see neither; this is unchanged for them.
-  const [effectivePrice, setEffectivePrice] = useState<EffectivePrice | null>(null);
+  // Logged-out visitors see neither; this is unchanged for them. Keyed by
+  // cart item id so a multi-item cart (e.g. a portfolio template plus a
+  // product) can price each line independently rather than only ever
+  // resolving a price for a cart of exactly one item.
+  const [pricesByItemId, setPricesByItemId] = useState<Map<string, EffectivePrice | null>>(new Map());
   const [priceLoaded, setPriceLoaded] = useState(false);
 
   useEffect(() => {
@@ -43,44 +46,71 @@ export default function PricingPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // A specific price only makes sense to look up when the cart is exactly
-  // one item, and with several different pieces in the cart there's no
-  // single "the" item to price. That one item is either a real portfolio
-  // item (its own id, no `::`) or a product cart entry (carries productId +
-  // a size label in `size`) — build whichever query string applies.
-  const singleItemPricingParams = useMemo(() => {
-    if (cartItems.length !== 1) return null;
-    const only = cartItems[0];
-    if (only.productId) {
-      return only.size
-        ? `?productId=${encodeURIComponent(only.productId)}&sizeLabel=${encodeURIComponent(only.size)}`
-        : null;
+  // A single cart item is either a real portfolio item (its own id, no
+  // `::`) or a product cart entry (carries productId + a size label in
+  // `size`) — build whichever query string applies to look up its price, or
+  // null if it's not a priceable item at all.
+  function pricingParamsFor(item: PortfolioCartItem): string | null {
+    if (item.productId) {
+      return item.size ? `?productId=${encodeURIComponent(item.productId)}&sizeLabel=${encodeURIComponent(item.size)}` : null;
     }
-    return only.id.includes('::') ? null : `?portfolioItemId=${encodeURIComponent(only.id)}`;
-  }, [cartItems]);
+    return item.id.includes('::') ? null : `?portfolioItemId=${encodeURIComponent(item.id)}`;
+  }
 
-  // The price lookup is per unit — the summary must multiply by how many of
-  // that single item are in the cart, or the total never moves when the
-  // quantity stepper is used.
-  const cartQuantity = cartItems.length === 1 ? cartItems[0].quantity : 1;
-
+  // Every cart item gets its own price lookup — not just when the cart
+  // happens to hold exactly one item — so a total can be shown even when a
+  // portfolio template and a product are both in the cart together.
   useEffect(() => {
-    if (!loggedIn) {
-      // Syncing from an external system (login status), not deriving from
-      // React state — the legitimate exception this rule allows for.
+    if (!loggedIn || cartItems.length === 0) {
+      // Syncing from an external system (login status/cart contents), not
+      // deriving from React state — the legitimate exception this rule allows for.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setEffectivePrice(null);
-      setPriceLoaded(false);
+      setPricesByItemId(new Map());
+      setPriceLoaded(cartItems.length === 0);
       return;
     }
     let cancelled = false;
-    fetch(`/api/account/pricing${singleItemPricingParams ?? ''}`)
-      .then((res) => (res.ok ? res.json() : { success: false }))
-      .then((json) => { if (!cancelled && json.success) setEffectivePrice(json.data); })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setPriceLoaded(true); });
+    setPriceLoaded(false);
+    Promise.all(
+      cartItems.map(async (item) => {
+        const params = pricingParamsFor(item);
+        if (!params) return [item.id, null] as const;
+        try {
+          const res = await fetch(`/api/account/pricing${params}`);
+          const json = res.ok ? await res.json() : { success: false };
+          return [item.id, json.success ? (json.data as EffectivePrice | null) : null] as const;
+        } catch {
+          return [item.id, null] as const;
+        }
+      })
+    ).then((entries) => {
+      if (!cancelled) setPricesByItemId(new Map(entries));
+    }).finally(() => {
+      if (!cancelled) setPriceLoaded(true);
+    });
     return () => { cancelled = true; };
-  }, [loggedIn, singleItemPricingParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on item ids/quantities via the join below, not the array reference, which would refetch every render.
+  }, [loggedIn, cartItems.map((i) => `${i.id}:${i.quantity}`).join(',')]);
+
+  const priceSummary = useMemo(() => {
+    let total = 0;
+    let pricedCount = 0;
+    let allNegotiated = true;
+    for (const item of cartItems) {
+      const price = pricesByItemId.get(item.id);
+      if (!price) continue;
+      total += price.price * item.quantity;
+      pricedCount += 1;
+      if (!price.negotiated) allNegotiated = false;
+    }
+    return {
+      total,
+      pricedCount,
+      unpricedCount: cartItems.length - pricedCount,
+      negotiated: allNegotiated && pricedCount > 0,
+      currency: cartItems.map((i) => pricesByItemId.get(i.id)?.currency).find(Boolean) ?? 'GBP',
+    };
+  }, [cartItems, pricesByItemId]);
 
   return (
     <div>
@@ -240,32 +270,32 @@ export default function PricingPage() {
                     Every project is priced individually once we&apos;ve reviewed your details — send us your selected items and we&apos;ll come back with a real quote, not an estimate.
                   </p>
 
-                  {/* Logged-in customers always see this block — their own
-                      negotiated price once one's been set, otherwise the
-                      price set on the exact piece in their cart, otherwise
-                      a plain "being prepared" message — never a blank or
-                      £0 price. Logged-out visitors see none of this. */}
-                  {loggedIn && priceLoaded && (
+                  {/* Logged-in customers always see this block — a running
+                      total across every priceable line in the cart (their
+                      own negotiated price where one's been set, otherwise
+                      the item's shared baseline), plus a note for anything
+                      still unpriced. Never a blank or £0 total. Logged-out
+                      visitors see none of this. */}
+                  {loggedIn && priceLoaded && cartItems.length > 0 && (
                     <div className="mt-6 rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-5">
-                      {effectivePrice ? (
+                      {priceSummary.pricedCount > 0 ? (
                         <>
                           <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
-                            {effectivePrice.negotiated ? 'Your price' : 'Starting from'}
-                            {cartQuantity > 1 ? ` · × ${cartQuantity}` : ''}
+                            {priceSummary.negotiated ? 'Your total' : 'Estimated total'}
                           </p>
                           <p className="mt-1.5 font-display text-3xl text-cat-heading">
-                            {formatPrice(effectivePrice.price * cartQuantity, effectivePrice.currency)}
+                            {formatPrice(priceSummary.total, priceSummary.currency)}
                           </p>
-                          {cartQuantity > 1 && (
-                            <p className="mt-1 font-mono text-[11px] text-cat-muted">
-                              {formatPrice(effectivePrice.price, effectivePrice.currency)} each
-                            </p>
-                          )}
                           <p className="mt-2 font-body text-sm text-cat-muted">
-                            {effectivePrice.negotiated
+                            {priceSummary.negotiated
                               ? 'This is the price we agreed for your project.'
                               : 'A general starting estimate — your final price is confirmed once we’ve reviewed your specific request.'}
                           </p>
+                          {priceSummary.unpricedCount > 0 && (
+                            <p className="mt-2 font-mono text-[11px] text-cat-muted">
+                              + {priceSummary.unpricedCount} item{priceSummary.unpricedCount > 1 ? 's' : ''} still being priced individually
+                            </p>
+                          )}
                         </>
                       ) : (
                         <>
