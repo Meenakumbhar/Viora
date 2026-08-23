@@ -60,7 +60,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
         </span>
         <h1 className="mt-3 font-display text-display-lg text-text-heading max-w-xl">
           Start your{' '}
-          <em className="italic text-accent-gold">project</em>
+          <em className="not-italic font-semibold text-accent-gold">project</em>
         </h1>
         <p className="mt-4 font-body text-body-lg text-text-muted max-w-lg">
           Tell us what you need — we respond within 24 hours.
@@ -76,7 +76,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
           <QuoteForm initialService={service} initialDetails={details} fromCart={cart === '1'} />
 
           <aside className="lg:border-l lg:border-border lg:pl-16">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">
+            <p className="font-mono text-base uppercase tracking-widest text-text-muted">
               Other ways to reach us
             </p>
             <div className="mt-6 flex flex-col gap-5">
@@ -94,7 +94,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                   </span>
                   {/* Text */}
                   <span className="flex flex-col">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-text-muted">
+                    <span className="font-mono text-base uppercase tracking-wider text-text-muted">
                       {c.label}
                     </span>
                     <span className="font-body text-body-base leading-tight">
@@ -109,7 +109,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               <p className="font-display text-lg italic text-accent-gold">
                 We respond within 24 hours
               </p>
-              <p className="mt-2 font-body text-sm text-text-muted leading-relaxed">
+              <p className="mt-2 font-body text-base text-text-muted leading-relaxed">
                 Every enquiry is read by a real person on the studio team — no
                 automated replies, no waiting in a queue.
               </p>

@@ -50,7 +50,7 @@ export default function PortfolioProject({ item }: { item: PortfolioItem }) {
   return (
     <main className="bg-[#FDFCFA] pb-24 pt-28 text-[#1C2530]">
       <div className="container-wide">
-        <Link href="/portfolio" className="font-mono text-[11px] uppercase tracking-widest text-[#5B6470] hover:text-[#1C2530]">
+        <Link href="/portfolio" className="font-mono text-base uppercase tracking-widest text-[#5B6470] hover:text-[#1C2530]">
           ← Back to portfolio
         </Link>
         <div className="mt-10 grid gap-12 lg:grid-cols-[1.15fr_0.85fr]">
@@ -76,18 +76,18 @@ export default function PortfolioProject({ item }: { item: PortfolioItem }) {
                 </>
               )}
             </div>
-            {images.length > 1 && <p className="mt-3 text-center font-mono text-[11px] uppercase tracking-widest text-cat-muted">{activeImage + 1} / {images.length} views</p>}
+            {images.length > 1 && <p className="mt-3 text-center font-mono text-base uppercase tracking-widest text-cat-muted">{activeImage + 1} / {images.length} views</p>}
           </section>
 
           <section>
             <div className="flex items-start justify-between gap-4">
-              <span className="font-mono text-[11px] uppercase tracking-widest text-[#6B5420]">{item.category}</span>
+              <span className="font-mono text-base uppercase tracking-widest text-[#6B5420]">{item.category}</span>
               <button
                 type="button"
                 onClick={handleToggleSave}
                 aria-pressed={saved}
                 aria-label={saved ? 'Remove from saved items' : 'Save this item'}
-                className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-[#5B6470] transition-colors hover:text-[#7A4A44]"
+                className="flex items-center gap-2 font-mono text-base uppercase tracking-widest text-[#5B6470] transition-colors hover:text-[#7A4A44]"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -105,11 +105,11 @@ export default function PortfolioProject({ item }: { item: PortfolioItem }) {
             <h1 className="mt-4 font-display text-5xl leading-none text-[#1C2530] md:text-7xl">{item.title}</h1>
             <p className="mt-6 font-body text-body-lg leading-relaxed text-[#374151]">{item.description ?? 'A considered design from our studio portfolio.'}</p>
             <div className="mt-8 flex flex-wrap gap-2">
-              {Object.values(item.filters ?? {}).flat().map((value) => <span key={value} className="border border-border px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-cat-muted">{value}</span>)}
+              {Object.values(item.filters ?? {}).flat().map((value) => <span key={value} className="border border-border px-2 py-1 font-mono text-base uppercase tracking-wider text-cat-muted">{value}</span>)}
             </div>
 
             <div className="mt-12 border-t border-border pt-8">
-              <p className="font-mono text-[11px] uppercase tracking-widest text-cat-muted">Request this piece</p>
+              <p className="font-mono text-base uppercase tracking-widest text-cat-muted">Request this piece</p>
               <div className="mt-5 flex items-center justify-between">
                 <span className="font-body text-cat-body">Quantity</span>
                 <div className="flex items-center border border-border">
@@ -123,7 +123,7 @@ export default function PortfolioProject({ item }: { item: PortfolioItem }) {
                       setQuantity(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
                     }}
                     aria-label="Quantity"
-                    className="w-14 border-0 bg-transparent text-center font-mono text-sm text-cat-heading [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="w-14 border-0 bg-transparent text-center font-mono text-base text-cat-heading [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                   <button type="button" onClick={() => setQuantity((value) => value + 1)} className="h-11 w-11 text-cat-heading">+</button>
                 </div>
@@ -132,18 +132,18 @@ export default function PortfolioProject({ item }: { item: PortfolioItem }) {
                 <button
                   type="button"
                   onClick={addItem}
-                  className="flex-1 border border-cat-accent bg-cat-accent px-6 py-3 font-mono text-[11px] uppercase tracking-widest text-cat-bg transition-colors hover:bg-cat-accent-dark"
+                  className="flex-1 border border-cat-accent bg-cat-accent px-6 py-3 font-mono text-base uppercase tracking-widest text-cat-bg transition-colors hover:bg-cat-accent-dark"
                 >
                   {added ? 'Added ✓' : 'Add to cart'}
                 </button>
-                <Link href="/pricing" onClick={addItem} className="flex-1 border border-cat-heading px-6 py-3 text-center font-mono text-[11px] uppercase tracking-widest text-cat-heading hover:bg-cat-heading hover:text-cat-bg">Checkout</Link>
+                <Link href="/pricing" onClick={addItem} className="flex-1 border border-cat-heading px-6 py-3 text-center font-mono text-base uppercase tracking-widest text-cat-heading hover:bg-cat-heading hover:text-cat-bg">Checkout</Link>
               </div>
               {added && (
-                <p className="mt-3 font-body text-sm text-cat-accent-dark animate-fadeIn">
+                <p className="mt-3 font-body text-base text-cat-accent-dark animate-fadeIn">
                   Added to your cart — <Link href="/pricing" className="underline hover:no-underline">view cart →</Link>
                 </p>
               )}
-              <p className="mt-3 font-mono text-[11px] text-cat-muted">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
+              <p className="mt-3 font-mono text-base text-cat-muted">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
             </div>
           </section>
         </div>

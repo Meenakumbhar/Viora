@@ -43,10 +43,10 @@ export default function OrderPaymentSection({ order: initialOrder, latestRevisio
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* Payment status badge */}
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">Payment</p>
+          <p className="font-mono text-base uppercase tracking-widest text-text-muted">Payment</p>
           <div className="mt-1.5 flex items-center gap-3">
             <span
-              className={`inline-flex items-center border px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-widest ${PAYMENT_STATUS_COLORS[order.payment_status]}`}
+              className={`inline-flex items-center border px-2.5 py-0.5 font-mono text-base uppercase tracking-widest ${PAYMENT_STATUS_COLORS[order.payment_status]}`}
             >
               {PAYMENT_STATUS_LABELS[order.payment_status]}
             </span>
@@ -57,12 +57,12 @@ export default function OrderPaymentSection({ order: initialOrder, latestRevisio
             )}
           </div>
           {!hasAmount && !isPaid && (
-            <p className="mt-1 font-mono text-[11px] text-text-muted">
+            <p className="mt-1 font-mono text-base text-text-muted">
               Your quote amount will appear here once confirmed.
             </p>
           )}
           {hasAmount && !isPaid && awaitingDesignApproval && (
-            <p className="mt-1 font-mono text-[11px] text-text-muted">
+            <p className="mt-1 font-mono text-base text-text-muted">
               Payment opens once you&apos;ve approved the design proof.
             </p>
           )}
@@ -75,7 +75,7 @@ export default function OrderPaymentSection({ order: initialOrder, latestRevisio
               type="button"
               id={`pay-now-${order.id}`}
               onClick={() => setShowPayPal(true)}
-              className="flex items-center gap-2 border border-accent-gold bg-accent-gold px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90"
+              className="flex items-center gap-2 border border-accent-gold bg-accent-gold px-5 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90"
             >
               <PaymentProviderIcon provider="paypal" />
               Pay via PayPal
@@ -88,14 +88,14 @@ export default function OrderPaymentSection({ order: initialOrder, latestRevisio
       {/* PayPal button (lazy-loaded after click) */}
       {canPay && showPayPal && (
         <div className="mt-4">
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-text-muted">
+          <p className="mb-3 font-mono text-base uppercase tracking-widest text-text-muted">
             Complete your payment via PayPal
           </p>
           <PayPalButton order={order} onSuccess={(updated) => setOrder(updated)} />
           <button
             type="button"
             onClick={() => setShowPayPal(false)}
-            className="mt-3 font-mono text-[11px] text-text-muted hover:text-text-heading"
+            className="mt-3 font-mono text-base text-text-muted hover:text-text-heading"
           >
             ← Cancel
           </button>
@@ -104,7 +104,7 @@ export default function OrderPaymentSection({ order: initialOrder, latestRevisio
 
       {/* Paid confirmation */}
       {isPaid && order.payment_provider && (order.paypal_order_id || order.razorpay_payment_id) && (
-        <p className="mt-2 flex items-center gap-2 font-mono text-[11px] text-text-muted">
+        <p className="mt-2 flex items-center gap-2 font-mono text-base text-text-muted">
           <PaymentProviderIcon provider={order.payment_provider} />
           Ref: {(order.paypal_order_id ?? order.razorpay_payment_id!).slice(0, 16).toUpperCase()}
         </p>

@@ -108,7 +108,7 @@ function getMobileNav(products: Product[]): MobileNavSection[] {
 function getHoverColorClass(href: string): string {
   const path = href.toLowerCase();
   if (path.includes('wedding') || path.includes('category=wedding')) return 'hover:text-[#C4958F]';
-  if (path.includes('funeral') || path.includes('category=funeral')) return 'hover:text-[#8B82C4]';
+  if (path.includes('funeral') || path.includes('category=funeral')) return 'hover:text-[#8A6F35]';
   if (path.includes('sports') || path.includes('category=sports')) return 'hover:text-[#3D7A3A]';
   if (path.includes('branding') || path.includes('category=branding') || path.includes('design')) return 'hover:text-[#2D5FA8]';
   if (path.includes('events') || path.includes('category=events') || path.includes('production')) return 'hover:text-[#D4883A]';
@@ -390,7 +390,7 @@ export default function Nav({ products }: { products: Product[] }) {
                 <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
               </svg>
               {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-gold px-1 text-[11px] font-semibold text-bg-primary">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-gold px-1 text-base font-semibold text-bg-primary">
                   {cartCount}
                 </span>
               )}

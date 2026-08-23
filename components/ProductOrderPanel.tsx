@@ -104,14 +104,14 @@ export default function ProductOrderPanel({
     <div>
       {templates.length > 0 && (
         <div className="border-b border-border pb-6">
-          <label htmlFor="template-select" className="font-mono text-[11px] uppercase tracking-widest text-cat-muted">
+          <label htmlFor="template-select" className="font-mono text-base uppercase tracking-widest text-cat-muted">
             Choose a template <span className="normal-case text-cat-muted/70">(optional)</span>
           </label>
           <select
             id="template-select"
             value={selectedTemplate?.id ?? ''}
             onChange={(e) => setSelectedTemplate(templates.find((t) => t.id === e.target.value) ?? null)}
-            className="mt-3 w-full rounded-full border border-border bg-cat-surface px-4 py-2.5 font-body text-sm text-cat-heading outline-none focus:border-cat-accent"
+            className="mt-3 w-full rounded-full border border-border bg-cat-surface px-4 py-2.5 font-body text-base text-cat-heading outline-none focus:border-cat-accent"
           >
             <option value="">No template — I&apos;ll discuss this with the studio</option>
             {sortedTemplates.map((template) => (
@@ -125,7 +125,7 @@ export default function ProductOrderPanel({
               <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-cat-bg">
                 <Image src={selectedTemplate.image_url} alt={selectedTemplate.title} fill sizes="56px" className="object-cover" />
               </div>
-              <p className="font-body text-sm text-cat-body">
+              <p className="font-body text-base text-cat-body">
                 Template <strong className="font-semibold">#{selectedTemplate.template_number}</strong> — {titleWithoutTemplateNumber(selectedTemplate)}
               </p>
             </div>
@@ -135,7 +135,7 @@ export default function ProductOrderPanel({
 
       {hasMultipleSizes && (
         <div className={templates.length > 0 ? 'mt-6' : ''}>
-          <p className="font-mono text-[11px] uppercase tracking-widest text-cat-muted">Choose a size</p>
+          <p className="font-mono text-base uppercase tracking-widest text-cat-muted">Choose a size</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {product.sizes.map((size) => (
               <button
@@ -144,7 +144,7 @@ export default function ProductOrderPanel({
                 onClick={() => setSelected(size)}
                 aria-pressed={selected.label === size.label}
                 className={[
-                  'rounded-full border px-4 py-2 font-body text-sm transition-all duration-200',
+                  'rounded-full border px-4 py-2 font-body text-base transition-all duration-200',
                   selected.label === size.label
                     ? 'border-accent-gold bg-accent-gold/10 text-accent-gold'
                     : 'border-border bg-cat-surface text-cat-heading hover:border-accent-gold',
@@ -166,10 +166,10 @@ export default function ProductOrderPanel({
               : ''
         }
       >
-        <p className="font-mono text-[11px] uppercase tracking-widest text-cat-muted">Size</p>
+        <p className="font-mono text-base uppercase tracking-widest text-cat-muted">Size</p>
         <p className="mt-2 font-body text-cat-body">{selected.dimensions}</p>
         {selected.description && (
-          <p className="mt-3 font-body text-sm leading-relaxed text-cat-body">{selected.description}</p>
+          <p className="mt-3 font-body text-base leading-relaxed text-cat-body">{selected.description}</p>
         )}
       </div>
 
@@ -186,7 +186,7 @@ export default function ProductOrderPanel({
               setQuantity(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
             }}
             aria-label="Quantity"
-            className="w-14 border-0 bg-transparent text-center font-mono text-sm text-cat-heading [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="w-14 border-0 bg-transparent text-center font-mono text-base text-cat-heading [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <button type="button" onClick={() => setQuantity((value) => value + 1)} className="h-11 w-11 rounded-full text-cat-heading">+</button>
         </div>
@@ -196,30 +196,30 @@ export default function ProductOrderPanel({
         <button
           type="button"
           onClick={addItem}
-          className="flex-1 rounded-2xl border border-cat-accent bg-cat-accent px-6 py-3 font-mono text-[11px] uppercase tracking-widest text-cat-bg hover:bg-cat-accent-dark"
+          className="flex-1 rounded-2xl border border-cat-accent bg-cat-accent px-6 py-3 font-mono text-base uppercase tracking-widest text-cat-bg hover:bg-cat-accent-dark"
         >
           {added ? 'Added ✓' : 'Add to cart'}
         </button>
         <Link
           href="/pricing"
           onClick={addItem}
-          className="flex-1 rounded-2xl border border-cat-heading px-6 py-3 text-center font-mono text-[11px] uppercase tracking-widest text-cat-heading hover:bg-cat-heading hover:text-cat-bg"
+          className="flex-1 rounded-2xl border border-cat-heading px-6 py-3 text-center font-mono text-base uppercase tracking-widest text-cat-heading hover:bg-cat-heading hover:text-cat-bg"
         >
           Checkout
         </Link>
       </div>
       {loggedIn && priceLoaded && customerPrice ? (
-        <p className="mt-3 font-mono text-[11px] text-cat-muted">
+        <p className="mt-3 font-mono text-base text-cat-muted">
           <span className="uppercase tracking-widest text-accent-gold">Your price</span>{' '}
           {formatPrice(customerPrice.price, customerPrice.currency)}
         </p>
       ) : basePriceByLabel.get(selected.label) ? (
-        <p className="mt-3 font-mono text-[11px] text-cat-muted">
+        <p className="mt-3 font-mono text-base text-cat-muted">
           <span className="uppercase tracking-widest text-accent-gold">Starting from</span>{' '}
           {formatPrice(basePriceByLabel.get(selected.label)!.price, basePriceByLabel.get(selected.label)!.currency)}
         </p>
       ) : (
-        <p className="mt-3 font-mono text-[11px] text-cat-muted">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
+        <p className="mt-3 font-mono text-base text-cat-muted">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
       )}
     </div>
   );

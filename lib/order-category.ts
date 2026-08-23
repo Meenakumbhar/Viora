@@ -19,7 +19,7 @@ export function serviceTypeToCategory(serviceType: string): ServiceCategory {
 // data-category attribute) can't do this row-by-row.
 export const CATEGORY_ACCENT: Record<ServiceCategory, string> = {
   wedding: '#C4958F',
-  funeral: '#8B82C4',
+  funeral: '#E5CB90',
   events: '#D4883A',
   sports: '#3D7A3A',
   branding: '#2D5FA8',

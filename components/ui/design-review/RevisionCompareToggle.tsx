@@ -21,14 +21,14 @@ export default function RevisionCompareToggle({ options, active, onChange, theme
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
-      <label className={`font-mono text-[11px] uppercase tracking-widest ${t.muted}`}>Compare with</label>
+      <label className={`font-mono text-base uppercase tracking-widest ${t.muted}`}>Compare with</label>
       <select
         value={active?.version ?? ''}
         onChange={(e) => {
           const version = Number(e.target.value);
           onChange(options.find((o) => o.version === version) ?? null);
         }}
-        className={`px-2 py-1 font-mono text-[11px] uppercase tracking-widest outline-none ${t.inputBg}`}
+        className={`px-2 py-1 font-mono text-base uppercase tracking-widest outline-none ${t.inputBg}`}
       >
         <option value="">None</option>
         {options.map((o) => (
@@ -41,7 +41,7 @@ export default function RevisionCompareToggle({ options, active, onChange, theme
         <button
           type="button"
           onClick={() => onChange(null)}
-          className={`font-mono text-[11px] uppercase tracking-widest ${t.muted} hover:text-red-400`}
+          className={`font-mono text-base uppercase tracking-widest ${t.muted} hover:text-red-400`}
         >
           Exit compare ×
         </button>

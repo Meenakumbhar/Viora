@@ -14,7 +14,7 @@ export default function PaymentProviderIcon({ provider, className = '' }: Paymen
       <span
         aria-label="PayPal"
         title="PayPal"
-        className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-[#003087] font-mono text-[10px] font-bold text-white ${className}`}
+        className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-[#003087] font-mono text-base font-bold text-white ${className}`}
       >
         P
       </span>
@@ -25,7 +25,7 @@ export default function PaymentProviderIcon({ provider, className = '' }: Paymen
     <span
       aria-label="Razorpay"
       title="Razorpay"
-      className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-[#0C2451] font-mono text-[10px] font-bold text-[#3395FF] ${className}`}
+      className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-[#0C2451] font-mono text-base font-bold text-[#3395FF] ${className}`}
     >
       R
     </span>

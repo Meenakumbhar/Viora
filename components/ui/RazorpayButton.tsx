@@ -138,7 +138,7 @@ export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps
 
   if (!keyId) {
     return (
-      <p className="font-mono text-[11px] text-red-500">
+      <p className="font-mono text-base text-red-500">
         Card payments are not configured. Please contact us to arrange payment.
       </p>
     );
@@ -148,7 +148,7 @@ export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps
     return (
       <div className="flex items-center gap-2">
         <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-        <p className="font-mono text-[11px] uppercase tracking-widest text-emerald-600">
+        <p className="font-mono text-base uppercase tracking-widest text-emerald-600">
           Payment successful — thank you!
         </p>
       </div>
@@ -161,13 +161,13 @@ export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps
         type="button"
         onClick={handleClick}
         disabled={!scriptLoaded || status === 'loading'}
-        className="flex items-center gap-2 border border-border px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-widest text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold disabled:opacity-60"
+        className="flex items-center gap-2 border border-border px-4 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold disabled:opacity-60"
       >
         <PaymentProviderIcon provider="razorpay" />
         {status === 'loading' ? 'Processing…' : `Pay £${order.payment_amount!.toFixed(2)} by card`}
       </button>
       {status === 'error' && errorMessage && (
-        <p className="mt-2 font-mono text-[11px] text-red-500" role="alert">
+        <p className="mt-2 font-mono text-base text-red-500" role="alert">
           {errorMessage}
         </p>
       )}

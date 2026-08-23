@@ -205,7 +205,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             <h1 className="mt-4 font-display text-display-lg text-text-primary leading-tight">
               {post.title}
             </h1>
-            <div className="mt-6 flex items-center gap-4 text-sm text-text-muted font-mono">
+            <div className="mt-6 flex items-center gap-4 text-base text-text-muted font-mono">
               <span>By Memories in Prints</span>
               <time dateTime={post.published_at || undefined}>
                 {post.published_at
@@ -256,7 +256,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             {/* Footer actions */}
             <div className="mt-16 pt-8 border-t border-border flex flex-wrap gap-6 justify-between items-center">
               <div>
-                <span className="block font-mono text-xs text-text-muted uppercase tracking-wider">
+                <span className="block font-mono text-base text-text-muted uppercase tracking-wider">
                   Category
                 </span>
                 <span className="font-body text-body-base text-text-primary">

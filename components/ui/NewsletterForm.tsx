@@ -96,13 +96,13 @@ export default function NewsletterForm() {
 
       {/* Error message */}
       {state === 'error' && errorMessage && (
-        <p className="mt-3 text-sm text-accent-blush" role="alert">
+        <p className="mt-3 text-base text-accent-blush" role="alert">
           {errorMessage}
         </p>
       )}
 
       {/* Privacy note */}
-      <p className="mt-4 text-sm text-text-muted">
+      <p className="mt-4 text-base text-text-muted">
         No spam. Unsubscribe any time.
       </p>
     </div>

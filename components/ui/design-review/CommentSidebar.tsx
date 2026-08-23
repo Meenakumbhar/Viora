@@ -46,7 +46,7 @@ export default function CommentSidebar({
 
   if (persisted.length === 0 && drafts.length === 0) {
     return (
-      <div className={`flex items-center justify-center border p-6 font-mono text-[11px] uppercase tracking-widest ${t.sidebarBorder} ${t.muted}`}>
+      <div className={`flex items-center justify-center border p-6 font-mono text-base uppercase tracking-widest ${t.sidebarBorder} ${t.muted}`}>
         No comments on this image yet
       </div>
     );
@@ -72,20 +72,20 @@ export default function CommentSidebar({
           >
             <div className="flex gap-2">
               <span
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold ${
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-base font-bold ${
                   fullyResolved ? 'bg-emerald-500 text-white' : 'bg-[#C6A85C] text-[#0E1117]'
                 }`}
               >
                 {i + 1}
               </span>
               <div>
-                <span className={`font-mono text-[10px] uppercase tracking-widest ${c.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
+                <span className={`font-mono text-base uppercase tracking-widest ${c.author_role === 'proofreader' ? 'text-teal-500' : t.muted}`}>
                   {c.author_role === 'proofreader' ? 'Proofreader' : 'Customer'}
                 </span>
-                <span className={`ml-2 font-mono text-[10px] normal-case ${t.muted}`} title={formatDateTime(c.created_at)}>
+                <span className={`ml-2 font-mono text-base normal-case ${t.muted}`} title={formatDateTime(c.created_at)}>
                   {timeAgo(c.created_at)}
                 </span>
-                <p className={`font-body text-sm ${t.heading} ${fullyResolved ? 'line-through opacity-50' : ''}`}>{c.comment}</p>
+                <p className={`font-body text-base ${t.heading} ${fullyResolved ? 'line-through opacity-50' : ''}`}>{c.comment}</p>
               </div>
             </div>
             {mode === 'manage' && onToggleResolved && (
@@ -97,7 +97,7 @@ export default function CommentSidebar({
                     e.stopPropagation();
                     onToggleResolved(c.id, 'designer_resolved', !c.designer_resolved);
                   }}
-                  className={`font-mono text-[10px] uppercase tracking-widest ${canToggleDesigner ? 'cursor-pointer' : 'cursor-default opacity-60'} ${
+                  className={`font-mono text-base uppercase tracking-widest ${canToggleDesigner ? 'cursor-pointer' : 'cursor-default opacity-60'} ${
                     c.designer_resolved ? 'text-emerald-500' : t.muted
                   }`}
                 >
@@ -110,7 +110,7 @@ export default function CommentSidebar({
                     e.stopPropagation();
                     onToggleResolved(c.id, 'proofreader_resolved', !c.proofreader_resolved);
                   }}
-                  className={`font-mono text-[10px] uppercase tracking-widest ${canToggleProofreader ? 'cursor-pointer' : 'cursor-default opacity-60'} ${
+                  className={`font-mono text-base uppercase tracking-widest ${canToggleProofreader ? 'cursor-pointer' : 'cursor-default opacity-60'} ${
                     c.proofreader_resolved ? 'text-emerald-500' : t.muted
                   }`}
                 >
@@ -124,15 +124,15 @@ export default function CommentSidebar({
       {drafts.map((d, i) => (
         <li key={d.tempId} className="flex items-start justify-between gap-3 border-b border-red-500/20 pb-2">
           <div className="flex gap-2">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 font-mono text-[11px] font-bold text-white">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 font-mono text-base font-bold text-white">
               {i + 1}
             </span>
-            <p className={`font-body text-sm ${t.heading}`}>{d.comment}</p>
+            <p className={`font-body text-base ${t.heading}`}>{d.comment}</p>
           </div>
           <button
             type="button"
             onClick={() => onRemoveDraft(d.tempId)}
-            className="shrink-0 font-mono text-[11px] uppercase tracking-widest text-red-400 hover:text-red-500"
+            className="shrink-0 font-mono text-base uppercase tracking-widest text-red-400 hover:text-red-500"
           >
             Remove
           </button>

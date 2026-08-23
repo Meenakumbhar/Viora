@@ -31,7 +31,7 @@ export default function SavedItemsPanel() {
 
   return (
     <div>
-      <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-heading">Saved inspiration</p>
+      <p className="font-mono text-base uppercase tracking-[0.18em] text-text-heading">Saved inspiration</p>
       <p className="mt-1.5 font-body text-base text-text-muted">
         Portfolio pieces you&apos;ve hearted while browsing.
       </p>
@@ -40,7 +40,7 @@ export default function SavedItemsPanel() {
       {mounted && items.length === 0 && (
         <div className="mt-6 border border-dashed border-border px-5 py-10 text-center">
           <p className="font-body text-base text-text-muted">Nothing saved yet.</p>
-          <Link href="/portfolio" className="mt-3 inline-block font-mono text-xs uppercase tracking-widest text-accent-gold link-underline">
+          <Link href="/portfolio" className="mt-3 inline-block font-mono text-base uppercase tracking-widest text-accent-gold link-underline">
             Browse the portfolio
           </Link>
         </div>
@@ -50,7 +50,7 @@ export default function SavedItemsPanel() {
         <div className="mt-8 space-y-10">
           {Array.from(groups.entries()).map(([category, groupItems]) => (
             <div key={category}>
-              <p className="font-mono text-[11px] uppercase tracking-widest text-text-muted">
+              <p className="font-mono text-base uppercase tracking-widest text-text-muted">
                 {CATEGORY_LABELS[category as ServiceCategory] ?? category} <span className="opacity-60">({groupItems.length})</span>
               </p>
               <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -74,7 +74,7 @@ export default function SavedItemsPanel() {
                           </div>
                         )}
                       </div>
-                      <p className="mt-2 truncate px-1 pb-2 font-body text-sm text-text-heading">{item.title}</p>
+                      <p className="mt-2 truncate px-1 pb-2 font-body text-base text-text-heading">{item.title}</p>
                     </Link>
                     <button
                       type="button"

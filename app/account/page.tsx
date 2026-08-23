@@ -32,21 +32,21 @@ export default async function AccountPage({
     >
       {verified === '1' && (
         <div className="mb-6 border border-accent-gold/40 bg-accent-gold/5 px-5 py-4">
-          <p className="font-mono text-sm uppercase tracking-widest text-accent-gold">Email verified</p>
+          <p className="font-mono text-base uppercase tracking-widest text-accent-gold">Email verified</p>
           <p className="mt-1 font-body text-base text-text-muted">Your account is now active.</p>
         </div>
       )}
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-heading">Your jobs</p>
+          <p className="font-mono text-base uppercase tracking-[0.18em] text-text-heading">Your jobs</p>
           <p className="mt-1.5 font-body text-base text-text-muted">
             Every quote you&apos;ve placed, from first request through to completion.
           </p>
         </div>
         <Link
           href="/account/quote"
-          className="shrink-0 border border-accent-gold px-5 py-2.5 font-mono text-sm uppercase tracking-widest text-accent-gold transition-colors hover:bg-accent-gold hover:text-bg-primary"
+          className="shrink-0 border border-accent-gold px-5 py-2.5 font-mono text-base uppercase tracking-widest text-accent-gold transition-colors hover:bg-accent-gold hover:text-bg-primary"
         >
           New quote
         </Link>

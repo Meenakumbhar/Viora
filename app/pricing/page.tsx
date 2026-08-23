@@ -119,14 +119,17 @@ export default function PricingPage() {
           Quote cart
         </span>
         <h1 className="mt-4 font-display text-display-xl text-text-primary max-w-4xl">
-          Review your <em className="italic text-accent-gold">ordered items</em>
+          Review your <em className="not-italic font-semibold text-accent-gold">ordered items</em>
         </h1>
         <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
           This lightweight cart keeps your chosen pieces together so you can review them before requesting a final quote.
         </p>
       </HeroVideo>
 
-      <section className="border-t border-border bg-cat-bg py-16 md:py-24 lg:py-28 transition-colors duration-500">
+      {/* Top padding trimmed from the bottom's: HeroVideo above already ends
+          in its own pb-16/24/32 + gradient fade, so a full py-16/24/28 here
+          on top of that read as a dead gap before the cart card. */}
+      <section className="border-t border-border bg-cat-bg pt-10 pb-16 md:pt-14 md:pb-24 lg:pt-20 lg:pb-28 transition-colors duration-500">
         <div className="container-wide">
           <SectionReveal>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.5fr_0.8fr]">
@@ -207,7 +210,7 @@ export default function PricingPage() {
                                 setCartItems(updatePortfolioCartQuantity(item.id, Number.isFinite(parsed) && parsed > 0 ? parsed : 1));
                               }}
                               aria-label={`Quantity of ${item.title}`}
-                              className="w-12 border-0 bg-transparent text-center font-mono text-sm text-cat-heading [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                              className="w-12 border-0 bg-transparent text-center font-mono text-base text-cat-heading [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                             />
                             <button
                               type="button"
@@ -220,7 +223,7 @@ export default function PricingPage() {
                           </div>
                           <Link
                             href={reviewHref}
-                            className="rounded-full border border-border px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
+                            className="rounded-full border border-border px-3 py-1 font-mono text-base uppercase tracking-wider text-text-muted transition-colors hover:border-accent-gold hover:text-accent-gold"
                           >
                             Review
                           </Link>
@@ -228,7 +231,7 @@ export default function PricingPage() {
                             type="button"
                             onClick={() => setCartItems(removeFromPortfolioCart(item.id))}
                             aria-label={`Remove ${item.title} from cart`}
-                            className="rounded-full border border-border px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-text-muted transition-colors hover:border-[#7A4A44] hover:text-[#7A4A44]"
+                            className="rounded-full border border-border px-3 py-1 font-mono text-base uppercase tracking-wider text-text-muted transition-colors hover:border-[#7A4A44] hover:text-[#7A4A44]"
                           >
                             Remove
                           </button>
@@ -249,7 +252,7 @@ export default function PricingPage() {
                               </div>
                             )}
                           </div>
-                          <span className="font-mono text-[11px] uppercase tracking-widest text-cat-accent-dark group-hover:text-accent-gold">
+                          <span className="font-mono text-base uppercase tracking-widest text-cat-accent-dark group-hover:text-accent-gold">
                             View product &rarr;
                           </span>
                         </Link>
@@ -280,26 +283,26 @@ export default function PricingPage() {
                     <div className="mt-6 rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-5">
                       {priceSummary.pricedCount > 0 ? (
                         <>
-                          <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">
+                          <p className="font-mono text-base uppercase tracking-widest text-accent-gold">
                             {priceSummary.negotiated ? 'Your total' : 'Estimated total'}
                           </p>
                           <p className="mt-1.5 font-display text-3xl text-cat-heading">
                             {formatPrice(priceSummary.total, priceSummary.currency)}
                           </p>
-                          <p className="mt-2 font-body text-sm text-cat-muted">
+                          <p className="mt-2 font-body text-base text-cat-muted">
                             {priceSummary.negotiated
                               ? 'This is the price we agreed for your project.'
                               : 'A general starting estimate — your final price is confirmed once we’ve reviewed your specific request.'}
                           </p>
                           {priceSummary.unpricedCount > 0 && (
-                            <p className="mt-2 font-mono text-[11px] text-cat-muted">
+                            <p className="mt-2 font-mono text-base text-cat-muted">
                               + {priceSummary.unpricedCount} item{priceSummary.unpricedCount > 1 ? 's' : ''} still being priced individually
                             </p>
                           )}
                         </>
                       ) : (
                         <>
-                          <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">Pricing</p>
+                          <p className="font-mono text-base uppercase tracking-widest text-accent-gold">Pricing</p>
                           <p className="mt-1.5 font-body text-body-base text-cat-heading">
                             Your custom pricing is being prepared — we&apos;ll let you know as soon as it&apos;s ready.
                           </p>

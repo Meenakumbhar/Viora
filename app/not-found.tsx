@@ -145,7 +145,7 @@ export default function NotFound() {
 
         {/* Studio label */}
         <p
-          className="fade-up relative z-10 font-mono text-[11px] uppercase tracking-[0.25em] text-white/30"
+          className="fade-up relative z-10 font-mono text-base uppercase tracking-[0.25em] text-white/30"
           style={{ animationDelay: '0ms' }}
         >
           Memories in Prints · Error
@@ -182,7 +182,7 @@ export default function NotFound() {
           }}
         >
           This page didn&rsquo;t{' '}
-          <em className="italic" style={{ color: '#C6A85C' }}>
+          <em className="not-italic font-semibold" style={{ color: '#C6A85C', fontStyle: 'normal' }}>
             make it to print.
           </em>
         </h1>
@@ -206,7 +206,7 @@ export default function NotFound() {
               <Link
                 key={href}
                 href={href}
-                className="inline-flex items-center gap-2 px-8 py-3.5 font-body text-sm uppercase tracking-widest transition-all duration-300 hover:opacity-90"
+                className="inline-flex items-center gap-2 px-8 py-3.5 font-body text-base uppercase tracking-widest transition-all duration-300 hover:opacity-90"
                 style={{ background: '#C6A85C', color: '#0E1117' }}
               >
                 {label}
@@ -215,7 +215,7 @@ export default function NotFound() {
               <Link
                 key={href}
                 href={href}
-                className="inline-flex items-center gap-2 border px-6 py-3 font-body text-sm uppercase tracking-widest transition-all duration-300 hover:border-[#C6A85C] hover:text-[#C6A85C]"
+                className="inline-flex items-center gap-2 border px-6 py-3 font-body text-base uppercase tracking-widest transition-all duration-300 hover:border-[#C6A85C] hover:text-[#C6A85C]"
                 style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' }}
               >
                 {label}
@@ -226,7 +226,7 @@ export default function NotFound() {
 
         {/* Footer note */}
         <p
-          className="fade-up absolute bottom-8 z-10 font-mono text-[11px] uppercase tracking-widest text-white/15"
+          className="fade-up absolute bottom-8 z-10 font-mono text-base uppercase tracking-widest text-white/15"
           style={{ animationDelay: '1100ms', opacity: 0 }}
         >
           Error 404 · Page not found · memoriesinprints.com

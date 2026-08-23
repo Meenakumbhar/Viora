@@ -61,7 +61,7 @@ const categoryGradients: Record<string, string> = {
   wedding:
     'linear-gradient(145deg, #F5E6DF 0%, #E8D5C4 50%, #C4958F 100%)',
   funeral:
-    'linear-gradient(145deg, #EDEAF8 0%, #D6D3EE 50%, #8B82C4 100%)',
+    'linear-gradient(145deg, #F7EFDA 0%, #F3E7C9 50%, #E5CB90 100%)',
   sports:
     'linear-gradient(145deg, #E2F0DB 0%, #C2DCBB 50%, #3D7A3A 100%)',
   branding:
@@ -163,6 +163,9 @@ const PortfolioCard = memo(function PortfolioCard({
     <article
       data-category={item.category}
       className={[
+        // Swapped back to a light caption background — the accent (now a
+        // pale champagne gold) reads as a proper "colour" on the Buy button
+        // instead, rather than being buried as white-on-dark card text.
         'group relative mb-4 break-inside-avoid overflow-hidden border border-border bg-cat-surface',
         'transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-cat-accent hover:shadow-[0_20px_44px_rgba(24,31,39,0.12)]',
         isAppearing ? 'animate-slide-up' : '',
@@ -184,10 +187,6 @@ const PortfolioCard = memo(function PortfolioCard({
         className={`${aspect} w-full`}
         priority={priority}
       >
-        <span className="glass absolute left-3 top-3 inline-flex items-center gap-1.5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-cat-heading">
-          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-cat-accent" />
-          {item.category}
-        </span>
         <button
           type="button"
           onClick={(event) => {
@@ -213,25 +212,25 @@ const PortfolioCard = memo(function PortfolioCard({
       </PortfolioVisual>
 
       {/* Caption */}
-      <div className="px-5 py-4">
-        <h3 className="font-display text-xl text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
+      <div className="px-4 py-3">
+        <h3 className="font-display text-lg text-cat-heading transition-colors duration-300 group-hover:text-cat-accent-dark">
           {item.title}
         </h3>
         {item.description && (
-          <p className="mt-2 font-body text-sm text-cat-body line-clamp-2 leading-relaxed">
+          <p className="mt-1.5 font-body text-base text-cat-body line-clamp-2 leading-relaxed">
             {item.description}
           </p>
         )}
 
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
-          <span className="font-mono text-[11px] text-cat-muted uppercase tracking-wider">
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
+          <span className="font-mono text-base text-cat-muted uppercase tracking-wider">
             {item.location || 'Worldwide'}
           </span>
 
           <button
             type="button"
             onClick={() => onBuy(item)}
-            className="relative z-20 w-1/4 shrink-0 rounded-full border border-cat-accent bg-cat-accent px-3 py-2 text-center font-mono text-[11px] font-semibold uppercase tracking-widest text-cat-bg transition-all duration-200 hover:-translate-y-0.5 hover:bg-cat-accent-dark hover:shadow-[0_14px_30px_rgba(198,168,92,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2"
+            className="relative z-20 w-1/4 shrink-0 rounded-full border border-cat-accent bg-cat-accent px-2.5 py-1.5 text-center font-mono text-sm font-semibold uppercase tracking-widest text-cat-heading transition-all duration-200 hover:-translate-y-0.5 hover:bg-cat-accent-dark hover:text-white hover:shadow-[0_14px_30px_rgba(198,168,92,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2"
           >
             Buy
           </button>
@@ -319,7 +318,7 @@ export default function PortfolioGrid({
 
   const filterOptions = useMemo(() => {
     const groups: Record<keyof PortfolioFilters, Map<string, number>> = {
-      style: new Map(), passion: new Map(), religion: new Map(), colour: new Map(), tribute: new Map(), children: new Map(),
+      style: new Map(), religion: new Map(), colour: new Map(), children: new Map(),
     };
     categoryItems.forEach((item) => {
       (Object.keys(groups) as (keyof PortfolioFilters)[]).forEach((group) => {
@@ -451,7 +450,7 @@ export default function PortfolioGrid({
     Object.values(activeFilters).some((values) => (values?.length ?? 0) > 0) || selectedTemplates.length > 0;
 
   const filterLabels: Record<keyof PortfolioFilters, string> = {
-    style: 'Style', passion: 'Passion', religion: 'Religion', colour: 'Colour', tribute: 'Tribute', children: 'Children',
+    style: 'Style', religion: 'Religion', colour: 'Colour', children: 'Children',
   };
 
   // Template numbers are numeric strings ("9", "10", "100") — a plain string
@@ -536,20 +535,20 @@ export default function PortfolioGrid({
       {(Object.keys(filterOptions).some((group) => filterOptions[group as keyof PortfolioFilters].size > 0) || templateOptions.size > 0) && (
         <div className="relative z-[100] isolate mb-12 border-y border-border/60 py-8">
           <div className="mb-4 flex items-center justify-between gap-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-cat-heading">Refine this collection</p>
+            <p className="font-mono text-base uppercase tracking-[0.18em] text-cat-heading">Refine this collection</p>
             <div className="flex items-center gap-4">
               <button
                 type="button"
                 onClick={handleResetFilters}
                 disabled={!hasActiveFilters}
-                className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-cat-muted underline decoration-cat-muted/50 underline-offset-2 transition-colors hover:text-cat-accent hover:decoration-cat-accent disabled:pointer-events-none disabled:opacity-40"
+                className="flex items-center gap-1.5 font-mono text-base uppercase tracking-[0.14em] text-cat-muted underline decoration-cat-muted/50 underline-offset-2 transition-colors hover:text-cat-accent hover:decoration-cat-accent disabled:pointer-events-none disabled:opacity-40"
               >
                 <svg viewBox="0 0 20 20" fill="none" className="h-3 w-3" aria-hidden="true">
                   <path d="M15 5 5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                 </svg>
                 Reset filters
               </button>
-              <span className="font-mono text-[11px] text-cat-muted">{filtered.length} projects</span>
+              <span className="font-mono text-base text-cat-muted">{filtered.length} projects</span>
             </div>
           </div>
           <div ref={filterPanelRef} className="flex flex-wrap gap-6">
@@ -564,15 +563,15 @@ export default function PortfolioGrid({
                   whileTap={{ scale: 0.97 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   className={[
-                    'group/filter flex min-h-11 items-center gap-3 rounded-full border px-6 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
+                    'glass group/filter flex min-h-8 items-center gap-2 rounded-full border px-4 py-2 font-mono text-[13px] uppercase tracking-[0.1em] shadow-[0_2px_10px_rgba(24,31,39,0.05)] transition-[background-color,border-color,box-shadow] duration-200',
                     openFilter === 'template'
                       ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
-                      : 'border-border text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.08)]',
+                      : 'border-cat-muted/35 text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.1)]',
                   ].join(' ')}
                 >
                   <span
                     aria-hidden="true"
-                    className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-200 ${selectedTemplates.length > 0 ? 'bg-cat-accent' : 'bg-border'}`}
+                    className={`h-1 w-1 shrink-0 rounded-full transition-colors duration-200 ${selectedTemplates.length > 0 ? 'bg-cat-accent' : 'bg-cat-muted/70'}`}
                   />
                   <span>Template No.</span>
                   {selectedTemplates.length > 0 && <span className="opacity-70">({selectedTemplates.length})</span>}
@@ -580,7 +579,7 @@ export default function PortfolioGrid({
                     aria-hidden="true"
                     viewBox="0 0 20 20"
                     fill="none"
-                    className={['h-4 w-4 transition-transform duration-200', openFilter === 'template' ? 'rotate-180' : ''].join(' ')}
+                    className={['h-3 w-3 transition-transform duration-200', openFilter === 'template' ? 'rotate-180' : ''].join(' ')}
                   >
                     <path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -603,7 +602,7 @@ export default function PortfolioGrid({
                           onChange={(e) => setFilterSearch(e.target.value)}
                           placeholder="Search template no.…"
                           autoFocus
-                          className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-[11px] text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
+                          className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-base text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
                         />
                       </div>
                     )}
@@ -611,12 +610,12 @@ export default function PortfolioGrid({
                       {(() => {
                         const values = searchFilterValues(sortFilterValues([...templateOptions.keys()]), filterSearch);
                         if (values.length === 0) {
-                          return <p className="px-3 py-4 font-mono text-[11px] text-cat-muted">No matches.</p>;
+                          return <p className="px-3 py-4 font-mono text-base text-cat-muted">No matches.</p>;
                         }
                         return values.map((value) => (
                           <label
                             key={value}
-                            className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-[11px] uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
+                            className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-base uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
                           >
                             <input
                               type="checkbox"
@@ -647,15 +646,15 @@ export default function PortfolioGrid({
                     whileTap={{ scale: 0.97 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     className={[
-                      'group/filter flex min-h-11 items-center gap-3 rounded-full border px-6 py-3 font-mono text-[11px] uppercase tracking-[0.12em] transition-[background-color,border-color,box-shadow] duration-200',
+                      'glass group/filter flex min-h-8 items-center gap-2 rounded-full border px-4 py-2 font-mono text-[13px] uppercase tracking-[0.1em] shadow-[0_2px_10px_rgba(24,31,39,0.05)] transition-[background-color,border-color,box-shadow] duration-200',
                       openFilter === group
                         ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
-                        : 'border-border text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.08)]',
+                        : 'border-cat-muted/35 text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.1)]',
                     ].join(' ')}
                   >
                     <span
                       aria-hidden="true"
-                      className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-200 ${(activeFilters[group]?.length ?? 0) > 0 ? 'bg-cat-accent' : 'bg-border'
+                      className={`h-1 w-1 shrink-0 rounded-full transition-colors duration-200 ${(activeFilters[group]?.length ?? 0) > 0 ? 'bg-cat-accent' : 'bg-cat-muted/70'
                         }`}
                     />
                     <span>{filterLabels[group]}</span>
@@ -667,7 +666,7 @@ export default function PortfolioGrid({
                       viewBox="0 0 20 20"
                       fill="none"
                       className={[
-                        'h-4 w-4 transition-transform duration-200',
+                        'h-3 w-3 transition-transform duration-200',
                         openFilter === group ? 'rotate-180' : '',
                       ].join(' ')}
                     >
@@ -698,7 +697,7 @@ export default function PortfolioGrid({
                             onChange={(e) => setFilterSearch(e.target.value)}
                             placeholder={`Search ${filterLabels[group].toLowerCase()}…`}
                             autoFocus
-                            className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-[11px] text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
+                            className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-base text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
                           />
                         </div>
                       )}
@@ -707,13 +706,13 @@ export default function PortfolioGrid({
                           const values = searchFilterValues(sortFilterValues([...filterOptions[group].keys()]), filterSearch);
                           if (values.length === 0) {
                             return (
-                              <p className="px-3 py-4 font-mono text-[11px] text-cat-muted">No matches.</p>
+                              <p className="px-3 py-4 font-mono text-base text-cat-muted">No matches.</p>
                             );
                           }
                           return values.map((value) => (
                             <label
                               key={value}
-                              className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-[11px] uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
+                              className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-base uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
                             >
                               <input
                                 type="checkbox"
@@ -741,7 +740,7 @@ export default function PortfolioGrid({
       {/* Masonry grid */}
       <div
         ref={gridRef}
-        className="columns-1 gap-4 md:columns-2 lg:columns-3"
+        className="columns-1 gap-4 md:columns-2 lg:columns-3 xl:columns-4"
       >
         {visible.map((item, i) => (
           <PortfolioCard
@@ -795,7 +794,7 @@ export default function PortfolioGrid({
               >
                 <div className="flex items-center justify-between border-b border-[#D9D4CC] px-6 py-5">
                   <div>
-                    <p className="font-mono text-[11px] uppercase tracking-widest text-[#6B5420]">Quote cart</p>
+                    <p className="font-mono text-base uppercase tracking-widest text-[#6B5420]">Quote cart</p>
                     <h2 id="portfolio-cart-title" className="mt-1 font-display text-3xl">Selected assets</h2>
                   </div>
                   <button type="button" onClick={() => setCartOpen(false)} className="flex h-11 w-11 items-center justify-center border border-[#D9D4CC] text-xl" aria-label="Close cart">×</button>
@@ -803,7 +802,7 @@ export default function PortfolioGrid({
 
                 <div className="flex-1 overflow-y-auto px-6 py-5">
                   {cartItems.length === 0 ? (
-                    <p className="font-body text-sm text-[#5B6470]">Your cart is empty.</p>
+                    <p className="font-body text-base text-[#5B6470]">Your cart is empty.</p>
                   ) : (
                     <div className="space-y-5">
                       {cartItems.map((item) => {
@@ -839,9 +838,9 @@ export default function PortfolioGrid({
                                 <div className="flex items-start justify-between gap-4">
                                   <div>
                                     <h3 className="font-display text-xl">{item.title}</h3>
-                                    <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-[#5B6470]">{item.category}</p>
+                                    <p className="mt-1 font-mono text-base uppercase tracking-wider text-[#5B6470]">{item.category}</p>
                                   </div>
-                                  <button type="button" onClick={() => setCartItems(removeFromPortfolioCart(item.id))} className="font-mono text-[11px] uppercase tracking-wider text-[#7A4A44] underline">Remove</button>
+                                  <button type="button" onClick={() => setCartItems(removeFromPortfolioCart(item.id))} className="font-mono text-base uppercase tracking-wider text-[#7A4A44] underline">Remove</button>
                                 </div>
                                 <div className="mt-4 flex items-center justify-between">
                                   <div className="flex items-center border border-[#D9D4CC]">
@@ -855,7 +854,7 @@ export default function PortfolioGrid({
                                         setCartItems(updatePortfolioCartQuantity(item.id, Number.isFinite(parsed) && parsed > 0 ? parsed : 1));
                                       }}
                                       aria-label="Quantity"
-                                      className="w-12 border-0 bg-transparent text-center font-mono text-xs [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                      className="w-12 border-0 bg-transparent text-center font-mono text-base [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                     />
                                     <button type="button" onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity + 1))} className="h-9 w-9">+</button>
                                   </div>
@@ -878,7 +877,7 @@ export default function PortfolioGrid({
                                     </div>
                                   )}
                                 </div>
-                                <span className="font-mono text-[11px] uppercase tracking-widest text-[#6B5420] group-hover:text-[#1C2530]">
+                                <span className="font-mono text-base uppercase tracking-widest text-[#6B5420] group-hover:text-[#1C2530]">
                                   View product &rarr;
                                 </span>
                               </Link>
@@ -892,9 +891,9 @@ export default function PortfolioGrid({
 
                 {cartItems.length > 0 && (
                   <div className="border-t border-[#D9D4CC] px-6 py-5">
-                    <p className="font-mono text-[11px] text-[#5B6470]">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
-                    <Link href="/pricing" onClick={() => setCartOpen(false)} className="mt-5 block bg-[#1C2530] px-5 py-3 text-center font-mono text-[11px] uppercase tracking-widest text-white hover:bg-[#374151]">Continue to checkout</Link>
-                    <button type="button" onClick={() => setCartOpen(false)} className="mt-3 w-full py-2 font-mono text-[11px] uppercase tracking-widest text-[#5B6470] underline">Continue browsing</button>
+                    <p className="font-mono text-base text-[#5B6470]">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
+                    <Link href="/pricing" onClick={() => setCartOpen(false)} className="mt-5 block bg-[#1C2530] px-5 py-3 text-center font-mono text-base uppercase tracking-widest text-white hover:bg-[#374151]">Continue to checkout</Link>
+                    <button type="button" onClick={() => setCartOpen(false)} className="mt-3 w-full py-2 font-mono text-base uppercase tracking-widest text-[#5B6470] underline">Continue browsing</button>
                   </div>
                 )}
               </aside>
@@ -917,7 +916,7 @@ export default function PortfolioGrid({
               >
                 <div className="flex items-center justify-between border-b border-[#D9D4CC] px-6 py-5">
                   <div>
-                    <p className="font-mono text-[11px] uppercase tracking-widest text-[#6B5420]">Saved items</p>
+                    <p className="font-mono text-base uppercase tracking-widest text-[#6B5420]">Saved items</p>
                     <h2 id="portfolio-saved-title" className="mt-1 font-display text-3xl">Your favourites</h2>
                   </div>
                   <button type="button" onClick={() => setSavedOpen(false)} className="flex h-11 w-11 items-center justify-center border border-[#D9D4CC] text-xl" aria-label="Close saved items">×</button>
@@ -925,7 +924,7 @@ export default function PortfolioGrid({
 
                 <div className="flex-1 overflow-y-auto px-6 py-5">
                   {savedItems.length === 0 ? (
-                    <p className="font-body text-sm text-[#5B6470]">Nothing saved yet. Tap the heart on any piece to keep it here for quick access later.</p>
+                    <p className="font-body text-base text-[#5B6470]">Nothing saved yet. Tap the heart on any piece to keep it here for quick access later.</p>
                   ) : (
                     <div className="space-y-5">
                       {savedItems.map((item) => (
@@ -933,7 +932,7 @@ export default function PortfolioGrid({
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <h3 className="font-display text-xl">{item.title}</h3>
-                              <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-[#5B6470]">{item.category}</p>
+                              <p className="mt-1 font-mono text-base uppercase tracking-wider text-[#5B6470]">{item.category}</p>
                             </div>
                             <button
                               type="button"
@@ -941,7 +940,7 @@ export default function PortfolioGrid({
                                 toggleSavedItem(item);
                                 return prev.filter((entry) => entry.id !== item.id);
                               })}
-                              className="font-mono text-[11px] uppercase tracking-wider text-[#7A4A44] underline"
+                              className="font-mono text-base uppercase tracking-wider text-[#7A4A44] underline"
                             >
                               Remove
                             </button>
@@ -950,7 +949,7 @@ export default function PortfolioGrid({
                             <Link
                               href={`/portfolio/${item.id}`}
                               onClick={() => setSavedOpen(false)}
-                              className="border border-[#D9D4CC] px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-[#5B6470] hover:border-[#1C2530] hover:text-[#1C2530]"
+                              className="border border-[#D9D4CC] px-3 py-1.5 font-mono text-base uppercase tracking-wider text-[#5B6470] hover:border-[#1C2530] hover:text-[#1C2530]"
                             >
                               View
                             </Link>
@@ -961,7 +960,7 @@ export default function PortfolioGrid({
                                 setCartItems(readPortfolioCart());
                                 setToast({ key: Date.now(), title: item.title });
                               }}
-                              className="border border-cat-accent bg-cat-accent px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-cat-bg hover:bg-cat-accent-dark"
+                              className="border border-cat-accent bg-cat-accent px-3 py-1.5 font-mono text-base uppercase tracking-wider text-cat-bg hover:bg-cat-accent-dark"
                             >
                               Add to cart
                             </button>
@@ -993,8 +992,8 @@ export default function PortfolioGrid({
                 <circle cx="19" cy="20" r="1" />
                 <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
               </svg>
-              <span className="font-mono text-[11px] font-medium uppercase tracking-widest">Cart</span>
-              <span className="flex h-5 min-w-5 items-center justify-center bg-cat-accent px-1 font-mono text-[11px] font-semibold text-cat-heading">
+              <span className="font-mono text-base font-medium uppercase tracking-widest">Cart</span>
+              <span className="flex h-5 min-w-5 items-center justify-center bg-cat-accent px-1 font-mono text-base font-semibold text-cat-heading">
                 {cartCount}
               </span>
             </motion.button>
@@ -1016,8 +1015,8 @@ export default function PortfolioGrid({
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="#7A4A44" stroke="#7A4A44" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 20.5s-7.5-4.6-10-9.3C.4 8 1.8 4.5 5 3.6c2-.5 3.9.3 5 2 1.1-1.7 3-2.5 5-2 3.2.9 4.6 4.4 3 7.6-2.5 4.7-10 9.3-10 9.3Z" />
               </svg>
-              <span className="font-mono text-[11px] font-medium uppercase tracking-widest">Saved</span>
-              <span className="flex h-5 min-w-5 items-center justify-center bg-cat-accent px-1 font-mono text-[11px] font-semibold text-cat-heading">
+              <span className="font-mono text-base font-medium uppercase tracking-widest">Saved</span>
+              <span className="flex h-5 min-w-5 items-center justify-center bg-cat-accent px-1 font-mono text-base font-semibold text-cat-heading">
                 {savedItems.length}
               </span>
             </motion.button>
@@ -1040,7 +1039,7 @@ export default function PortfolioGrid({
                   ✓
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-xs uppercase tracking-widest text-[#C6A85C]">Added to cart</p>
+                  <p className="font-mono text-base uppercase tracking-widest text-[#C6A85C]">Added to cart</p>
                   <p className="mt-1 truncate font-display text-lg text-white">{toast.title}</p>
                 </div>
                 <button
@@ -1049,7 +1048,7 @@ export default function PortfolioGrid({
                     setCartOpen(true);
                     setToast(null);
                   }}
-                  className="ml-1 shrink-0 font-mono text-xs font-medium uppercase tracking-wider text-[#C6A85C] transition-colors hover:text-white"
+                  className="ml-1 shrink-0 font-mono text-base font-medium uppercase tracking-wider text-[#C6A85C] transition-colors hover:text-white"
                 >
                   View cart →
                 </button>

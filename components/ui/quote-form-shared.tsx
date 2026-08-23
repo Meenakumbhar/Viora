@@ -69,7 +69,7 @@ export function PillChip({
       type="button"
       onClick={onClick}
       className={[
-        'px-4 py-2.5 border font-body text-sm transition-all duration-200 text-left',
+        'px-4 py-2.5 border font-body text-base transition-all duration-200 text-left',
         'hover:border-accent-gold hover:text-accent-gold',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold',
         selected
@@ -189,7 +189,7 @@ export function QuantityCombobox({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="w-full rounded-full border border-border bg-surface py-2 pl-4 pr-8 font-body text-sm text-text-heading placeholder:text-text-muted focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold/40 disabled:cursor-not-allowed"
+        className="w-full rounded-full border border-border bg-surface py-2 pl-4 pr-8 font-body text-base text-text-heading placeholder:text-text-muted focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold/40 disabled:cursor-not-allowed"
       />
       {/* Chevron */}
       <span
@@ -215,7 +215,7 @@ export function QuantityCombobox({
               aria-selected={String(q) === (value ?? '')}
               onMouseDown={() => select(String(q))}
               className={[
-                'cursor-pointer px-4 py-1.5 font-body text-sm transition-colors',
+                'cursor-pointer px-4 py-1.5 font-body text-base transition-colors',
                 i === highlighted
                   ? 'bg-accent-gold/10 text-accent-gold'
                   : 'text-text-heading hover:bg-bg-secondary',
@@ -314,7 +314,7 @@ export function DateField({
       >
         {displayValue
           ? <span>{displayValue}</span>
-          : <span className="text-text-muted/50 text-sm">Pick a date&hellip;</span>
+          : <span className="text-text-muted/50 text-base">Pick a date&hellip;</span>
         }
       </button>
 
@@ -323,7 +323,7 @@ export function DateField({
         htmlFor="quote-date-btn"
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-1.5 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-1.5 text-base uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         {label}
@@ -389,7 +389,7 @@ export function DateField({
                 type="button"
                 onClick={() => setView(view === 'years' ? 'days' : 'years')}
                 className={[
-                  'px-2 py-1 font-mono text-sm transition-colors',
+                  'px-2 py-1 font-mono text-base transition-colors',
                   view === 'years' ? 'text-accent-gold' : 'text-text-muted hover:text-accent-gold',
                 ].join(' ')}
               >
@@ -436,7 +436,7 @@ export function DateField({
                     disabled={isPast}
                     onClick={() => selectMonth(idx)}
                     className={[
-                      'py-2 text-sm font-body transition-all duration-150',
+                      'py-2 text-base font-body transition-all duration-150',
                       isSelected
                         ? 'bg-accent-gold text-bg-primary font-semibold'
                         : isPast
@@ -467,7 +467,7 @@ export function DateField({
                     data-selected={isSelected}
                     onClick={() => selectYear(year)}
                     className={[
-                      'w-full px-4 py-2.5 text-left font-mono text-sm transition-colors',
+                      'w-full px-4 py-2.5 text-left font-mono text-base transition-colors',
                       isSelected
                         ? 'bg-accent-gold text-bg-primary font-semibold'
                         : 'text-text-heading hover:bg-accent-gold/10 hover:text-accent-gold',
@@ -555,14 +555,14 @@ export function AutoTextarea({
         htmlFor={id}
         className={[
           'absolute left-4 pointer-events-none transition-all duration-200 font-body',
-          lifted ? 'top-2 text-[11px] uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
+          lifted ? 'top-2 text-base uppercase tracking-wider text-accent-gold' : 'top-4 text-body-base text-text-muted',
         ].join(' ')}
       >
         {label} {optional && <span className="normal-case text-text-muted">(optional)</span>}
       </label>
       {/* Character counter */}
       {(focused || value.length > 0) && (
-        <p className={`mt-1 text-right font-mono text-[11px] transition-colors ${nearLimit ? 'text-accent-blush' : 'text-text-muted'
+        <p className={`mt-1 text-right font-mono text-base transition-colors ${nearLimit ? 'text-accent-blush' : 'text-text-muted'
           }`}>
           {value.length} / {maxLength}
         </p>

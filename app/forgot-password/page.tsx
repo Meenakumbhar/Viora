@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
             </div>
             <h1 className="font-display text-display-md text-text-heading">Check your email</h1>
             <p className="mt-3 font-body text-body-base text-text-muted">{message}</p>
-            <Link href="/login" className="mt-8 inline-block font-mono text-[11px] uppercase tracking-wider text-accent-gold link-underline">
+            <Link href="/login" className="mt-8 inline-block font-mono text-base uppercase tracking-wider text-accent-gold link-underline">
               Back to log in
             </Link>
           </div>
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
             <div>
-              <label htmlFor="forgot-email" className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+              <label htmlFor="forgot-email" className="block font-mono text-base uppercase tracking-wider text-text-muted">
                 Email
               </label>
               <input
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && (
-              <p className="font-body text-sm text-accent-blush" role="alert">{error}</p>
+              <p className="font-body text-base text-accent-blush" role="alert">{error}</p>
             )}
 
             <button
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
             </button>
           </form>
 
-          <p className="mt-8 font-body text-sm text-text-muted">
+          <p className="mt-8 font-body text-base text-text-muted">
             Remembered your password?{' '}
             <Link href="/login" className="text-accent-gold link-underline">Log in</Link>
           </p>

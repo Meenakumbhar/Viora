@@ -48,7 +48,7 @@ export default function ZoomPanStage({ onTap, contentRefOut, children, borderCla
             reset();
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="absolute right-2 top-2 z-10 border border-white/20 bg-black/50 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-white backdrop-blur-sm hover:border-[#C6A85C] hover:text-[#C6A85C]"
+          className="absolute right-2 top-2 z-10 border border-white/20 bg-black/50 px-2 py-1 font-mono text-base uppercase tracking-widest text-white backdrop-blur-sm hover:border-[#C6A85C] hover:text-[#C6A85C]"
         >
           Reset zoom
         </button>

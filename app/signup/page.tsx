@@ -53,7 +53,7 @@ export default function SignupPage() {
             </div>
             <h1 className="font-display text-display-md text-text-heading">Almost there</h1>
             <p className="mt-3 font-body text-body-base text-text-muted">{message}</p>
-            <Link href="/login" className="mt-8 inline-block font-mono text-[11px] uppercase tracking-wider text-accent-gold link-underline">
+            <Link href="/login" className="mt-8 inline-block font-mono text-base uppercase tracking-wider text-accent-gold link-underline">
               Back to log in
             </Link>
           </div>
@@ -71,7 +71,7 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
             <div>
-              <label htmlFor="signup-name" className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+              <label htmlFor="signup-name" className="block font-mono text-base uppercase tracking-wider text-text-muted">
                 Full Name
               </label>
               <input
@@ -83,7 +83,7 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label htmlFor="signup-email" className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+              <label htmlFor="signup-email" className="block font-mono text-base uppercase tracking-wider text-text-muted">
                 Email
               </label>
               <input
@@ -96,7 +96,7 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label htmlFor="signup-password" className="block font-mono text-[11px] uppercase tracking-wider text-text-muted">
+              <label htmlFor="signup-password" className="block font-mono text-base uppercase tracking-wider text-text-muted">
                 Password
               </label>
               <input
@@ -108,11 +108,11 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-2 w-full border border-border bg-bg-primary px-4 py-2.5 font-body text-text-heading outline-none transition-colors focus:border-accent-gold"
               />
-              <p className="mt-1.5 font-mono text-[11px] text-text-muted">At least 8 characters.</p>
+              <p className="mt-1.5 font-mono text-base text-text-muted">At least 8 characters.</p>
             </div>
 
             {error && (
-              <p className="font-body text-sm text-accent-blush" role="alert">{error}</p>
+              <p className="font-body text-base text-accent-blush" role="alert">{error}</p>
             )}
 
             <button
@@ -124,7 +124,7 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="mt-8 font-body text-sm text-text-muted">
+          <p className="mt-8 font-body text-base text-text-muted">
             Already have an account?{' '}
             <Link href="/login" className="text-accent-gold link-underline">Log in</Link>
           </p>

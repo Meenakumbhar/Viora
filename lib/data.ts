@@ -67,6 +67,19 @@ export const processSteps: ProcessStep[] = [
 
 // ─── FAQ DATA ────────────────────────────────────────────────────────────────
 
+export const generalFaqs = [
+  { question: 'What services does Memories in Prints provide?', answer: 'We specialise in memorial and funeral card designs, tribute templates, personalised graphic design services, printing and delivery solutions (available in select regions), and worldwide digital file delivery.' },
+  { question: 'Do you provide services worldwide?', answer: 'Yes. Our digital design services are available globally. Printing and physical delivery are available in select countries. For international clients, we provide high-resolution digital files that can be printed locally.' },
+  { question: 'How do I place an order?', answer: 'You can place an order directly through our website by selecting a template or requesting a custom design. Once details are confirmed and payment is received, our team will contact you to begin the project and keep you updated throughout.' },
+  { question: 'How long does it take to receive my order?', answer: 'Digital designs are typically delivered within 1–3 business days, depending on complexity. Printed orders usually take 3–5 business days to produce, plus delivery time depending on your location.' },
+  { question: 'What payment methods do you accept?', answer: 'We accept major international payment methods including credit/debit cards, PayPal, and bank transfers where applicable. International clients are responsible for any currency conversion or bank fees.' },
+  { question: 'Can I request changes after I receive my design?', answer: 'Yes — minor revisions are included in your order. Major revisions, such as significant layout or content changes outside the agreed scope, may require additional charges.' },
+  { question: 'Do you offer refunds?', answer: 'Digital services and custom designs are non-refundable once delivered, as they are personalised. Template sales are final. Printing orders can only be cancelled before production begins. If an error occurs on our part, we will correct or replace the design at no extra cost.' },
+  { question: 'Will my personal information be safe?', answer: 'Absolutely. We take your privacy seriously — your information is only used to complete your order and improve our services. See our Privacy Policy for full details.' },
+  { question: 'Can I use your designs for commercial purposes?', answer: 'By default, our designs are for personal use only. If you need a commercial licence — for resale or business use — please contact us for a tailored agreement.' },
+  { question: 'How do I contact Memories in Prints?', answer: 'Email us at info@memoriesinprints.com or call 8421210204. We offer worldwide online and remote support.' },
+];
+
 export const pricingFaqs = [
   { question: 'Are prices listed inclusive of VAT?', answer: 'All prices shown exclude VAT. VAT is added at the applicable rate for UK clients. International orders are zero-rated for VAT purposes.' },
   { question: 'Is shipping included in the price?', answer: 'Shipping is calculated separately at quote stage based on destination, weight, and your preferred delivery speed. We always provide the full cost upfront.' },

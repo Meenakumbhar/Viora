@@ -2,14 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import HeroDoodles from '@/components/ui/HeroDoodles';
 
-// Only the funeral portfolio gets a background video — every other category
-// keeps its animated gradient. Swap or add a category key here to extend it.
-// NOTE: .MOV files don't play in Chrome/Firefox/Edge on Windows — convert to
-// .mp4 first, then update NEXT_PUBLIC_FUNERAL_HERO_VIDEO_URL in .env.local.
-const CATEGORY_VIDEOS: Partial<Record<string, string>> = {
-  funeral: process.env.NEXT_PUBLIC_FUNERAL_HERO_VIDEO_URL,
-};
+// No category currently uses a background video — funeral now uses the
+// static Portfolio-funeral-Image.jpg (see CATEGORY_IMAGES) instead of the
+// NEXT_PUBLIC_FUNERAL_HERO_VIDEO_URL video it used before. Add a category
+// key here to bring video back for a given category.
+const CATEGORY_VIDEOS: Partial<Record<string, string>> = {};
 
 // A static background photo per category — used whenever that category has
 // no video (or the video fails to load). Falls back to the animated gradient
@@ -41,18 +40,18 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,252,250,0.6) 65%, #FDFCFA 100%)',
   },
   funeral: {
-    eyebrow: 'Funeral Stationery',
+    eyebrow: '',
     headline: 'Print that honours a',
     headlineAccent: 'life',
     description:
       'Orders of service, memorial cards, and keepsake books — handled with warmth, care, and unhurried attention to detail.',
     bgGradient:
-      'linear-gradient(135deg, #F8F7FD 0%, #EDEAF8 30%, #D6D3EE 60%, #F8F7FD 100%)',
+      'linear-gradient(135deg, #FBF7EE 0%, #F7EFDA 30%, #F3E7C9 60%, #FBF7EE 100%)',
     overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(248,247,253,0.6) 65%, #F8F7FD 100%)',
+      'linear-gradient(to bottom, transparent 0%, transparent 55%, rgba(251,247,238,0.45) 78%, rgba(251,247,238,0.88) 100%)',
   },
   wedding: {
-    eyebrow: 'Wedding Stationery',
+    eyebrow: '',
     headline: 'Stationery for your',
     headlineAccent: 'forever',
     description:
@@ -154,7 +153,7 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
   return (
     <section
       data-category={activeCategory.toLowerCase()}
-      className="relative min-h-[70vh] overflow-hidden bg-cat-bg transition-colors duration-700"
+      className="relative min-h-[max(70vh,34rem)] overflow-hidden bg-cat-bg transition-colors duration-700"
     >
       {/* Background layers start below the fixed nav (h-20) plus a little
           breathing room, matching the homepage hero — so the nav always sits
@@ -193,7 +192,9 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
             backgroundSize: '400% 400%',
             animation: 'hero-gradient-shift 12s ease infinite',
           }}
-        />
+        >
+          <HeroDoodles />
+        </div>
       )}
 
       {/* Gradient overlay — smooth bottom transition */}
@@ -204,8 +205,10 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
         }}
       />
 
-      {/* Content positioned at bottom */}
-      <div className="absolute inset-x-0 bottom-0 z-10 px-6 pb-16 md:px-12 md:pb-24 lg:px-20 lg:pb-32">
+      {/* Content positioned at bottom — shifted up from the very edge so it
+          sits better-balanced within the image instead of crammed against
+          the bottom, and needs less opaque overlay behind it as a result. */}
+      <div className="absolute inset-x-0 bottom-0 z-10 px-6 pb-10 md:px-12 md:pb-16 lg:px-20 lg:pb-20">
         <span
           className="block font-mono text-label uppercase tracking-wider text-accent-gold transition-opacity duration-500"
           key={`eyebrow-${activeCategory}`}
@@ -213,14 +216,21 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
           {content.eyebrow}
         </span>
         <h1
-          className="mt-4 font-display text-display-xl text-cat-heading max-w-4xl transition-opacity duration-500"
+          className={`mt-4 font-display text-display-lg max-w-4xl transition-opacity duration-500 ${key === 'funeral' ? 'text-white' : 'text-cat-heading'
+            }`}
           key={`headline-${activeCategory}`}
         >
           {content.headline}{' '}
-          <em className="italic text-accent-gold">{content.headlineAccent}</em>
+          <em
+            className={`not-italic font-semibold ${key === 'funeral' ? 'text-cat-heading' : 'text-accent-gold'
+              }`}
+          >
+            {content.headlineAccent}
+          </em>
         </h1>
         <p
-          className="mt-6 font-body text-body-lg text-cat-body max-w-2xl leading-relaxed transition-opacity duration-500"
+          className={`mt-6 font-body text-body-lg max-w-2xl leading-relaxed transition-opacity duration-500 ${key === 'funeral' ? 'text-cat-heading' : 'text-cat-body'
+            }`}
           key={`desc-${activeCategory}`}
         >
           {content.description}

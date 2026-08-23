@@ -9,9 +9,7 @@ import type { PortfolioItem, PortfolioFilters, ServiceCategory } from '@/types/d
 const CATEGORIES: ServiceCategory[] = ['wedding', 'funeral', 'sports', 'branding', 'events'];
 
 const FILTER_GROUPS: { key: keyof PortfolioFilters; label: string }[] = [
-  { key: 'tribute', label: 'Tribute' },
   { key: 'style', label: 'Style' },
-  { key: 'passion', label: 'Passion' },
   { key: 'religion', label: 'Religion' },
   { key: 'colour', label: 'Colour' },
   { key: 'children', label: 'Children' },
@@ -39,12 +37,12 @@ function emptyForm(): FormState {
     image_url: '',
     published: true,
     templateNumber: '',
-    filterText: { style: '', passion: '', religion: '', colour: '', tribute: '', children: '' },
+    filterText: { style: '', religion: '', colour: '', children: '' },
   };
 }
 
 function toFormState(item: PortfolioItem): FormState {
-  const filterText: Record<keyof PortfolioFilters, string> = { style: '', passion: '', religion: '', colour: '', tribute: '', children: '' };
+  const filterText: Record<keyof PortfolioFilters, string> = { style: '', religion: '', colour: '', children: '' };
   (Object.keys(filterText) as (keyof PortfolioFilters)[]).forEach((key) => {
     filterText[key] = (item.filters?.[key] ?? []).join(', ');
   });
