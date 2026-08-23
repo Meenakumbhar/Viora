@@ -45,30 +45,40 @@ export default function ProcessPage() {
         </p>
       </HeroVideo>
 
-      {/* Timeline Section */}
-      <section className="bg-bg-primary py-16 md:py-24 lg:py-28 border-t border-border">
+      {/* Timeline Section — a horizontal stepper on lg+ (all steps in one
+          row, connected by a single line behind the numbered circles) that
+          collapses back to a stacked list below lg, where five columns of
+          this much text would no longer be readable. Top padding kept
+          lighter than the bottom's: the hero above already ends in its own
+          lg:pb-32 + gradient fade, so a full py-16/24/28 here on top of
+          that read as a dead gap — but it still needs its own clear
+          breathing room from the hero, not zero. */}
+      <section className="bg-bg-primary pt-14 pb-16 md:pt-20 md:pb-24 lg:pt-20 lg:pb-14 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
-            <div className="max-w-4xl mx-auto">
-              <div className="space-y-10 relative before:absolute before:inset-y-0 before:left-6 md:before:left-12 before:w-[1px] before:bg-border">
+            <div className="mx-auto max-w-4xl lg:max-w-none">
+              <div className="relative space-y-10 before:absolute before:inset-y-0 before:left-6 before:w-[1px] before:bg-border md:before:left-12 lg:grid lg:grid-cols-5 lg:gap-6 lg:space-y-0 lg:before:inset-x-0 lg:before:top-4 lg:before:left-0 lg:before:h-[1px] lg:before:w-full lg:before:bg-border">
                 {processSteps.map((step) => (
-                  <div key={step.number} className="relative pl-16 md:pl-28 flex flex-col md:flex-row gap-6 md:gap-12">
+                  <div
+                    key={step.number}
+                    className="relative flex flex-col gap-6 pl-16 md:flex-row md:gap-12 md:pl-28 lg:flex-col lg:items-center lg:gap-0 lg:pl-0 lg:text-center"
+                  >
                     {/* Circle counter */}
-                    <div className="absolute left-2 md:left-8 -translate-x-1/2 w-8 h-8 rounded-full border border-border bg-bg-secondary flex items-center justify-center font-mono text-xs text-accent-gold font-bold">
+                    <div className="absolute left-2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-bg-primary font-mono text-xs font-bold text-accent-gold md:left-8 lg:static lg:translate-x-0">
                       {step.number}
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="font-display text-3xl text-text-primary">
+                    <div className="flex-1 lg:mt-3">
+                      <div className="flex flex-wrap items-center gap-3 lg:flex-col lg:items-center lg:gap-2">
+                        <h2 className="font-display text-3xl text-text-primary lg:text-xl">
                           {step.title}
                         </h2>
                         <span className="font-mono text-[11px] text-text-muted uppercase tracking-widest border border-border px-2 py-0.5 bg-bg-secondary">
                           {step.timeframe}
                         </span>
                       </div>
-                      
-                      <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed max-w-2xl">
+
+                      <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed max-w-2xl lg:mt-2 lg:text-sm">
                         {step.description}
                       </p>
                     </div>

@@ -80,7 +80,7 @@ export default async function Home() {
       {/* ──────────────────── SECTION 1 — HERO ──────────────────── */}
       <section
         id="hero"
-        className="hero-section relative h-[82vh] min-h-[600px] max-h-[780px] overflow-hidden bg-bg-primary flex items-center pt-28 pb-16"
+        className="hero-section relative h-[88vh] min-h-[680px] max-h-[880px] overflow-hidden bg-bg-primary flex items-center pt-28 pb-16"
       >
         {/* Banner photo — starts below the fixed nav's height (h-20) plus a
             little breathing room, so the nav always sits on the section's
@@ -97,6 +97,13 @@ export default async function Home() {
             style={{ objectPosition: '65% 30%' }}
           />
 
+          {/* Scrim — darkens the left side where the copy sits so it reads
+              clearly regardless of how bright that part of the photo is,
+              fading out toward the right so the image itself stays visible. */}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(100deg, rgba(10,14,20,0.55) 0%, rgba(10,14,20,0.32) 35%, rgba(10,14,20,0) 68%)' }}
+          />
         </div>
 
         <div className="container-wide relative z-10 w-full">
@@ -105,10 +112,10 @@ export default async function Home() {
             <AnimatedHeadline
               text="Made for every moment"
               accentWord="moment"
-              className="font-display text-display-lg text-text-heading max-w-lg mt-5"
+              className="font-display text-display-lg text-white max-w-lg mt-5 [text-shadow:0_2px_16px_rgba(0,0,0,0.35)]"
             />
 
-            <p className="font-body text-body-lg text-text-muted max-w-lg mt-6">
+            <p className="font-body text-body-lg text-white/90 max-w-lg mt-6 [text-shadow:0_1px_10px_rgba(0,0,0,0.35)]">
               Funerals and Weddings.
               <br />
               Beautiful design and printing for life’s important moments from funeral stationery and keepsakes to wedding invitations.

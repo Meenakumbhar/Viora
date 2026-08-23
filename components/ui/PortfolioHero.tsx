@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import HeroDoodles from '@/components/ui/HeroDoodles';
 
 // Only the funeral portfolio gets a background video — every other category
 // keeps its animated gradient. Swap or add a category key here to extend it.
@@ -193,7 +194,9 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
             backgroundSize: '400% 400%',
             animation: 'hero-gradient-shift 12s ease infinite',
           }}
-        />
+        >
+          <HeroDoodles />
+        </div>
       )}
 
       {/* Gradient overlay — smooth bottom transition */}
