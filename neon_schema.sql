@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS enquiries (
     source TEXT,
     portfolio_items JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    status TEXT DEFAULT 'new' NOT NULL CHECK (status IN ('new', 'read', 'replied', 'converted'))
+    status TEXT DEFAULT 'new' NOT NULL CHECK (status IN ('new', 'read', 'replied', 'converted', 'cancelled'))
 );
 
 -- Add portfolio_items to an existing database without affecting current enquiries.
@@ -283,6 +283,39 @@ UPDATE products SET type_slug = slug WHERE type_slug IS NULL;
 UPDATE products SET type_label = title WHERE type_label IS NULL;
 ALTER TABLE products ALTER COLUMN type_slug SET NOT NULL;
 ALTER TABLE products ALTER COLUMN type_label SET NOT NULL;
+
+-- 12. A specific price for one (product, size) pair, the same for every
+-- customer who doesn't have something more specific set for them. A
+-- product's sizes are a jsonb array with no id of their own — size_label
+-- (the size's `label`) is the only stable identifier, so it's part of the
+-- key alongside product_id, same idea as portfolio_item_prices above but
+-- one level deeper.
+CREATE TABLE IF NOT EXISTS product_prices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    size_label TEXT NOT NULL,
+    price NUMERIC(10,2) NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'GBP',
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE (product_id, size_label)
+);
+
+-- 13. The genuinely per-customer, per-(product,size) price — most specific,
+-- wins first over product_prices' shared baseline (see
+-- getEffectiveProductPrice in lib/db.ts). No set_by column, same reasoning
+-- as customer_item_prices above.
+CREATE TABLE IF NOT EXISTS customer_product_prices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    size_label TEXT NOT NULL,
+    price NUMERIC(10,2) NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'GBP',
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE (user_id, product_id, size_label)
+);
 
 -- ─── Indexes for Performance ──────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_enquiries_status ON enquiries(status, created_at DESC);

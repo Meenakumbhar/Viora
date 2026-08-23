@@ -43,14 +43,20 @@ export default function PricingPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // A specific per-piece price only makes sense to look up when the cart is
-  // exactly one real portfolio item — product cart entries use a composite
-  // `slug::size` id, not a portfolio_items id, and with several different
-  // pieces in the cart there's no single "the" item to price.
-  const singlePortfolioItemId = useMemo(() => {
+  // A specific price only makes sense to look up when the cart is exactly
+  // one item, and with several different pieces in the cart there's no
+  // single "the" item to price. That one item is either a real portfolio
+  // item (its own id, no `::`) or a product cart entry (carries productId +
+  // a size label in `size`) — build whichever query string applies.
+  const singleItemPricingParams = useMemo(() => {
     if (cartItems.length !== 1) return null;
     const only = cartItems[0];
-    return only.id.includes('::') ? null : only.id;
+    if (only.productId) {
+      return only.size
+        ? `?productId=${encodeURIComponent(only.productId)}&sizeLabel=${encodeURIComponent(only.size)}`
+        : null;
+    }
+    return only.id.includes('::') ? null : `?portfolioItemId=${encodeURIComponent(only.id)}`;
   }, [cartItems]);
 
   // The price lookup is per unit — the summary must multiply by how many of
@@ -59,16 +65,22 @@ export default function PricingPage() {
   const cartQuantity = cartItems.length === 1 ? cartItems[0].quantity : 1;
 
   useEffect(() => {
-    if (!loggedIn) { setEffectivePrice(null); setPriceLoaded(false); return; }
+    if (!loggedIn) {
+      // Syncing from an external system (login status), not deriving from
+      // React state — the legitimate exception this rule allows for.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setEffectivePrice(null);
+      setPriceLoaded(false);
+      return;
+    }
     let cancelled = false;
-    const qs = singlePortfolioItemId ? `?portfolioItemId=${encodeURIComponent(singlePortfolioItemId)}` : '';
-    fetch(`/api/account/pricing${qs}`)
+    fetch(`/api/account/pricing${singleItemPricingParams ?? ''}`)
       .then((res) => (res.ok ? res.json() : { success: false }))
       .then((json) => { if (!cancelled && json.success) setEffectivePrice(json.data); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setPriceLoaded(true); });
     return () => { cancelled = true; };
-  }, [loggedIn, singlePortfolioItemId]);
+  }, [loggedIn, singleItemPricingParams]);
 
   return (
     <div>

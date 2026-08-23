@@ -1,24 +1,63 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Product, ProductSize, PortfolioItem } from '@/types/database';
+import type { Product, ProductSize, PortfolioItem, ProductPrice, EffectivePrice } from '@/types/database';
 import { addToPortfolioCart } from '@/utils/portfolio-cart';
 import { categoryToServiceLabel } from '@/lib/active-services';
+import { formatPrice } from '@/lib/format';
 
 export default function ProductOrderPanel({
   product,
   templates = [],
+  basePrices = [],
 }: {
   product: Product;
   templates?: PortfolioItem[];
+  /** Shared baseline prices for this product's sizes — public, no auth needed. */
+  basePrices?: ProductPrice[];
 }) {
   const [selected, setSelected] = useState<ProductSize>(product.sizes[0]);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<PortfolioItem | null>(null);
   const hasMultipleSizes = product.sizes.length > 1;
+
+  const basePriceByLabel = useMemo(() => new Map(basePrices.map((p) => [p.size_label, p])), [basePrices]);
+
+  // Mirrors app/pricing/page.tsx's own login-check pattern.
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [customerPrice, setCustomerPrice] = useState<EffectivePrice | null>(null);
+  const [priceLoaded, setPriceLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/account/me')
+      .then((res) => { if (!cancelled) setLoggedIn(res.ok); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Re-fires whenever the selected size changes, so the negotiated price
+  // (if any) always matches whichever size is currently shown.
+  useEffect(() => {
+    if (!loggedIn) {
+      // Syncing from an external system (login status), not deriving from
+      // React state — the legitimate exception this rule allows for.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCustomerPrice(null);
+      setPriceLoaded(false);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/account/pricing?productId=${encodeURIComponent(product.id)}&sizeLabel=${encodeURIComponent(selected.label)}`)
+      .then((res) => (res.ok ? res.json() : { success: false }))
+      .then((json) => { if (!cancelled && json.success) setCustomerPrice(json.data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setPriceLoaded(true); });
+    return () => { cancelled = true; };
+  }, [loggedIn, product.id, selected.label]);
   // Portfolio titles are already prefixed with their own template number
   // (e.g. "165 - Canal Boats Cover") — strip that back off wherever we show
   // the number separately (as "#165") so it isn't printed twice.
@@ -54,6 +93,7 @@ export default function ProductOrderPanel({
         image: selectedTemplate?.image_url ?? product.image_url ?? undefined,
         size: selected.label,
         serviceType: categoryToServiceLabel(product.category) ?? undefined,
+        productId: product.id,
       });
     }
     setAdded(true);
@@ -168,7 +208,19 @@ export default function ProductOrderPanel({
           Checkout
         </Link>
       </div>
-      <p className="mt-3 font-mono text-[11px] text-cat-muted">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
+      {loggedIn && priceLoaded && customerPrice ? (
+        <p className="mt-3 font-mono text-[11px] text-cat-muted">
+          <span className="uppercase tracking-widest text-accent-gold">Your price</span>{' '}
+          {formatPrice(customerPrice.price, customerPrice.currency)}
+        </p>
+      ) : basePriceByLabel.get(selected.label) ? (
+        <p className="mt-3 font-mono text-[11px] text-cat-muted">
+          <span className="uppercase tracking-widest text-accent-gold">Starting from</span>{' '}
+          {formatPrice(basePriceByLabel.get(selected.label)!.price, basePriceByLabel.get(selected.label)!.currency)}
+        </p>
+      ) : (
+        <p className="mt-3 font-mono text-[11px] text-cat-muted">No price shown here — every project is quoted individually once we&apos;ve reviewed your details.</p>
+      )}
     </div>
   );
 }

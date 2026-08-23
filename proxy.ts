@@ -30,6 +30,8 @@ function isProtectedApiRoute(pathname: string, method: string): boolean {
   if (pathname.startsWith("/api/admin/orders/")) return true; // design revisions — admin only
   if (pathname === "/api/admin/portfolio-item-pricing") return true; // per-portfolio-piece pricing — admin only
   if (pathname === "/api/admin/customer-item-pricing") return true; // per-customer, per-piece pricing — admin only
+  if (pathname === "/api/admin/product-pricing") return true; // per-(product,size) pricing — admin only
+  if (pathname === "/api/admin/customer-product-pricing") return true; // per-customer, per-(product,size) pricing — admin only
   // /api/upload — admin OR staff (checked separately below, both can upload design proofs)
   // /api/staff/* — staff-role only (checked separately below)
   // /api/payments/* — user-authenticated internally, not admin-gated here

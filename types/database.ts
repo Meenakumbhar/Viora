@@ -1,6 +1,6 @@
 // ─── Database Row Types ───────────────────────────────────────────────────────
 
-export type EnquiryStatus = 'new' | 'read' | 'replied' | 'converted';
+export type EnquiryStatus = 'new' | 'read' | 'replied' | 'converted' | 'cancelled';
 export type ServiceCategory = 'wedding' | 'funeral' | 'sports' | 'branding' | 'events';
 
 // ─── App-level types used in lib/data.ts ─────────────────────────────────────
@@ -348,6 +348,34 @@ export interface EffectivePrice {
   price: number;
   currency: string;
   negotiated: boolean;
+}
+
+// A price for one (product, size) pair, the same for every customer who
+// doesn't have something more specific set for them (see
+// CustomerProductPrice — full lookup order on getEffectiveProductPrice in
+// lib/db.ts). size_label is a ProductSize's `label` — sizes have no id of
+// their own. No row means "not set", same as PortfolioItemPrice above.
+export interface ProductPrice {
+  id: string;
+  product_id: string;
+  size_label: string;
+  price: number;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// The genuinely per-customer, per-(product,size) price — most specific,
+// always wins first over ProductPrice's shared baseline.
+export interface CustomerProductPrice {
+  id: string;
+  user_id: string;
+  product_id: string;
+  size_label: string;
+  price: number;
+  currency: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SignupPayload {

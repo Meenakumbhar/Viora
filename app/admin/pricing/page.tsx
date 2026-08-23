@@ -4,12 +4,17 @@ import {
   getAllPortfolioItemsForAdmin,
   getAllPortfolioItemPrices,
   getAllCustomerItemPrices,
+  getAllProductsForAdmin,
+  getAllProductPrices,
+  getAllCustomerProductPrices,
   toPublicUser,
 } from '@/lib/db';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import PortfolioItemPricingManager from '@/components/admin/PortfolioItemPricingManager';
 import CustomerItemPricingManager from '@/components/admin/CustomerItemPricingManager';
+import ProductPricingManager from '@/components/admin/ProductPricingManager';
+import CustomerProductPricingManager from '@/components/admin/CustomerProductPricingManager';
 import { ADMIN_NAV_ITEMS } from '@/lib/admin-nav';
 
 export const dynamic = 'force-dynamic';
@@ -20,12 +25,16 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPricingPage() {
-  const [users, portfolioItems, portfolioItemPrices, customerItemPrices] = await Promise.all([
-    getAllUsers(),
-    getAllPortfolioItemsForAdmin(),
-    getAllPortfolioItemPrices(),
-    getAllCustomerItemPrices(),
-  ]);
+  const [users, portfolioItems, portfolioItemPrices, customerItemPrices, products, productPrices, customerProductPrices] =
+    await Promise.all([
+      getAllUsers(),
+      getAllPortfolioItemsForAdmin(),
+      getAllPortfolioItemPrices(),
+      getAllCustomerItemPrices(),
+      getAllProductsForAdmin(),
+      getAllProductPrices(),
+      getAllCustomerProductPrices(),
+    ]);
   const publicUsers = users.map(toPublicUser);
 
   return (
@@ -50,6 +59,8 @@ export default async function AdminPricingPage() {
       <div className="space-y-14">
         <CustomerItemPricingManager initialUsers={publicUsers} initialItems={portfolioItems} initialPrices={customerItemPrices} />
         <PortfolioItemPricingManager initialItems={portfolioItems} initialPrices={portfolioItemPrices} />
+        <CustomerProductPricingManager initialUsers={publicUsers} initialProducts={products} initialPrices={customerProductPrices} />
+        <ProductPricingManager initialProducts={products} initialPrices={productPrices} />
       </div>
     </DashboardShell>
   );

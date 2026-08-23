@@ -17,7 +17,6 @@ import {
   SERVICE_PROMPTS,
   PillChip,
   DateField,
-  QuantityCombobox,
   AutoTextarea,
   toDateInputValue,
 } from '@/components/ui/quote-form-shared';
@@ -33,8 +32,6 @@ interface FormData {
   country: string;
   serviceType: string;
   eventDate: Date | undefined;
-  quantity: string | null;
-  quantityUndecided: boolean;
   description: string;
   source: string;
 }
@@ -48,8 +45,6 @@ const INITIAL_DATA: FormData = {
   country: '',
   serviceType: '',
   eventDate: undefined,
-  quantity: null,
-  quantityUndecided: false,
   description: '',
   source: '',
 };
@@ -388,6 +383,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
   });
   const [state, setState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [enquiryId, setEnquiryId] = useState<string | null>(null);
 
   /* ── Portfolio cart context — so a quote raised from "Buy" on a portfolio
      item stays linked to that item, instead of arriving as a generic request.
@@ -471,7 +467,6 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
     if (!data.email.trim()) return 'Please enter your email address.';
     if (!isValidEmail(data.email)) return 'Please enter a valid email address.';
     if (!data.serviceType) return 'Please select a service type.';
-    if ((!data.quantity || !data.quantity.trim()) && !data.quantityUndecided) return 'Please select an estimated quantity.';
     return null;
   }
 
@@ -494,9 +489,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
           country: data.country,
           service_type: data.serviceType,
           event_date: data.eventDate ? toDateInputValue(data.eventDate) : null,
-          quantity_estimate: data.quantityUndecided
-            ? 'Not yet decided'
-            : data.quantity?.trim() || null,
+          quantity_estimate: null,
           description: data.description,
           source: data.source || null,
           portfolio_items: includeCartItems && cartItems.length > 0
@@ -504,13 +497,14 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
             : null,
         }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.success) {
         throw new Error(body.error || 'Something went wrong. Please try again.');
       }
       if (includeCartItems && cartItems.length > 0) {
         clearPortfolioCart();
       }
+      setEnquiryId(body.data?.id ?? null);
       setState('success');
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -537,6 +531,22 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
         <p className="mt-4 max-w-md font-body text-body-base text-text-muted">
           Your request is with us. We&apos;ll be in touch within 24 hours.
         </p>
+
+        {enquiryId && (
+          <div className="mt-8 w-full max-w-md rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-6 text-left">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">Next step</p>
+            <p className="mt-2 font-body text-body-base text-text-heading">
+              Fill out your order form now so we can start on the design straight away — you don&apos;t need to wait for our reply.
+            </p>
+            <Link
+              href={`/order-form/${enquiryId}`}
+              className="mt-4 inline-flex items-center justify-center gap-2 bg-accent-gold px-6 py-3 font-body font-medium uppercase tracking-wider text-bg-primary transition-all duration-300 hover:bg-accent-gold-dark"
+            >
+              Fill out order form &rarr;
+            </Link>
+          </div>
+        )}
+
         <Link
           href="/portfolio"
           className="mt-8 inline-flex items-center gap-2 font-body text-label uppercase tracking-wider text-accent-gold link-underline"
@@ -667,18 +677,6 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
             Delivery Date
           </p>
           <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
-        </div>
-
-        {/* Quantity — combobox: type a number, pick from scrollable dropdown */}
-        <div>
-          <p className="mb-1.5 font-body text-sm text-text-muted uppercase tracking-wider">
-            Estimated quantity<span className="text-accent-gold ml-0.5">*</span>
-          </p>
-          <QuantityCombobox
-            value={data.quantity}
-            disabled={data.quantityUndecided}
-            onChange={(v) => setField('quantity', v)}
-          />
         </div>
       </div>
 

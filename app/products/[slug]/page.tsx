@@ -5,7 +5,7 @@ import Image from 'next/image';
 import SectionReveal from '@/components/ui/SectionReveal';
 import ProductGallery from '@/components/ProductGallery';
 import ProductOrderPanel from '@/components/ProductOrderPanel';
-import { getProducts, getProductBySlug, getRelatedProducts, getPortfolioItems } from '@/lib/db';
+import { getProducts, getProductBySlug, getRelatedProducts, getPortfolioItems, getProductPricesForProduct } from '@/lib/db';
 import { SITE_URL } from '@/lib/site-url';
 
 interface PageProps {
@@ -59,9 +59,10 @@ export default async function ProductPage({ params }: PageProps) {
     notFound();
   }
 
-  const [related, categoryPortfolioItems] = await Promise.all([
+  const [related, categoryPortfolioItems, productPrices] = await Promise.all([
     getRelatedProducts(product.related_slugs),
     getPortfolioItems(product.category),
+    getProductPricesForProduct(product.id),
   ]);
 
   // Only portfolio pieces tagged with a template number are pickable here —
@@ -94,7 +95,7 @@ export default async function ProductPage({ params }: PageProps) {
                 </p>
 
                 <div className="mt-8 border-t border-border pt-6">
-                  <ProductOrderPanel product={product} templates={templates} />
+                  <ProductOrderPanel product={product} templates={templates} basePrices={productPrices} />
                 </div>
               </section>
             </div>

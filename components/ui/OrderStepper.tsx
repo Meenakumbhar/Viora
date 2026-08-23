@@ -14,6 +14,7 @@ const STAGE_LABELS: Record<DisplayStage, string> = {
   awaiting_review: 'Awaiting Your Review',
   payment: 'Payment',
   completed: 'Completed',
+  cancelled: 'Cancelled',
 };
 
 export default function OrderStepper({
@@ -24,6 +25,20 @@ export default function OrderStepper({
   /** 'dark' matches the admin dashboard; 'light' matches the public site. */
   theme?: 'dark' | 'light';
 }) {
+  // Not a step in the normal linear progression (see the type's own comment
+  // in lib/order-stage.ts) — show a plain terminal marker instead of a
+  // stepper with every step stuck at "unreached".
+  if (stage === 'cancelled') {
+    return (
+      <div className={`flex items-center gap-2 font-mono text-xs uppercase tracking-widest ${theme === 'dark' ? 'text-white/40' : 'text-text-muted'}`}>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-[#7A4A44] text-[#7A4A44]" aria-hidden="true">
+          ✕
+        </span>
+        Cancelled
+      </div>
+    );
+  }
+
   const currentIndex = STAGES.indexOf(stage);
   const isDark = theme === 'dark';
 

@@ -29,6 +29,7 @@ export const STATUS_LABELS: Record<DisplayStage, string> = {
   awaiting_review: 'Awaiting Your Review',
   payment: 'Payment',
   completed: 'Completed',
+  cancelled: 'Cancelled',
 };
 
 export const STATUS_COLORS: Record<DisplayStage, string> = {
@@ -40,4 +41,5 @@ export const STATUS_COLORS: Record<DisplayStage, string> = {
   awaiting_review: '#C6A85C',
   payment: '#C6A85C',
   completed: '#2F6B2C',
+  cancelled: '#7A4A44',
 };

@@ -44,7 +44,7 @@ export default function LoginPage() {
       }
 
       const role = json.data?.user?.role;
-      const isStaff = role === 'designer' || role === 'employee' || role === 'proofreader';
+      const isStaff = role === 'designer' || role === 'employee' || role === 'proofreader' || role === 'admin';
       const fallback = isStaff ? '/staff' : '/account';
       const params = new URLSearchParams(window.location.search);
       const next = params.get('next');

@@ -43,8 +43,79 @@ function StatusTag({ status }: { status: DisplayStage }) {
   );
 }
 
-export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
-  const [expandedId, setExpandedId] = useState<string | null>(rows.length === 1 ? rows[0].id : null);
+function CancelEnquiryControl({ enquiryId, onCancelled }: { enquiryId: string; onCancelled: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleCancel() {
+    setCancelling(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/account/enquiries/${enquiryId}/cancel`, { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Could not cancel this enquiry.');
+      }
+      onCancelled();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not cancel this enquiry.');
+      setCancelling(false);
+      setConfirming(false);
+    }
+  }
+
+  if (confirming) {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="font-mono text-xs uppercase tracking-widest text-[#7A4A44]">Cancel this enquiry?</span>
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={cancelling}
+          className="border border-[#7A4A44] px-4 py-2 font-mono text-xs uppercase tracking-widest text-[#7A4A44] transition-colors hover:bg-[#7A4A44] hover:text-white disabled:opacity-50"
+        >
+          {cancelling ? 'Cancelling…' : 'Yes, cancel it'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirming(false)}
+          disabled={cancelling}
+          className="font-mono text-xs uppercase tracking-widest text-text-muted hover:text-text-heading"
+        >
+          Never mind
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="font-mono text-xs uppercase tracking-widest text-[#7A4A44] underline transition-colors hover:text-[#5c3833]"
+      >
+        Cancel this enquiry
+      </button>
+      {error && <p className="mt-2 font-mono text-xs text-[#7A4A44]" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+export default function CustomerOrderList({ rows: initialRows }: { rows: AccountRow[] }) {
+  const [rows, setRows] = useState(initialRows);
+  const [expandedId, setExpandedId] = useState<string | null>(initialRows.length === 1 ? initialRows[0].id : null);
+
+  function markEnquiryCancelled(enquiryId: string) {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.kind === 'placed' && row.enquiry.id === enquiryId
+          ? { ...row, enquiry: { ...row.enquiry, status: 'cancelled' } }
+          : row
+      )
+    );
+  }
 
   return (
     <div>
@@ -55,6 +126,8 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
           if (row.kind === 'placed') {
             const { enquiry } = row;
             const accent = accentForServiceType(enquiry.service_type);
+            const isCancelled = enquiry.status === 'cancelled';
+            const placedStage = deriveDisplayStage({ isPlaced: true, isCancelled });
             return (
               <div key={row.id} className="border border-border" style={{ borderLeft: `4px solid ${accent}` }}>
                 <button
@@ -73,14 +146,16 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
                     <span className="hidden font-mono text-xs text-text-muted sm:inline">
                       {new Date(enquiry.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </span>
-                    <StatusTag status="enquiry_received" />
+                    <StatusTag status={placedStage} />
                   </div>
                 </button>
 
                 {isOpen && (
                   <div className="border-t border-dashed border-border px-5 py-6 sm:px-8">
                     <p className="font-body text-base text-text-muted">
-                      We&apos;ve received this request — it&apos;ll move to Order Confirmed once our studio begins work.
+                      {isCancelled
+                        ? 'You cancelled this enquiry — get in touch if you’d like to start a new one.'
+                        : 'We’ve received this request — it’ll move to Order Confirmed once our studio begins work.'}
                     </p>
 
                     {enquiry.quantity_estimate && (
@@ -108,17 +183,20 @@ export default function CustomerOrderList({ rows }: { rows: AccountRow[] }) {
                     )}
 
                     <div className="mt-8">
-                      <OrderStepper stage="enquiry_received" theme="light" />
+                      <OrderStepper stage={placedStage} theme="light" />
                     </div>
 
-                    <div className="mt-8 border-t border-border pt-6">
-                      <Link
-                        href={`/order-form/${enquiry.id}`}
-                        className="inline-block border border-accent-gold px-5 py-2.5 font-body text-label uppercase tracking-wider text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary"
-                      >
-                        Order form
-                      </Link>
-                    </div>
+                    {!isCancelled && (
+                      <div className="mt-8 flex flex-wrap items-center gap-6 border-t border-border pt-6">
+                        <Link
+                          href={`/order-form/${enquiry.id}`}
+                          className="inline-block border border-accent-gold px-5 py-2.5 font-body text-label uppercase tracking-wider text-accent-gold transition-all duration-300 hover:bg-accent-gold hover:text-bg-primary"
+                        >
+                          Order form
+                        </Link>
+                        <CancelEnquiryControl enquiryId={enquiry.id} onCancelled={() => markEnquiryCancelled(enquiry.id)} />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

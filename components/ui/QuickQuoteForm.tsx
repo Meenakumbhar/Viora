@@ -18,7 +18,6 @@ import {
   SERVICE_PROMPTS,
   PillChip,
   DateField,
-  QuantityCombobox,
   AutoTextarea,
   toDateInputValue,
 } from '@/components/ui/quote-form-shared';
@@ -28,8 +27,6 @@ type FormState = 'idle' | 'loading' | 'success' | 'error';
 interface QuickFormData {
   serviceType: string;
   eventDate: Date | undefined;
-  quantity: string | null;
-  quantityUndecided: boolean;
   address: string;
   description: string;
 }
@@ -37,8 +34,6 @@ interface QuickFormData {
 const INITIAL_DATA: QuickFormData = {
   serviceType: '',
   eventDate: undefined,
-  quantity: null,
-  quantityUndecided: false,
   address: '',
   description: '',
 };
@@ -67,14 +62,15 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
   });
   const [state, setState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [enquiryId, setEnquiryId] = useState<string | null>(null);
 
   // Give them a moment to read the confirmation, then take them straight to
-  // their orders — that's where this request now lives.
+  // the order form — that's the actual next step, not just the order list.
   useEffect(() => {
     if (state !== 'success') return;
-    const timer = setTimeout(() => router.push('/account'), 3000);
+    const timer = setTimeout(() => router.push(enquiryId ? `/order-form/${enquiryId}` : '/account'), 3000);
     return () => clearTimeout(timer);
-  }, [state, router]);
+  }, [state, router, enquiryId]);
 
   /* ── Portfolio cart context — so a quote raised from "Buy" on a portfolio
      item stays linked to that item, instead of arriving as a generic request.
@@ -119,7 +115,6 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
 
   function validate(): string | null {
     if (!data.serviceType) return 'Please select a service type.';
-    if ((!data.quantity || !data.quantity.trim()) && !data.quantityUndecided) return 'Please select an estimated quantity.';
     return null;
   }
 
@@ -140,9 +135,7 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
           country: user.country || null,
           service_type: data.serviceType,
           event_date: data.eventDate ? toDateInputValue(data.eventDate) : null,
-          quantity_estimate: data.quantityUndecided
-            ? 'Not yet decided'
-            : data.quantity?.trim() || null,
+          quantity_estimate: null,
           description: data.description,
           address: hasSavedAddress && !useDifferentAddress
             ? user.address
@@ -153,13 +146,14 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
             : null,
         }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.success) {
         throw new Error(body.error || 'Something went wrong. Please try again.');
       }
       if (includeCartItems && cartItems.length > 0) {
         clearPortfolioCart();
       }
+      setEnquiryId(body.data?.id ?? null);
       setState('success');
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -184,13 +178,23 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
           Thank you, {(user.name || user.email).split(' ')[0]}
         </h3>
         <p className="mt-4 max-w-md font-body text-body-base text-text-muted">
-          Your request is with us. We&apos;ll be in touch within 24 hours. Head to your orders to track it.
+          Your request is with us. We&apos;ll be in touch within 24 hours.
         </p>
+
+        {enquiryId && (
+          <div className="mt-8 w-full max-w-md rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-6 text-left">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-accent-gold">Next step</p>
+            <p className="mt-2 font-body text-body-base text-text-heading">
+              Fill out your order form now so we can start on the design straight away — you don&apos;t need to wait for our reply.
+            </p>
+          </div>
+        )}
+
         <Link
-          href="/account"
+          href={enquiryId ? `/order-form/${enquiryId}` : '/account'}
           className="mt-8 inline-flex items-center gap-2 font-body text-label uppercase tracking-wider text-accent-gold link-underline"
         >
-          Go to your orders now &rarr;
+          {enquiryId ? 'Fill out order form now' : 'Go to your orders now'} &rarr;
         </Link>
         <p className="mt-3 font-mono text-[11px] uppercase tracking-wider text-text-muted">
           Taking you there automatically&hellip;
@@ -284,27 +288,6 @@ export default function QuickQuoteForm({ user, initialService, initialDetails, f
           Delivery Date
         </p>
         <DateField value={data.eventDate} onChange={(d) => setField('eventDate', d)} />
-      </div>
-
-      {/* ── Quantity ─────────────────────────────────────────────────────── */}
-      <div>
-        <p className="mb-1.5 font-body text-sm text-text-muted uppercase tracking-wider">
-          Estimated quantity<span className="text-accent-gold ml-0.5">*</span>
-        </p>
-        <QuantityCombobox
-          value={data.quantity}
-          disabled={data.quantityUndecided}
-          onChange={(v) => setField('quantity', v)}
-        />
-        <label className="mt-3 flex items-center gap-2 font-body text-xs text-text-muted">
-          <input
-            type="checkbox"
-            checked={data.quantityUndecided}
-            onChange={(e) => setField('quantityUndecided', e.target.checked)}
-            className="h-3.5 w-3.5 accent-accent-gold"
-          />
-          I haven&apos;t decided yet
-        </label>
       </div>
 
       {/* ── Address — defaults to the saved profile address, like Amazon ──── */}
