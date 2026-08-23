@@ -30,7 +30,7 @@ export default async function ProductsPage() {
         </p>
       </HeroVideo>
 
-      <section className="bg-cat-bg py-24 md:py-36 border-t border-border">
+      <section className="bg-cat-bg py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -86,7 +86,7 @@ export default async function ProductsPage() {
         </div>
       </section>
 
-      <section className="bg-cat-surface border-t border-border py-24 md:py-36 text-center">
+      <section className="bg-cat-surface border-t border-border py-16 md:py-20 text-center">
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-cat-heading">

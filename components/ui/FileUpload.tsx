@@ -2,6 +2,7 @@
 
 import { useState, useRef, type DragEvent, type ChangeEvent } from 'react';
 import Image from 'next/image';
+import { uploadFileDirect } from '@/utils/presigned-upload';
 
 interface FileUploadProps {
   value?: string;
@@ -26,6 +27,10 @@ export default function FileUpload({
   // iPhones — without it, uploading a photo straight from an iOS camera roll
   // fails with "unsupported file type".
   accept = 'image/jpeg,image/png,image/webp,image/avif,image/svg+xml,image/heic,image/heif,application/pdf',
+  // The file goes straight from the browser to R2 via a presigned URL, not
+  // through our server, so this is just a sane ceiling rather than a
+  // workaround for a hosting-platform request-body limit — see
+  // utils/presigned-upload.ts.
   maxSizeMB = 25,
   label = 'Upload Media',
   helperText = 'PNG, JPG, WebP, AVIF, SVG, HEIC or PDF up to 25MB',
@@ -53,45 +58,16 @@ export default function FileUpload({
 
     setErrorMessage('');
     setIsUploading(true);
-    setProgress(15);
+    setProgress(0);
 
     try {
-      const namedFile = filenamePrefix
-        ? new File([file], `${filenamePrefix}_${file.name}`, { type: file.type })
-        : file;
-
-      const formData = new FormData();
-      formData.append('file', namedFile);
-      formData.append('folder', folder);
-
-      // Simulated smooth progress while waiting for network
-      const interval = setInterval(() => {
-        setProgress((prev) => (prev < 85 ? prev + 15 : prev));
-      }, 150);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
+      const uploaded = await uploadFileDirect(file, {
+        folder,
+        filenamePrefix,
+        onProgress: setProgress,
       });
 
-      clearInterval(interval);
-      setProgress(100);
-
-      // A non-JSON body here means the server never reached our route handler
-      // at all (a dev-mode compile hiccup, a proxy timeout, a stale bundle) —
-      // surface a plain retry message instead of the raw parser error.
-      let json: { success: boolean; error?: string; data?: { url: string; key: string } };
-      try {
-        json = await response.json();
-      } catch {
-        throw new Error(`Upload failed (server returned an unexpected response, status ${response.status}). Please try again.`);
-      }
-
-      if (!response.ok || !json.success || !json.data) {
-        throw new Error(json.error || 'Upload failed. Please try again.');
-      }
-
-      onChange(json.data.url, json.data.key);
+      onChange(uploaded.url, uploaded.key);
     } catch (err) {
       console.error('[FileUpload] upload error:', err);
       setErrorMessage(

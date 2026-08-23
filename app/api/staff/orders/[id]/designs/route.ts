@@ -72,11 +72,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const parsed = await parseJsonBody(request, designUploadSchema, 'staff/orders/:id/designs');
     if (parsed.error) return parsed.error;
-    const { imageUrls, notes } = parsed.data;
+    const { imageUrls, imageLabels, notes } = parsed.data;
 
     let revision;
     try {
-      revision = await createDesignRevision({ orderId: id, imageUrls, notes: notes ?? null });
+      revision = await createDesignRevision({ orderId: id, imageUrls, imageLabels, notes: notes ?? null });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'A new upload is not allowed right now.';
       return NextResponse.json<ApiResponse>({ success: false, error: message }, { status: 409 });

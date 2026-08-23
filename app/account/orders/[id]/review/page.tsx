@@ -50,6 +50,7 @@ export default async function ReviewDesignPage({ params }: { params: Promise<{ i
   return (
     <DashboardShell
       theme="light"
+      enableThemeToggle={false}
       section="Account"
       navItems={NAV_ITEMS}
       userLabel={user.name ?? user.email}
@@ -62,7 +63,13 @@ export default async function ReviewDesignPage({ params }: { params: Promise<{ i
 
       {pending ? (
         <div className="mt-10">
-          <DesignReviewSubmit orderId={order.id} revisionId={pending.id} images={pending.image_urls} version={pending.version} />
+          <DesignReviewSubmit
+            orderId={order.id}
+            revisionId={pending.id}
+            images={pending.image_urls}
+            labels={pending.image_labels}
+            version={pending.version}
+          />
         </div>
       ) : (
         <p className="mt-6 font-body text-body-base text-text-muted">

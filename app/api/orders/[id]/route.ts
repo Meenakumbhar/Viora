@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getOrderById, getOrderHistory, updateOrderStatus } from '@/lib/db';
+import { getOrderById, getOrderHistory, getLatestDesignRevision, updateOrderStatus } from '@/lib/db';
 import { sendOrderStatusUpdateEmail } from '@/lib/resend';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Order, OrderStatus, OrderWithHistory } from '@/types/database';
@@ -24,9 +24,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json<ApiResponse>({ success: false, error: 'Order not found.' }, { status: 404 });
   }
 
-  const history = await getOrderHistory(id);
+  const [history, latestRevision] = await Promise.all([
+    getOrderHistory(id),
+    getLatestDesignRevision(id),
+  ]);
 
-  return NextResponse.json<ApiResponse<OrderWithHistory>>({ success: true, data: { ...order, history } });
+  return NextResponse.json<ApiResponse<OrderWithHistory>>({ success: true, data: { ...order, history, latestRevision } });
 }
 
 // PUT /api/orders/[id] — Update an order's status (admin only, gated in middleware.ts)

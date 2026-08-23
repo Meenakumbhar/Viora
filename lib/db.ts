@@ -11,11 +11,11 @@ import {
   orderStatusHistory as orderStatusHistoryTable,
   designRevisions as designRevisionsTable,
   designComments as designCommentsTable,
+  staffActivity as staffActivityTable,
   portfolioItemPrices as portfolioItemPricesTable,
   customerItemPrices as customerItemPricesTable,
 } from '@/db/schema';
 import { user as usersTable } from '@/db/auth-schema';
-import { portfolioItems as staticPortfolio, blogPosts as staticBlog, products as staticProducts } from './data';
 import type {
   PortfolioItem,
   Product,
@@ -46,6 +46,8 @@ import type {
   PortfolioItemPrice,
   CustomerItemPrice,
   EffectivePrice,
+  StaffActivityEvent,
+  StaffActivityEventType,
 } from '@/types/database';
 
 /**
@@ -165,25 +167,6 @@ function normalizeProduct(row: any): Product {
     related_slugs: Array.isArray(row.related_slugs) ? row.related_slugs.map(String) : [],
     published: Boolean(row.published),
     created_at: toIsoTimestampString(row.created_at),
-  };
-}
-
-function staticProductToProduct(item: (typeof staticProducts)[number]): Product {
-  return {
-    id: `static-product-${item.slug}`,
-    slug: item.slug,
-    type_slug: item.slug,
-    type_label: item.title,
-    title: item.title,
-    subtitle: item.subtitle,
-    description: item.description,
-    category: item.category,
-    image_url: item.image,
-    image_urls: item.image_urls ?? null,
-    sizes: item.sizes,
-    related_slugs: item.relatedSlugs,
-    published: true,
-    created_at: new Date().toISOString(),
   };
 }
 
@@ -326,32 +309,13 @@ export async function getPortfolioItems(category?: string): Promise<PortfolioIte
         .where(where)
         .orderBy(desc(portfolioItemsTable.created_at));
 
-      if (rows.length > 0) {
-        return rows.map(normalizePortfolioItem);
-      }
+      return rows.map(normalizePortfolioItem);
     } catch (err) {
       console.error('[db] getPortfolioItems error:', err);
     }
   }
 
-  // Static fallback if DB is not yet populated or configured
-  let filtered = staticPortfolio;
-  if (category && category !== 'all') {
-    filtered = staticPortfolio.filter((item) => item.category === category);
-  }
-
-  return filtered.map((item, index) => ({
-    id: `static-portfolio-${index}`,
-    title: item.title,
-    category: item.category as ServiceCategory,
-    filters: item.filters,
-    template_number: null,
-    image_url: `/images/portfolio/${item.category}.jpg`,
-    description: item.description,
-    location: item.location,
-    published: true,
-    created_at: new Date().toISOString(),
-  }));
+  return [];
 }
 
 export async function getPortfolioItemById(id: string): Promise<PortfolioItem | null> {
@@ -369,22 +333,7 @@ export async function getPortfolioItemById(id: string): Promise<PortfolioItem | 
     }
   }
 
-  const index = id.startsWith('static-portfolio-') ? Number(id.replace('static-portfolio-', '')) : -1;
-  const item = Number.isInteger(index) && index >= 0 ? staticPortfolio[index] : undefined;
-  return item
-    ? {
-        id,
-        title: item.title,
-        category: item.category as ServiceCategory,
-        filters: item.filters,
-        template_number: null,
-        image_url: `/images/portfolio/${item.category}.jpg`,
-        description: item.description,
-        location: item.location,
-        published: true,
-        created_at: new Date().toISOString(),
-      }
-    : null;
+  return null;
 }
 
 export interface PortfolioItemInput {
@@ -490,21 +439,13 @@ export async function getProducts(category?: string): Promise<Product[]> {
         .where(where)
         .orderBy(desc(productsTable.created_at));
 
-      if (rows.length > 0) {
-        return rows.map(normalizeProduct);
-      }
+      return rows.map(normalizeProduct);
     } catch (err) {
       console.error('[db] getProducts error:', err);
     }
   }
 
-  // Static fallback if DB is not yet populated or configured
-  let filtered = staticProducts;
-  if (category && category !== 'all') {
-    filtered = staticProducts.filter((item) => item.category === category);
-  }
-
-  return filtered.map(staticProductToProduct);
+  return [];
 }
 
 // All published designs belonging to one catalog type (e.g. every "Memory
@@ -521,15 +462,13 @@ export async function getProductsByType(typeSlug: string): Promise<Product[]> {
         .where(and(eq(productsTable.published, true), eq(productsTable.type_slug, typeSlug)))
         .orderBy(asc(productsTable.created_at));
 
-      if (rows.length > 0) {
-        return rows.map(normalizeProduct);
-      }
+      return rows.map(normalizeProduct);
     } catch (err) {
       console.error(`[db] getProductsByType(${typeSlug}) error:`, err);
     }
   }
 
-  return staticProducts.filter((p) => p.slug === typeSlug).map(staticProductToProduct);
+  return [];
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -547,8 +486,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     }
   }
 
-  const item = staticProducts.find((p) => p.slug === slug);
-  return item ? staticProductToProduct(item) : null;
+  return null;
 }
 
 export async function getRelatedProducts(slugs: string[]): Promise<Product[]> {
@@ -561,16 +499,14 @@ export async function getRelatedProducts(slugs: string[]): Promise<Product[]> {
         .select()
         .from(productsTable)
         .where(and(eq(productsTable.published, true), inArray(productsTable.slug, slugs)));
-      if (rows.length > 0) {
-        const bySlug = new Map(rows.map((row) => [row.slug, normalizeProduct(row)]));
-        return slugs.map((slug) => bySlug.get(slug)).filter((p): p is Product => Boolean(p));
-      }
+      const bySlug = new Map(rows.map((row) => [row.slug, normalizeProduct(row)]));
+      return slugs.map((slug) => bySlug.get(slug)).filter((p): p is Product => Boolean(p));
     } catch (err) {
       console.error('[db] getRelatedProducts error:', err);
     }
   }
 
-  return staticProducts.filter((p) => slugs.includes(p.slug)).map(staticProductToProduct);
+  return [];
 }
 
 export interface ProductInput {
@@ -681,27 +617,13 @@ export async function getBlogPosts(limit = 20): Promise<Post[]> {
         .orderBy(desc(postsTable.published_at))
         .limit(limit);
 
-      if (rows.length > 0) {
-        return rows.map(normalizePost);
-      }
+      return rows.map(normalizePost);
     } catch (err) {
       console.error('[db] getBlogPosts error:', err);
     }
   }
 
-  // Static fallback
-  return staticBlog.slice(0, limit).map((post, index) => ({
-    id: `static-post-${index}`,
-    title: post.title,
-    slug: post.slug,
-    content: '',
-    excerpt: post.excerpt,
-    category: post.category,
-    image_url: post.image_url || `/images/blog/${post.slug}.jpg`,
-    published_at: post.published_at || new Date().toISOString().split('T')[0],
-    published: true,
-    created_at: new Date().toISOString(),
-  }));
+  return [];
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<Post | null> {
@@ -721,23 +643,6 @@ export async function getBlogPostBySlug(slug: string): Promise<Post | null> {
     } catch (err) {
       console.error(`[db] getBlogPostBySlug(${slug}) error:`, err);
     }
-  }
-
-  // Static fallback
-  const staticPost = staticBlog.find((p) => p.slug === slug);
-  if (staticPost) {
-    return {
-      id: `static-post-${slug}`,
-      title: staticPost.title,
-      slug: staticPost.slug,
-      content: '',
-      excerpt: staticPost.excerpt,
-      category: staticPost.category,
-      image_url: staticPost.image_url || `/images/blog/${staticPost.slug}.jpg`,
-      published_at: staticPost.published_at || new Date().toISOString().split('T')[0],
-      published: true,
-      created_at: new Date().toISOString(),
-    };
   }
 
   return null;
@@ -1367,7 +1272,88 @@ export async function assignOrderToDesigner(orderId: string, designerId: string 
     .where(eq(ordersTable.id, orderId))
     .returning();
 
-  return rows.length > 0 ? normalizeOrder(rows[0]) : null;
+  if (rows.length === 0) return null;
+
+  if (designerId) {
+    const designer = await getUserById(designerId);
+    await logStaffActivity(orderId, 'designer_assigned', designer?.name ?? designer?.email ?? null);
+  } else {
+    await logStaffActivity(orderId, 'designer_unassigned');
+  }
+
+  return normalizeOrder(rows[0]);
+}
+
+// Recent events for the staff activity feed. Scoped to one designer's own
+// assigned orders when designerId is given (what a designer sees on their
+// own dashboard); unscoped for a proofreader/admin, who see everything.
+// Two queries + an in-memory join rather than a SQL join, matching this
+// file's existing pattern (see getDesignRevisionsForOrders) rather than
+// introducing a new query style for one feature.
+export async function getRecentStaffActivity(options: { designerId?: string | null; limit?: number } = {}): Promise<StaffActivityEvent[]> {
+  const db = getDrizzle();
+  if (!db) return [];
+
+  const limit = options.limit ?? 20;
+
+  let orderIds: string[] | null = null;
+  if (options.designerId) {
+    const assigned = await db
+      .select({ id: ordersTable.id })
+      .from(ordersTable)
+      .where(eq(ordersTable.assigned_designer_id, options.designerId));
+    orderIds = assigned.map((o) => String(o.id));
+    if (orderIds.length === 0) return [];
+  }
+
+  const rows = await db
+    .select()
+    .from(staffActivityTable)
+    .where(orderIds ? inArray(staffActivityTable.order_id, orderIds) : undefined)
+    .orderBy(desc(staffActivityTable.created_at))
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+
+  const relatedOrderIds = [...new Set(rows.map((r) => String(r.order_id)))];
+  const relatedOrders = await db
+    .select({ id: ordersTable.id, customer_name: ordersTable.customer_name, service_type: ordersTable.service_type })
+    .from(ordersTable)
+    .where(inArray(ordersTable.id, relatedOrderIds));
+  const orderById = new Map(relatedOrders.map((o) => [String(o.id), o]));
+
+  return rows.map((row) => {
+    const order = orderById.get(String(row.order_id));
+    return {
+      id: String(row.id),
+      order_id: String(row.order_id),
+      event_type: row.event_type as StaffActivityEventType,
+      detail: row.detail != null ? String(row.detail) : null,
+      created_at: toIsoTimestampString(row.created_at),
+      order_customer_name: order?.customer_name ?? 'Unknown',
+      order_service_type: order?.service_type ?? '',
+    };
+  });
+}
+
+export interface DesignerWorkload {
+  designerId: string;
+  name: string;
+  openOrders: number;
+}
+
+// A deliberately coarse "how full is their plate" metric for the team
+// workload panel — open orders assigned, full stop. Not weighted by how far
+// along each one is; that level of nuance isn't worth the extra queries for
+// what's meant to be a load-balancing glance, not a precise report.
+export async function getDesignerWorkload(): Promise<DesignerWorkload[]> {
+  const [designers, allOrders] = await Promise.all([getDesigners(), getAllOrders()]);
+
+  return designers.map((d) => ({
+    designerId: d.id,
+    name: d.name ?? d.email,
+    openOrders: allOrders.filter((o) => o.assigned_designer_id === d.id && o.status !== 'completed').length,
+  }));
 }
 
 // ─── Subscribers ──────────────────────────────────────────────────────────────
@@ -1496,14 +1482,23 @@ function normalizeDesignComment(row: any): DesignComment {
 function normalizeDesignRevision(row: any, comments: DesignComment[] = []): DesignRevision {
   const rawUrls = row.image_urls;
   const image_urls = Array.isArray(rawUrls) ? rawUrls.map(String) : [];
+  // Stored as '' for "no label on this slot" (Postgres text[] elements can't
+  // be typed nullable through Drizzle) — mapped back to null at this layer
+  // so the rest of the app only ever deals with string | null.
+  const rawLabels = row.image_labels;
+  const image_labels = Array.isArray(rawLabels)
+    ? rawLabels.map((l: unknown) => (l != null && String(l).length > 0 ? String(l) : null))
+    : null;
   return {
     id: String(row.id),
     order_id: String(row.order_id),
     version: Number(row.version),
     image_urls,
+    image_labels,
     notes: row.notes != null ? String(row.notes) : null,
     status: row.status as DesignRevisionStatus,
     created_at: toIsoTimestampString(row.created_at),
+    updated_at: toIsoTimestampString(row.updated_at ?? row.created_at),
     comments,
   };
 }
@@ -1553,6 +1548,36 @@ const CUSTOMER_VISIBLE_STATUSES = new Set<DesignRevisionStatus>(['pending_review
 export async function getDesignRevisionsForCustomer(orderId: string): Promise<DesignRevision[]> {
   const revisions = await getDesignRevisionsForOrder(orderId);
   return revisions.filter((r) => CUSTOMER_VISIBLE_STATUSES.has(r.status));
+}
+
+// The single highest-version revision for an order, in ANY status (not just
+// what's shown to the customer) — undefined means this order never went
+// through design review at all. Shared by the payment gate below and by the
+// order-lifecycle display stage (components/ui/OrderStepper.tsx) so both
+// agree on what "latest" means.
+export async function getLatestDesignRevision(orderId: string): Promise<DesignRevision | undefined> {
+  const revisions = await getDesignRevisionsForOrder(orderId);
+  return [...revisions].sort((a, b) => b.version - a.version)[0];
+}
+
+// Payment is only asked for once the funeral director/customer has approved
+// the design — not before, and not while a proof is still going back and
+// forth. An order that never went through design review at all (no rows in
+// design_revisions — e.g. a straightforward templated product with no
+// bespoke proof) is unaffected and stays payable as soon as a price is set,
+// same as before this gate existed.
+export async function getOrderPaymentGate(orderId: string): Promise<{ payable: true } | { payable: false; reason: string }> {
+  const latest = await getLatestDesignRevision(orderId);
+  if (!latest) return { payable: true };
+  if (latest.status === 'approved') return { payable: true };
+
+  // Deliberately generic — some of the underlying statuses (proofreader-only
+  // states) are never shown to the customer elsewhere either, so this
+  // shouldn't name one just because it happens to be the current blocker.
+  return {
+    payable: false,
+    reason: "Payment opens once you've approved the design proof.",
+  };
 }
 
 // Batched, customer-visible version of getDesignRevisionsForCustomer for a
@@ -1620,10 +1645,25 @@ export async function getDesignRevisionById(id: string): Promise<DesignRevision 
 // has explicitly routed the latest one back ('returned_to_designer') — never
 // directly off a customer's change request, and never while something is still
 // mid-review with the proofreader or the customer. This is the server-side
+// Fire-and-forget-adjacent: awaited so a genuine DB outage surfaces, but
+// never allowed to fail the mutation it's logging for — a missed activity
+// feed entry is a much smaller problem than a proof upload/review action
+// silently failing because the log insert hit a transient error.
+async function logStaffActivity(orderId: string, eventType: StaffActivityEventType, detail?: string | null): Promise<void> {
+  try {
+    const db = getDrizzle();
+    if (!db) return;
+    await db.insert(staffActivityTable).values({ order_id: orderId, event_type: eventType, detail: detail ?? null });
+  } catch (err) {
+    console.error('[db] logStaffActivity error:', err);
+  }
+}
+
 // half of the gate; the UI hides the upload control for the same reason.
 export async function createDesignRevision(input: {
   orderId: string;
   imageUrls: string[];
+  imageLabels?: (string | null)[] | null;
   notes?: string | null;
 }): Promise<DesignRevision> {
   const db = getDrizzle();
@@ -1642,18 +1682,29 @@ export async function createDesignRevision(input: {
     );
   }
 
+  // Blank/whitespace-only labels fall back to "Image N" individually rather
+  // than storing an empty string tab caption; an entirely-unlabeled upload
+  // stores null, same as an older revision with no labels at all. Stored as
+  // '' rather than null per-slot — Postgres text[] elements can't be typed
+  // nullable through Drizzle — and mapped back to null in normalizeDesignRevision.
+  const trimmedLabels: string[] | null = input.imageLabels?.map((l) => l?.trim() || '') ?? null;
+  const hasAnyLabel = trimmedLabels?.some((l) => l !== '') ?? false;
+
   const rows = await db
     .insert(designRevisionsTable)
     .values({
       order_id: input.orderId,
       version: dsql`COALESCE((SELECT MAX(version) FROM design_revisions WHERE order_id = ${input.orderId}), 0) + 1`,
       image_urls: input.imageUrls,
+      image_labels: hasAnyLabel ? trimmedLabels : null,
       notes: input.notes?.trim() || null,
       status: 'pending_proofreader_review',
     })
     .returning();
 
-  return normalizeDesignRevision(rows[0]);
+  const revision = normalizeDesignRevision(rows[0]);
+  await logStaffActivity(input.orderId, 'proof_uploaded', `v${revision.version}`);
+  return revision;
 }
 
 // Proofreader approves a revision awaiting their review, sending it on to the customer.
@@ -1663,11 +1714,14 @@ export async function proofreaderApproveRevision(revisionId: string): Promise<De
 
   const rows = await db
     .update(designRevisionsTable)
-    .set({ status: 'pending_review' })
+    .set({ status: 'pending_review', updated_at: new Date() })
     .where(and(eq(designRevisionsTable.id, revisionId), eq(designRevisionsTable.status, 'pending_proofreader_review')))
     .returning();
 
-  return rows.length > 0 ? normalizeDesignRevision(rows[0]) : null;
+  if (rows.length === 0) return null;
+  const revision = normalizeDesignRevision(rows[0]);
+  await logStaffActivity(revision.order_id, 'sent_to_customer', `v${revision.version}`);
+  return revision;
 }
 
 // Proofreader routes a revision back to the designer, with their own pinned
@@ -1685,7 +1739,7 @@ export async function proofreaderReturnToDesigner(
 
   const rows = await db
     .update(designRevisionsTable)
-    .set({ status: 'returned_to_designer' })
+    .set({ status: 'returned_to_designer', updated_at: new Date() })
     .where(
       and(
         eq(designRevisionsTable.id, revisionId),
@@ -1709,6 +1763,13 @@ export async function proofreaderReturnToDesigner(
     );
   }
 
+  const revision = normalizeDesignRevision(rows[0]);
+  await logStaffActivity(
+    revision.order_id,
+    'returned_to_designer',
+    `v${revision.version}${comments.length > 0 ? ` · ${comments.length} mark${comments.length === 1 ? '' : 's'}` : ''}`
+  );
+
   return getDesignRevisionById(revisionId);
 }
 
@@ -1727,7 +1788,7 @@ export async function submitDesignReview(
 
   const rows = await db
     .update(designRevisionsTable)
-    .set({ status: newStatus })
+    .set({ status: newStatus, updated_at: new Date() })
     .where(and(eq(designRevisionsTable.id, revisionId), eq(designRevisionsTable.status, 'pending_review')))
     .returning();
 
@@ -1744,6 +1805,13 @@ export async function submitDesignReview(
       }))
     );
   }
+
+  const revision = normalizeDesignRevision(rows[0]);
+  await logStaffActivity(
+    revision.order_id,
+    action === 'approve' ? 'approved' : 'changes_requested',
+    `v${revision.version}${action === 'request_changes' && comments.length > 0 ? ` · ${comments.length} mark${comments.length === 1 ? '' : 's'}` : ''}`
+  );
 
   return getDesignRevisionById(revisionId);
 }

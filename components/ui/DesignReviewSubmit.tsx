@@ -9,10 +9,11 @@ interface DesignReviewSubmitProps {
   orderId: string;
   revisionId: string;
   images: string[];
+  labels?: (string | null)[] | null;
   version: number;
 }
 
-export default function DesignReviewSubmit({ orderId, revisionId, images, version }: DesignReviewSubmitProps) {
+export default function DesignReviewSubmit({ orderId, revisionId, images, labels, version }: DesignReviewSubmitProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<'approved' | 'changes_requested' | null>(null);
@@ -69,6 +70,7 @@ export default function DesignReviewSubmit({ orderId, revisionId, images, versio
       )}
       <DesignReviewCanvas
         images={images}
+        labels={labels}
         comments={[]}
         mode="review"
         theme="light"

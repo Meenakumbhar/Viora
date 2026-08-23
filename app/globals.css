@@ -27,8 +27,12 @@
   --color-bg-primary: #FDFCFA;       /* Warm Parchment */
   --color-bg-secondary: #FAF8F5;     /* Linen — cards, surfaces */
   --color-bg-alternate: #F7F4EF;     /* Cream — alternating sections */
+  --color-bg-surface: #F3EFE9;       /* Warm surface — gradient stops, card fills */
+  --color-bg-cta: #F4E9D3;           /* Pale gold tint — reserved for final CTA panels only */
   --color-accent-gold: #C6A85C;       /* Warm Gold — universal CTA */
   --color-accent-gold-hover: #A88A40;
+  --color-accent-blush: #D9A79E;      /* Dusty rose — gradient/card accent */
+  --color-accent-sage: #9FB393;       /* Soft sage — gradient/card accent */
   --color-text-primary: #1C2530;      /* Primary Heading Color */
   --color-text-heading: #1C2530;
   --color-text-body: #4A4A4A;
@@ -564,4 +568,43 @@ body {
 /* Wrapper div so DayPicker grid has consistent padding */
 .rdp-custom-wrapper {
   padding: 0.5rem 0.75rem 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD DAY/NIGHT TOGGLE — legacy-component retrofit
+   ─────────────────────────────────────────────────────────────────────────
+   Most of the admin/staff area (OrdersAdminManager, the admin dashboard,
+   ProductAdminManager, etc.) was written when dark was the dashboard's only
+   possible state, using literal `text-white/40`, `border-white/10`,
+   `bg-white/[0.03]`-style utilities throughout. Tailwind's opacity-modified
+   color utilities resolve through a `--color-white` CSS variable at render
+   time (verified empirically, not assumed) — so rather than hand-editing
+   several hundred individual class instances across ~15 files, marking each
+   of those components' outermost element `dash-legacy` and overriding
+   --color-white *only* inside that marker, *only* when the toggle is on
+   light, retroactively makes every one of those existing utilities resolve
+   to a dark ink tone instead of white — while leaving already-theme-aware
+   pieces (StatCard's own light variant, PANEL_THEME in lib/dashboard-theme)
+   alone, since they don't carry the `dash-legacy` marker and were never
+   written assuming --color-white means "adapts with theme" in the first
+   place — for them white always meant literal white, correctly.
+   Scoped under [data-dash-theme], set by DashboardShell on its own root
+   div, so this can never leak outside the dashboard shell.
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-dash-theme="light"] .dash-legacy {
+  --color-white: #1C2530;
+}
+
+/* A handful of surface fills were hardcoded as literal hex (bg-[#0E1117],
+   bg-[#151C24]) rather than the `white` utility — arbitrary-value classes
+   compile to a literal color, not a variable reference, so --color-white
+   can't reach them. Overriding the generated class directly is the
+   equivalent fix for just these two known fill colors. */
+[data-dash-theme="light"] .dash-legacy.bg-\[\#0E1117\],
+[data-dash-theme="light"] .dash-legacy .bg-\[\#0E1117\] {
+  background-color: #FFFFFF;
+}
+[data-dash-theme="light"] .dash-legacy.bg-\[\#151C24\],
+[data-dash-theme="light"] .dash-legacy .bg-\[\#151C24\] {
+  background-color: #FFFFFF;
 }

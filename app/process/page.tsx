@@ -46,11 +46,11 @@ export default function ProcessPage() {
       </HeroVideo>
 
       {/* Timeline Section */}
-      <section className="bg-bg-primary py-24 md:py-36 border-t border-border">
+      <section className="bg-bg-primary py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide">
           <SectionReveal>
             <div className="max-w-4xl mx-auto">
-              <div className="space-y-16 relative before:absolute before:inset-y-0 before:left-6 md:before:left-12 before:w-[1px] before:bg-border">
+              <div className="space-y-10 relative before:absolute before:inset-y-0 before:left-6 md:before:left-12 before:w-[1px] before:bg-border">
                 {processSteps.map((step) => (
                   <div key={step.number} className="relative pl-16 md:pl-28 flex flex-col md:flex-row gap-6 md:gap-12">
                     {/* Circle counter */}
@@ -81,10 +81,10 @@ export default function ProcessPage() {
       </section>
 
       {/* FAQ Accordion */}
-      <section className="bg-bg-alternate py-24 md:py-36 border-t border-border">
+      <section className="bg-bg-alternate py-16 md:py-24 lg:py-28 border-t border-border">
         <div className="container-wide max-w-4xl">
           <SectionReveal>
-            <div className="text-center mb-16">
+            <div className="text-center mb-10">
               <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
                 Support
               </span>
@@ -98,8 +98,8 @@ export default function ProcessPage() {
         </div>
       </section>
 
-      {/* final CTA */}
-      <section className="bg-bg-secondary border-t border-border py-24 text-center">
+      {/* final CTA — pale gold tint reserved for calls-to-action, consistent across pages */}
+      <section className="bg-bg-cta border-t border-border py-16 md:py-20 text-center">
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">

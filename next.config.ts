@@ -14,6 +14,15 @@ const r2Hostname = process.env.R2_PUBLIC_URL || process.env.NEXT_PUBLIC_R2_URL
 
 const isDev = process.env.NODE_ENV !== 'production';
 
+// The private R2 storage endpoint the browser PUTs files to directly via a
+// presigned URL (see utils/presigned-upload.ts) — distinct from R2_PUBLIC_URL
+// above, which is the public CDN domain files are read back from afterward.
+// R2 addresses the bucket as a subdomain of the account
+// (<bucket>.<account-id>.r2.cloudflarestorage.com), hence the wildcard.
+const r2StorageEndpoint = process.env.R2_ACCOUNT_ID
+  ? `https://*.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+  : null;
+
 const CSP = [
   "default-src 'self'",
   // React dev mode needs eval() for its debugging/stack-trace features — never used in production builds.
@@ -28,8 +37,11 @@ const CSP = [
   // cross-origin video/audio (R2, or anywhere else).
   `media-src 'self' https://*.r2.dev${r2Hostname && !r2Hostname.endsWith('.r2.dev') ? ` https://${r2Hostname}` : ''}`,
   // *.sentry.io covers Sentry's ingest endpoints across regions/orgs — narrow
-  // this to the exact ingest host once a real DSN confirms it.
-  "connect-src 'self' https://*.paypal.com https://*.paypalobjects.com https://*.razorpay.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+  // this to the exact ingest host once a real DSN confirms it. The R2
+  // storage endpoint is needed for direct browser-to-R2 uploads (presigned
+  // PUT) — without it the CSP blocks the connection before it even reaches
+  // R2's own CORS check, which looks identical to a network failure client-side.
+  `connect-src 'self' https://*.paypal.com https://*.paypalobjects.com https://*.razorpay.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com${r2StorageEndpoint ? ` ${r2StorageEndpoint}` : ''}`,
   "frame-src https://*.paypal.com https://*.razorpay.com",
   "object-src 'none'",
   "base-uri 'self'",

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import DesignReviewCanvas from '@/components/ui/DesignReviewCanvas';
+import { uploadFileDirect } from '@/utils/presigned-upload';
 import type { DesignRevision, CommentResolutionField } from '@/types/database';
 
 const STATUS_LABELS: Record<DesignRevision['status'], string> = {
@@ -40,6 +41,10 @@ interface DesignManagerProps {
 export default function DesignManager({ initialRevisions, apiBase, viewerRole = 'admin' }: DesignManagerProps) {
   const [revisions, setRevisions] = useState(initialRevisions);
   const [files, setFiles] = useState<File[]>([]);
+  // Positionally matched to `files` — an optional caption per proof (e.g.
+  // "Thank You Card") for orders that bundle several products into one
+  // upload, so the customer can tell the proofs apart on the review tabs.
+  const [labels, setLabels] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [uploading, setUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -60,21 +65,18 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
     try {
       const imageUrls: string[] = [];
       for (const file of files) {
-        const form = new FormData();
-        form.append('file', file);
-        form.append('folder', 'designs');
-        const res = await fetch('/api/upload', { method: 'POST', body: form });
-        const json = await res.json();
-        if (!res.ok || !json.success) {
-          throw new Error(json.error ?? `Failed to upload ${file.name}.`);
-        }
-        imageUrls.push(json.data.url);
+        const uploaded = await uploadFileDirect(file, { folder: 'designs' });
+        imageUrls.push(uploaded.url);
       }
 
       const res = await fetch(apiBase, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrls, notes: notes.trim() || undefined }),
+        body: JSON.stringify({
+          imageUrls,
+          imageLabels: labels.some((l) => l.trim()) ? labels : undefined,
+          notes: notes.trim() || undefined,
+        }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -83,6 +85,7 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
 
       setRevisions((prev) => [...prev, json.data]);
       setFiles([]);
+      setLabels([]);
       setNotes('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -131,7 +134,7 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
   }
 
   return (
-    <div>
+    <div className="dash-legacy">
       {/* Upload panel */}
       <div className="mb-10 border border-white/10 bg-white/5 p-6">
         <h2 className="font-display text-2xl font-light">
@@ -147,9 +150,43 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
             type="file"
             accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
             multiple
-            onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+            onChange={(e) => {
+              const next = Array.from(e.target.files ?? []);
+              setFiles(next);
+              setLabels(next.map(() => ''));
+            }}
             className="block w-full font-mono text-xs text-white/60 file:mr-4 file:border file:border-white/20 file:bg-transparent file:px-4 file:py-2 file:font-mono file:text-[10px] file:uppercase file:tracking-widest file:text-white/70"
           />
+
+          {files.length > 0 && (
+            <div className="space-y-2 border border-white/10 bg-black/20 p-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+                Label each proof (optional) — helps the customer tell them apart when reviewing
+              </p>
+              {files.map((file, i) => (
+                <div key={`${file.name}-${i}`} className="flex items-center gap-3">
+                  <span className="w-1/3 truncate font-mono text-[11px] text-white/50" title={file.name}>
+                    {file.name}
+                  </span>
+                  <input
+                    type="text"
+                    value={labels[i] ?? ''}
+                    onChange={(e) =>
+                      setLabels((prev) => {
+                        const next = [...prev];
+                        next[i] = e.target.value;
+                        return next;
+                      })
+                    }
+                    placeholder="e.g. Thank You Card"
+                    maxLength={200}
+                    className="flex-1 border border-white/15 bg-transparent px-3 py-1.5 text-xs text-white outline-none focus:border-[#C6A85C]"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -196,6 +233,7 @@ export default function DesignManager({ initialRevisions, apiBase, viewerRole = 
               {revision.notes && <p className="mb-3 font-body text-sm text-white/50">{revision.notes}</p>}
               <DesignReviewCanvas
                 images={revision.image_urls}
+                labels={revision.image_labels}
                 comments={revision.comments}
                 mode="manage"
                 theme="dark"

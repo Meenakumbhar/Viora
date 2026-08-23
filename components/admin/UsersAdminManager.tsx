@@ -67,7 +67,7 @@ export default function UsersAdminManager({ initialUsers }: UsersAdminManagerPro
   }
 
   return (
-    <div>
+    <div className="dash-legacy">
       {/* Filters */}
       <div className="mb-6 space-y-4">
         <div className="flex flex-wrap items-end gap-4">

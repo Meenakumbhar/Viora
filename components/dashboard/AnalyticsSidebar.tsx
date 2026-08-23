@@ -17,7 +17,7 @@ export default function AnalyticsSidebar({ orders }: { orders: Order[] }) {
   const kpis = getClientKpis(orders);
 
   return (
-    <div className="space-y-10">
+    <div className="dash-legacy space-y-10">
       <div>
         <h3 className="font-mono text-[10px] uppercase tracking-widest text-white/40">Revenue — last 6 months</h3>
         <div className="mt-4">

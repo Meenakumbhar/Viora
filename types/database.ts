@@ -181,6 +181,8 @@ export interface OrderStatusHistoryEntry {
 
 export interface OrderWithHistory extends Order {
   history: OrderStatusHistoryEntry[];
+  /** The order's latest design revision, in ANY status — undefined means this order never went through design review at all. Drives the order-lifecycle stepper (see deriveDisplayStage in components/ui/OrderStepper.tsx). */
+  latestRevision?: DesignRevision;
 }
 
 // ─── Design Review ─────────────────────────────────────────────────────────────
@@ -220,10 +222,38 @@ export interface DesignRevision {
   order_id: string;
   version: number;
   image_urls: string[];
+  // Positionally matched to image_urls — an optional caption ("Thank You
+  // Card") shown on the review tabs instead of "Image N". Null/absent on
+  // older revisions, which fall back to the numbered tab text.
+  image_labels: (string | null)[] | null;
   notes: string | null;
   status: DesignRevisionStatus;
   created_at: string;
+  /** When this row's status last changed — created_at only tells you when this version was first uploaded. Drives "waiting since" in the staff queue view. */
+  updated_at: string;
   comments: DesignComment[];
+}
+
+export type StaffActivityEventType =
+  | 'proof_uploaded'
+  | 'returned_to_designer'
+  | 'sent_to_customer'
+  | 'changes_requested'
+  | 'approved'
+  | 'designer_assigned'
+  | 'designer_unassigned';
+
+export interface StaffActivityEvent {
+  id: string;
+  order_id: string;
+  event_type: StaffActivityEventType;
+  /** Freeform extra context set at write time — e.g. "v2 · 3 marks", or a designer's name for an assignment event. */
+  detail: string | null;
+  created_at: string;
+  // Denormalized in at read time (a join, not stored) so the feed never
+  // needs a second round-trip per item to say whose order this was.
+  order_customer_name: string;
+  order_service_type: string;
 }
 
 export interface DesignCommentInput {

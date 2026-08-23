@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import type { Order } from '@/types/database';
+import type { Order, DesignRevision } from '@/types/database';
 import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
 
 const PayPalButton = dynamic(() => import('@/components/ui/PayPalButton'), { ssr: false });
@@ -22,15 +22,21 @@ const PAYMENT_STATUS_COLORS = {
 
 interface OrderPaymentSectionProps {
   order: Order;
+  /** The order's latest design revision (any status, not just customer-visible ones) — undefined means this order never went through design review at all. */
+  latestRevision?: DesignRevision;
 }
 
-export default function OrderPaymentSection({ order: initialOrder }: OrderPaymentSectionProps) {
+export default function OrderPaymentSection({ order: initialOrder, latestRevision }: OrderPaymentSectionProps) {
   const [order, setOrder] = useState(initialOrder);
   const [showPayPal, setShowPayPal] = useState(false);
 
   const hasAmount = order.payment_amount !== null && order.payment_amount > 0;
   const isPaid = order.payment_status === 'paid';
-  const canPay = hasAmount && !isPaid;
+  // An order with no design-review history at all (no bespoke proof needed)
+  // is unaffected by this — payment only waits on approval for orders that
+  // actually went through review. Mirrors getOrderPaymentGate server-side.
+  const awaitingDesignApproval = Boolean(latestRevision && latestRevision.status !== 'approved');
+  const canPay = hasAmount && !isPaid && !awaitingDesignApproval;
 
   return (
     <div className="mt-6 border-t border-border pt-6">
@@ -55,9 +61,14 @@ export default function OrderPaymentSection({ order: initialOrder }: OrderPaymen
               Your quote amount will appear here once confirmed.
             </p>
           )}
+          {hasAmount && !isPaid && awaitingDesignApproval && (
+            <p className="mt-1 font-mono text-[11px] text-text-muted">
+              Payment opens once you&apos;ve approved the design proof.
+            </p>
+          )}
         </div>
 
-        {/* Payment method choice — only when amount is set and unpaid */}
+        {/* Payment method choice — only once an amount is set, it's unpaid, and (if this order has a design proof) it's been approved */}
         {canPay && !showPayPal && (
           <div className="flex flex-wrap items-center gap-3">
             <button

@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { DashboardThemeContext } from '@/lib/dashboard-theme';
+
+const THEME_STORAGE_KEY = 'miph-dashboard-theme';
 
 export interface DashboardNavItem {
   label: string;
@@ -12,6 +15,7 @@ export interface DashboardNavItem {
 }
 
 interface DashboardShellProps {
+  /** Initial theme — overridden by a saved preference (localStorage) once one exists, when enableThemeToggle is on. */
   theme: 'dark' | 'light';
   /** Small eyebrow above the wordmark, e.g. "Admin" or "Studio" */
   section: string;
@@ -22,6 +26,8 @@ interface DashboardShellProps {
   children: React.ReactNode;
   /** Optional collapsible right panel — e.g. analytics charts. Hidden by default, toggled from the topbar. */
   analyticsSlot?: React.ReactNode;
+  /** Shows a day/night toggle in the topbar and remembers the choice (per browser) across visits. On by default — the staff/admin area is meant to offer both; opt individual pages out (e.g. the customer-facing review page) by passing false. */
+  enableThemeToggle?: boolean;
 }
 
 // A small registration-mark cross — the print industry's own alignment mark —
@@ -70,17 +76,40 @@ export default function DashboardShell({
   logoutSlot,
   children,
   analyticsSlot,
+  enableThemeToggle = true,
 }: DashboardShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
-  const t = THEME[theme];
+  // Starts at the server-passed default; a saved preference (if any) takes
+  // over once the client has mounted — see the effect below. Only ever
+  // changes from that default when enableThemeToggle is on, since nothing
+  // else touches this state.
+  const [activeTheme, setActiveTheme] = useState<'dark' | 'light'>(theme);
+  const t = THEME[activeTheme];
+
+  useEffect(() => {
+    if (!enableThemeToggle) return;
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+    // Syncing from an external system (localStorage, unavailable during SSR)
+    // on mount — the accepted exception to "don't setState in an effect,"
+    // not a reaction to other state changing.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (saved === 'dark' || saved === 'light') setActiveTheme(saved);
+  }, [enableThemeToggle]);
+
+  function toggleTheme() {
+    const next = activeTheme === 'dark' ? 'light' : 'dark';
+    setActiveTheme(next);
+    window.localStorage.setItem(THEME_STORAGE_KEY, next);
+  }
 
   const isActive = (item: DashboardNavItem) =>
     item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
   return (
     <div
+      data-dash-theme={activeTheme}
       style={{ position: 'fixed', inset: 0, zIndex: 9999, background: t.shellBg, color: t.text, fontFamily: 'var(--font-dm-sans)' }}
       className="flex"
     >
@@ -89,7 +118,7 @@ export default function DashboardShell({
         className={`hidden w-60 shrink-0 flex-col border-r ${t.sidebarBorder} md:flex`}
         style={{ background: t.sidebarBg, backdropFilter: 'blur(12px)' }}
       >
-        <SidebarContent theme={theme} section={section} navItems={navItems} isActive={isActive} logoutSlot={logoutSlot} />
+        <SidebarContent theme={activeTheme} section={section} navItems={navItems} isActive={isActive} logoutSlot={logoutSlot} />
       </aside>
 
       {/* Sidebar — mobile drawer */}
@@ -98,10 +127,10 @@ export default function DashboardShell({
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
           <aside
             className={`absolute inset-y-0 left-0 flex w-64 flex-col border-r ${t.sidebarBorder}`}
-            style={{ background: theme === 'dark' ? '#151C24' : 'var(--color-bg-primary)' }}
+            style={{ background: activeTheme === 'dark' ? '#151C24' : 'var(--color-bg-primary)' }}
           >
             <SidebarContent
-              theme={theme}
+              theme={activeTheme}
               section={section}
               navItems={navItems}
               isActive={isActive}
@@ -130,6 +159,19 @@ export default function DashboardShell({
             {section}
           </span>
           <div className="flex items-center gap-3">
+            {enableThemeToggle && (
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className={`border px-2.5 py-1 font-mono text-sm uppercase tracking-widest transition-colors ${t.sidebarBorder} ${t.muted} ${
+                  activeTheme === 'dark' ? 'hover:text-white' : 'hover:text-text-heading'
+                }`}
+                aria-label={`Switch to ${activeTheme === 'dark' ? 'day' : 'night'} mode`}
+                title={`Switch to ${activeTheme === 'dark' ? 'day' : 'night'} mode`}
+              >
+                {activeTheme === 'dark' ? '☀' : '☾'}
+              </button>
+            )}
             {analyticsSlot && (
               <button
                 type="button"
@@ -152,7 +194,9 @@ export default function DashboardShell({
 
         <div className="flex min-h-0 flex-1">
           <main className="min-w-0 flex-1 overflow-y-auto px-5 py-10 md:px-10 md:py-14">
-            <div className="mx-auto max-w-6xl">{children}</div>
+            <div className="mx-auto max-w-6xl">
+              <DashboardThemeContext.Provider value={activeTheme}>{children}</DashboardThemeContext.Provider>
+            </div>
           </main>
 
           {analyticsSlot && analyticsOpen && (

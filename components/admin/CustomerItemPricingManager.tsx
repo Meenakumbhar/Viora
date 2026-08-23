@@ -175,7 +175,7 @@ export default function CustomerItemPricingManager({
   }
 
   return (
-    <section>
+    <section className="dash-legacy">
       <p className="mb-1 font-mono text-xs uppercase tracking-[0.18em] text-white/60">Customer × item pricing</p>
       <p className="mb-4 font-mono text-[11px] text-white/30">
         The same piece can cost a different amount for different customers. This is the most specific price there

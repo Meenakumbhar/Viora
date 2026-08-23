@@ -84,7 +84,7 @@ export default function PricingPage() {
         </p>
       </HeroVideo>
 
-      <section className="border-t border-border bg-cat-bg py-24 md:py-36 transition-colors duration-500">
+      <section className="border-t border-border bg-cat-bg py-16 md:py-24 lg:py-28 transition-colors duration-500">
         <div className="container-wide">
           <SectionReveal>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.5fr_0.8fr]">
@@ -156,7 +156,17 @@ export default function PricingPage() {
                             >
                               &minus;
                             </button>
-                            <span className="w-8 text-center font-mono text-sm text-cat-heading">{item.quantity}</span>
+                            <input
+                              type="number"
+                              min={1}
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const parsed = parseInt(e.target.value, 10);
+                                setCartItems(updatePortfolioCartQuantity(item.id, Number.isFinite(parsed) && parsed > 0 ? parsed : 1));
+                              }}
+                              aria-label={`Quantity of ${item.title}`}
+                              className="w-12 border-0 bg-transparent text-center font-mono text-sm text-cat-heading [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                            />
                             <button
                               type="button"
                               onClick={() => setCartItems(updatePortfolioCartQuantity(item.id, item.quantity + 1))}

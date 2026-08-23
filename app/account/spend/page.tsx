@@ -7,7 +7,7 @@ import UserLogoutButton from '@/components/ui/UserLogoutButton';
 import AccountShell from '@/components/dashboard/AccountShell';
 import SpendSummary, { type MonthlySpend, type CategorySpend, type ProviderSpend } from '@/components/dashboard/SpendSummary';
 import { serviceTypeToCategory, CATEGORY_ACCENT, CATEGORY_LABELS } from '@/lib/order-category';
-import type { DisplayStage } from '@/components/ui/OrderStepper';
+import type { RawOrderDisplayStatus } from '@/lib/order-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +45,7 @@ export default async function SpendPage() {
   const convertedEnquiryIds = new Set(orders.filter((o) => o.enquiry_id).map((o) => o.enquiry_id as string));
   const placedCount = enquiries.filter((e) => !convertedEnquiryIds.has(e.id)).length;
 
-  const statusCounts: Partial<Record<DisplayStage, number>> = { placed: placedCount };
+  const statusCounts: Partial<Record<RawOrderDisplayStatus, number>> = { placed: placedCount };
   for (const order of orders) {
     statusCounts[order.status] = (statusCounts[order.status] ?? 0) + 1;
   }

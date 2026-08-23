@@ -185,6 +185,11 @@ export const designRevisions = pgTable(
       .references(() => orders.id, { onDelete: 'cascade' }),
     version: integer('version').notNull(),
     image_urls: text('image_urls').array().notNull(),
+    // Positionally matched to image_urls (same index, same length once set) —
+    // an optional caption like "Thank You Card" shown on the review tabs
+    // instead of "Image N", for orders bundling proofs of several products.
+    // Nullable/absent on older revisions, which just keep the "Image N" tab text.
+    image_labels: text('image_labels').array(),
     notes: text('notes'),
     // The live column's actual default is 'pending_review', not
     // 'pending_proofreader_review' as neon_schema.sql documents — found via
@@ -193,6 +198,11 @@ export const designRevisions = pgTable(
     // exercised, but this schema reflects the real live value, not the docs.
     status: text('status').notNull().default('pending_review'),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Touched explicitly by every status-changing mutation (proofreader
+    // approve/return, customer approve/request-changes) — created_at alone
+    // only tells you when this version was first uploaded, not when it most
+    // recently changed hands, which the staff "waiting since" queue view needs.
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [unique('design_revisions_order_id_version_key').on(table.version, table.order_id)]
 );
@@ -209,6 +219,24 @@ export const designComments = pgTable('design_comments', {
   designer_resolved: boolean('designer_resolved').notNull().default(false),
   proofreader_resolved: boolean('proofreader_resolved').notNull().default(false),
   author_role: text('author_role').notNull().default('customer'),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// A generic, append-only event log for the staff-facing activity feed —
+// distinct from order_status_history (which only ever logs order.status
+// changes). This covers everything a designer/proofreader/admin actually
+// needs to know happened: a proof uploaded, returned, sent to the customer,
+// approved, or an order (re)assigned. Denormalized `detail` (e.g. "v2 · 3
+// marks", or a designer's name) is written once at event time rather than
+// reconstructed at read time, so the feed never needs to join out to
+// design_comments or users just to render a line of text.
+export const staffActivity = pgTable('staff_activity', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  order_id: uuid('order_id')
+    .notNull()
+    .references(() => orders.id, { onDelete: 'cascade' }),
+  event_type: text('event_type').notNull(),
+  detail: text('detail'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

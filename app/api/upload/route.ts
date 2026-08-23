@@ -1,86 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { uploadToR2, deleteFromR2 } from '@/utils/r2';
+import { deleteFromR2, getPresignedUploadUrl, getR2PublicUrl } from '@/utils/r2';
 import { parseJsonBody } from '@/lib/validation';
-import { auth } from '@/lib/auth';
-import { getUserById } from '@/lib/db';
-import { ADMIN_SESSION_COOKIE, verifyAdminToken } from '@/utils/admin-auth';
+import {
+  ALLOWED_MIME_TYPES,
+  MAX_FILE_SIZE,
+  buildObjectKey,
+  isUploadRequestAuthorized,
+  sanitizeFolder,
+} from '@/lib/upload-shared';
 import type { ApiResponse } from '@/types/database';
 
 const deleteSchema = z.object({ key: z.string().trim().min(1, 'File key is required for deletion.').max(500) });
 
-// The one folder a signed-out visitor is allowed to upload into — the
-// customer order form (app/order-form/[enquiryId]) has no login of its own,
-// matching the trust model of the enquiry-id link it's reached through.
-// Everything else (portfolio images, etc.) stays admin/staff only.
-const PUBLIC_UPLOAD_FOLDERS = new Set(['order-form-attachments']);
-const UPLOAD_ROLES = new Set(['designer', 'employee', 'admin']);
+const presignSchema = z.object({
+  filename: z.string().trim().min(1, 'A filename is required.').max(200),
+  contentType: z.string().trim().min(1, 'A content type is required.').max(100),
+  size: z.number().int().positive().max(MAX_FILE_SIZE, `File size exceeds maximum allowed limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB.`),
+  folder: z.string().trim().max(100).optional(),
+});
 
-async function isUploadRequestAuthorized(request: NextRequest): Promise<boolean> {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  const cookieToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  if (await verifyAdminToken(cookieToken, adminPassword)) return true;
-
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session) return false;
-  const user = await getUserById(session.user.id);
-  return Boolean(user && UPLOAD_ROLES.has(user.role));
-}
-
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
-
-const ALLOWED_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/avif',
-  'image/gif',
-  // iPhones capture photos as HEIC/HEIF by default — without these, a photo
-  // picked straight from an iOS camera roll fails to upload.
-  'image/heic',
-  'image/heif',
-  'application/pdf',
-];
-
-interface UploadResult {
-  url: string;
+interface PresignResult {
+  uploadUrl: string;
   key: string;
-  name: string;
-  size: number;
-  contentType: string;
+  url: string;
 }
 
-// POST /api/upload — Upload a file to Cloudflare R2
+// POST /api/upload — Issue a short-lived, single-object presigned URL so the
+// browser can PUT the file straight to R2. The file's bytes never pass
+// through this route, so there's no hosting-platform request-body ceiling to
+// hit — the earlier direct-proxy version silently truncated anything past
+// Vercel's ~4.5MB serverless limit, which is what broke larger PDF uploads.
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
-    const folder = ((formData.get('folder') as string) || 'uploads')
-      .replace(/[^a-zA-Z0-9_-]/g, '')
-      .toLowerCase();
+    const parsed = await parseJsonBody(request, presignSchema, 'upload/presign');
+    if (parsed.error) return parsed.error;
+    const { filename, contentType, size, folder: rawFolder } = parsed.data;
 
-    if (!PUBLIC_UPLOAD_FOLDERS.has(folder) && !(await isUploadRequestAuthorized(request))) {
+    const folder = sanitizeFolder(rawFolder);
+
+    if (!(await isUploadRequestAuthorized(request, folder))) {
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'Unauthorized.' },
         { status: 401 }
       );
     }
 
-    if (!file) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: 'No file provided.' },
-        { status: 400 }
-      );
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json<ApiResponse>(
-        { success: false, error: 'File size exceeds maximum allowed limit of 25MB.' },
-        { status: 400 }
-      );
-    }
-
-    const contentType = file.type || 'application/octet-stream';
     if (!ALLOWED_MIME_TYPES.includes(contentType)) {
       return NextResponse.json<ApiResponse>(
         {
@@ -91,48 +56,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine safe file extension
-    const originalName = file.name || 'file';
-    const extensionParts = originalName.split('.');
-    const ext = extensionParts.length > 1 ? extensionParts.pop()?.toLowerCase() : 'bin';
-    const safeBaseName = (extensionParts.join('.') || 'file')
-      .replace(/[^a-zA-Z0-9_-]/g, '_')
-      .slice(0, 40);
+    // `size` is client-reported at this stage (used only for the pre-check
+    // above) — R2 enforces the actual byte count against the presigned PUT
+    // regardless, so a spoofed value here can't smuggle a larger object in.
+    void size;
 
-    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    const key = `${folder}/${safeBaseName}-${uniqueId}.${ext}`;
+    const key = buildObjectKey(folder, filename);
+    const uploadUrl = await getPresignedUploadUrl({ key, contentType });
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const result = await uploadToR2({
-      key,
-      body: buffer,
-      contentType,
-      metadata: {
-        originalName: encodeURIComponent(originalName),
-        uploadedAt: new Date().toISOString(),
-      },
-    });
-
-    return NextResponse.json<ApiResponse<UploadResult>>(
+    return NextResponse.json<ApiResponse<PresignResult>>(
       {
         success: true,
         data: {
-          url: result.url,
-          key: result.key,
-          name: originalName,
-          size: file.size,
-          contentType,
+          uploadUrl,
+          key,
+          url: getR2PublicUrl(key),
         },
-        message: 'File uploaded successfully.',
+        message: 'Presigned upload URL created.',
       },
       { status: 201 }
     );
   } catch (err) {
-    console.error('[upload] Error uploading to R2:', err);
+    console.error('[upload] Error creating presigned upload URL:', err);
     const message =
-      err instanceof Error ? err.message : 'Failed to upload file to Cloudflare R2.';
+      err instanceof Error ? err.message : 'Failed to prepare file upload.';
     return NextResponse.json<ApiResponse>(
       { success: false, error: message },
       { status: 500 }

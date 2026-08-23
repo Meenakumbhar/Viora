@@ -103,7 +103,7 @@ export default function ProofreaderPanel({ initialRevisions, apiBase }: Proofrea
   }
 
   return (
-    <div>
+    <div className="dash-legacy">
       <div className="mb-4 flex items-center justify-end">
         <button
           type="button"
@@ -132,6 +132,7 @@ export default function ProofreaderPanel({ initialRevisions, apiBase }: Proofrea
           {error && <p className="mb-3 font-mono text-xs text-red-400" role="alert">{error}</p>}
           <DesignReviewCanvas
             images={current.image_urls}
+            labels={current.image_labels}
             comments={current.comments}
             mode="proofread"
             theme="dark"
@@ -162,6 +163,7 @@ export default function ProofreaderPanel({ initialRevisions, apiBase }: Proofrea
                 {revision.notes && <p className="mb-3 font-body text-sm text-white/50">{revision.notes}</p>}
                 <DesignReviewCanvas
                   images={revision.image_urls}
+                  labels={revision.image_labels}
                   comments={revision.comments}
                   mode="manage"
                   theme="dark"

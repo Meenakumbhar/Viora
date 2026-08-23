@@ -30,11 +30,13 @@ export default async function AdminOrderFormPage({ params }: { params: Promise<{
       userLabel="Studio team"
       logoutSlot={<LogoutButton />}
     >
+      <div className="dash-legacy">
       <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">Order form · read only</p>
       <h1 className="mt-2 font-display text-4xl font-light" style={{ letterSpacing: '-0.02em' }}>
         {enquiry.name}
       </h1>
       <p className="mt-2 font-mono text-xs text-white/30">{enquiry.email}</p>
+      </div>
 
       <div className="mt-10">
         <OrderFormSummary enquiry={enquiry} orderForm={orderForm} />

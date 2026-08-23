@@ -137,7 +137,17 @@ export default function ProductOrderPanel({
         <span className="font-body text-cat-body">Quantity</span>
         <div className="flex items-center rounded-full border border-border">
           <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="h-11 w-11 rounded-full text-cat-heading">−</button>
-          <span className="w-10 text-center font-mono text-sm">{quantity}</span>
+          <input
+            type="number"
+            min={1}
+            value={quantity}
+            onChange={(e) => {
+              const parsed = parseInt(e.target.value, 10);
+              setQuantity(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
+            }}
+            aria-label="Quantity"
+            className="w-14 border-0 bg-transparent text-center font-mono text-sm text-cat-heading [appearance:textfield] focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          />
           <button type="button" onClick={() => setQuantity((value) => value + 1)} className="h-11 w-11 rounded-full text-cat-heading">+</button>
         </div>
       </div>
