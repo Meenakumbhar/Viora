@@ -36,7 +36,7 @@ test.describe('payment method choice on an order', () => {
 
   test('both PayPal and card payment options are offered for an unpaid order', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Pay via PayPal' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Pay £45\.00 by card/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Pay £45\.00 with Razorpay/ })).toBeVisible();
   });
 
   test('choosing PayPal reveals the inline PayPal payment container', async ({ page }) => {
@@ -51,7 +51,7 @@ test.describe('payment method choice on an order', () => {
   test('choosing card checkout hits the Razorpay boundary correctly', async ({ page }) => {
     const [response] = await Promise.all([
       page.waitForResponse((res) => res.url().includes('/api/payments/razorpay/create-order')),
-      page.getByRole('button', { name: /Pay £45\.00 by card/ }).click(),
+      page.getByRole('button', { name: /Pay £45\.00 with Razorpay/ }).click(),
     ]);
 
     if (response.status() === 503) {
