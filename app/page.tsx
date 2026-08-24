@@ -70,6 +70,12 @@ const blogGradients: Record<string, string> = {
 /* ═══════════════════════════════════════════════════════════════════════════
    HOME PAGE — Server Component
    ═══════════════════════════════════════════════════════════════════════════ */
+// ISR rather than always-dynamic or fully-static: this page pulls live
+// portfolio/blog data directly (not through a cached helper), so without a
+// revalidate window it would be cached until the next deploy and miss admin
+// edits. 60s matches the nav's product cache in app/layout.tsx.
+export const revalidate = 60;
+
 export default async function Home() {
   const { featured } = await getHomepagePortfolioData();
   const recentPosts = await getBlogPosts(3);

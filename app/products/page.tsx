@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   description: 'Memorial keepsakes and stationery — memory cards, thank you cards, memorial boards, seed cards, attendance cards, photo prints, bookmarks, and memorial portraits.',
 };
 
+// ISR — this page fetches products directly, not through a cached helper,
+// so it needs its own revalidate window now that the root layout no longer
+// forces every route dynamic. See app/layout.tsx.
+export const revalidate = 60;
+
 export default async function ProductsPage() {
   const products = await getProducts();
   const groups = groupProductsByType(products);

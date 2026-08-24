@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-export function PageTransition({ children }: { children: React.ReactNode }) {
+function PageTransitionInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   // Query-only navigations (e.g. /portfolio?category=funeral) don't change
@@ -28,5 +28,18 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
         {children}
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+// useSearchParams() needs a Suspense boundary above it, or Next bails out of
+// static rendering for every route this wraps (which is every route — this
+// sits in the root layout). The fallback renders the page content directly,
+// un-animated, so prerendering (and the initial paint) never blocks on it —
+// PageTransitionInner then swaps in once search params are available.
+export function PageTransition({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={children}>
+      <PageTransitionInner>{children}</PageTransitionInner>
+    </Suspense>
   );
 }
