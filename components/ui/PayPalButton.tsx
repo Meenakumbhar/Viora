@@ -176,19 +176,19 @@ export default function PayPalButton({ order, onSuccess }: PayPalButtonProps) {
   return (
     <div>
       {status === 'loading' && (
-        <p className="mb-2 font-mono text-base uppercase tracking-widest text-text-muted">
+        <p className="mb-2 font-mono text-base uppercase tracking-widest text-bg-primary/60">
           Processing…
         </p>
       )}
       {status === 'error' && errorMessage && (
-        <p className="mb-2 font-mono text-base text-red-500" role="alert">
+        <p className="mb-2 font-mono text-base text-red-400" role="alert">
           {errorMessage}
         </p>
       )}
       <div
         id={`paypal-btn-${order.id}`}
         ref={containerRef}
-        className="max-w-[280px]"
+        className="w-full"
       />
     </div>
   );

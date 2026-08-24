@@ -43,7 +43,12 @@ export default function EnquiryOrderAction({ enquiry, existingOrder }: { enquiry
           service_type: enquiry.service_type,
           event_date: enquiry.event_date,
           quantity_estimate: enquiry.quantity_estimate,
-          details: enquiry.description,
+          // orders has no separate address column — fold the enquiry's
+          // delivery/venue address in here too, or converting drops it
+          // silently and nothing on the order ever shows where this ships.
+          details: [enquiry.address ? `Delivery: ${enquiry.address}` : null, enquiry.description]
+            .filter(Boolean)
+            .join('\n\n') || null,
           enquiry_id: enquiry.id,
           portfolio_items: enquiry.portfolio_items,
         }),
