@@ -5,29 +5,17 @@ interface PaymentProviderIconProps {
   className?: string;
 }
 
-// Simple brand-toned monogram badges rather than reproductions of the actual
-// PayPal/Razorpay logo artwork — enough to tell the two apart at a glance
-// wherever a paid order's method is shown, without copying trademarked marks.
+// Official wordmarks (public/images/payment/*.svg — from Simple Icons,
+// CC0) rather than the letter-badge stand-ins used before. Standard
+// nominative use: identifying a supported payment method, not endorsement.
 export default function PaymentProviderIcon({ provider, className = '' }: PaymentProviderIconProps) {
-  if (provider === 'paypal') {
-    return (
-      <span
-        aria-label="PayPal"
-        title="PayPal"
-        className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-[#003087] font-mono text-base font-bold text-white ${className}`}
-      >
-        P
-      </span>
-    );
-  }
-
+  const isPaypal = provider === 'paypal';
   return (
-    <span
-      aria-label="Razorpay"
-      title="Razorpay"
-      className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-[#0C2451] font-mono text-base font-bold text-[#3395FF] ${className}`}
-    >
-      R
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={isPaypal ? '/images/payment/paypal.svg' : '/images/payment/razorpay.svg'}
+      alt={isPaypal ? 'PayPal' : 'Razorpay'}
+      className={`h-5 w-auto shrink-0 ${className}`}
+    />
   );
 }

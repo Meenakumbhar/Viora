@@ -1,12 +1,6 @@
-'use client';
-
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import type { Order, DesignRevision } from '@/types/database';
 import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
-
-const PayPalButton = dynamic(() => import('@/components/ui/PayPalButton'), { ssr: false });
-const RazorpayButton = dynamic(() => import('@/components/ui/RazorpayButton'), { ssr: false });
 
 const PAYMENT_STATUS_LABELS = {
   unpaid: 'Awaiting payment',
@@ -26,10 +20,7 @@ interface OrderPaymentSectionProps {
   latestRevision?: DesignRevision;
 }
 
-export default function OrderPaymentSection({ order: initialOrder, latestRevision }: OrderPaymentSectionProps) {
-  const [order, setOrder] = useState(initialOrder);
-  const [showPayPal, setShowPayPal] = useState(false);
-
+export default function OrderPaymentSection({ order, latestRevision }: OrderPaymentSectionProps) {
   const hasAmount = order.payment_amount !== null && order.payment_amount > 0;
   const isPaid = order.payment_status === 'paid';
   // An order with no design-review history at all (no bespoke proof needed)
@@ -68,39 +59,16 @@ export default function OrderPaymentSection({ order: initialOrder, latestRevisio
           )}
         </div>
 
-        {/* Payment method choice — only once an amount is set, it's unpaid, and (if this order has a design proof) it's been approved */}
-        {canPay && !showPayPal && (
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              id={`pay-now-${order.id}`}
-              onClick={() => setShowPayPal(true)}
-              className="flex items-center gap-2 border border-accent-gold bg-accent-gold px-5 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90"
-            >
-              <PaymentProviderIcon provider="paypal" />
-              Pay via PayPal
-            </button>
-            <RazorpayButton order={order} onSuccess={(updated) => setOrder(updated)} />
-          </div>
+        {/* Only once an amount is set, it's unpaid, and (if this order has a design proof) it's been approved */}
+        {canPay && (
+          <Link
+            href={`/account/orders/${order.id}/pay`}
+            className="flex items-center gap-2 border border-accent-gold bg-accent-gold px-5 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90"
+          >
+            Pay now
+          </Link>
         )}
       </div>
-
-      {/* PayPal button (lazy-loaded after click) */}
-      {canPay && showPayPal && (
-        <div className="mt-4">
-          <p className="mb-3 font-mono text-base uppercase tracking-widest text-text-muted">
-            Complete your payment via PayPal
-          </p>
-          <PayPalButton order={order} onSuccess={(updated) => setOrder(updated)} />
-          <button
-            type="button"
-            onClick={() => setShowPayPal(false)}
-            className="mt-3 font-mono text-base text-text-muted hover:text-text-heading"
-          >
-            ← Cancel
-          </button>
-        </div>
-      )}
 
       {/* Paid confirmation */}
       {isPaid && order.payment_provider && (order.paypal_order_id || order.razorpay_payment_id) && (

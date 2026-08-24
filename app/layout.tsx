@@ -5,9 +5,21 @@ import Nav from '@/components/ui/Nav';
 import Footer from '@/components/ui/Footer';
 import CategoryWrapper from '@/components/ui/CategoryWrapper';
 import { PageTransition } from '@/components/ui/PageTransition';
+import { unstable_cache } from 'next/cache';
 import { SITE_URL } from '@/lib/site-url';
 import { getProducts } from '@/lib/db';
 import './globals.css';
+
+// getProducts() already swallows DB errors and returns [] rather than
+// throwing (see lib/db.ts), so caching it here is safe even if the DB is
+// briefly unreachable — worst case is a stale/empty nav list for up to
+// REVALIDATE_SECONDS, not a crash. Wrapping it lets every route go back to
+// being statically served/ISR'd instead of hitting Neon on every request.
+const REVALIDATE_SECONDS = 60;
+const getCachedProducts = unstable_cache(() => getProducts(), ['nav-products'], {
+  revalidate: REVALIDATE_SECONDS,
+  tags: ['products'],
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════
    FONTS
@@ -106,21 +118,12 @@ export const metadata: Metadata = {
    ROOT LAYOUT
    ═══════════════════════════════════════════════════════════════════════════ */
 
-// Every route renders Nav with live `products` from the DB (see below), so
-// there's no page in this app that's actually static — including the
-// Next-generated /_not-found route, which still renders through this layout
-// during build-time prerendering. Forcing dynamic here skips that
-// prerender pass entirely (render happens per-request instead), which is
-// what fixes a build failing on "Error occurred prerendering page
-// /_not-found" when the DB isn't reachable from the build environment.
-export const dynamic = 'force-dynamic';
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const products = await getProducts();
+  const products = await getCachedProducts();
 
   return (
     <html

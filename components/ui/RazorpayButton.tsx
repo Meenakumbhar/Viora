@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Order } from '@/types/database';
-import PaymentProviderIcon from '@/components/ui/PaymentProviderIcon';
+import { SITE_URL } from '@/lib/site-url';
 
 interface RazorpayCheckoutResponse {
   razorpay_order_id: string;
@@ -98,6 +98,10 @@ export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps
         order_id: razorpayOrderId,
         name: 'Memories in Prints',
         description: order.service_type,
+        image: `${SITE_URL}/images/logo.png`,
+        // Skips re-typing what we already know from the account — Razorpay
+        // still asks for the card itself, this just saves the contact step.
+        prefill: { name: order.customer_name, email: order.customer_email },
         theme: { color: '#C6A85C' },
 
         handler: async (response: RazorpayCheckoutResponse) => {
@@ -164,10 +168,17 @@ export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps
         type="button"
         onClick={handleClick}
         disabled={!scriptLoaded || status === 'loading'}
-        className="flex items-center gap-2 border border-border px-4 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 bg-accent-gold px-4 py-3 font-mono text-base font-semibold uppercase tracking-widest text-text-heading transition-colors hover:bg-accent-gold-hover disabled:opacity-60"
       >
-        <PaymentProviderIcon provider="razorpay" />
-        {status === 'loading' ? 'Processing…' : `Pay £${order.payment_amount!.toFixed(2)} by card`}
+        {status === 'loading' ? (
+          'Processing…'
+        ) : (
+          <>
+            Pay with
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/payment/razorpay-wordmark.svg" alt="Razorpay" className="h-4 w-auto" />
+          </>
+        )}
       </button>
       {status === 'error' && errorMessage && (
         <p className="mt-2 font-mono text-base text-red-500" role="alert">

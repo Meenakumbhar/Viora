@@ -12,6 +12,10 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+// ISR — without this, once a slug is generated it's cached until the next
+// deploy and won't pick up admin edits (price, description, sizes, etc.).
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   const products = await getProducts();
   return products.map((p) => ({ slug: p.slug }));
