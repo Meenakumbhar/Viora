@@ -74,7 +74,7 @@ export default function OrdersView({ rows }: { rows: AccountRow[] }) {
               key={chip.value}
               type="button"
               onClick={() => setFilter(chip.value)}
-              className={`border px-3 py-1.5 font-mono text-base uppercase tracking-wider transition-colors ${
+              className={`border px-3 py-1.5 font-mono text-sm uppercase tracking-wider transition-colors ${
                 active
                   ? 'border-accent-gold bg-accent-gold text-bg-primary'
                   : 'border-border text-text-muted hover:border-accent-gold hover:text-accent-gold'
@@ -92,13 +92,13 @@ export default function OrdersView({ rows }: { rows: AccountRow[] }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by job number or service…"
-          className="w-full max-w-sm border border-border bg-bg-primary px-3 py-2 font-mono text-base text-text-heading outline-none placeholder:text-text-muted focus:border-accent-gold sm:max-w-xs"
+          className="w-full max-w-sm border border-border bg-bg-primary px-3 py-2 font-mono text-sm text-text-heading outline-none placeholder:text-text-muted focus:border-accent-gold sm:max-w-xs"
         />
       </div>
 
       <div className="mt-6">
         {filtered.length === 0 ? (
-          <p className="border border-dashed border-border px-5 py-8 text-center font-body text-base text-text-muted">
+          <p className="border border-dashed border-border px-5 py-8 text-center font-body text-sm text-text-muted">
             No jobs match this view.
           </p>
         ) : (

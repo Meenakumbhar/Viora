@@ -33,8 +33,8 @@ export default async function AccountQuotePage({ searchParams }: QuotePageProps)
       logoutSlot={<UserLogoutButton />}
     >
       <div className="max-w-2xl">
-        <p className="font-mono text-base uppercase tracking-[0.18em] text-text-heading">New quote</p>
-        <p className="mt-1.5 font-body text-base text-text-muted">
+        <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-heading">New quote</p>
+        <p className="mt-1.5 font-body text-sm text-text-muted">
           Just the details for this order — we already have the rest on file.
         </p>
 

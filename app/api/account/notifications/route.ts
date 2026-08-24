@@ -6,6 +6,7 @@ import type { ApiResponse } from '@/types/database';
 
 interface NotificationsSummary {
   awaitingReviewCount: number;
+  awaitingReview: { id: string; serviceType: string }[];
 }
 
 // GET /api/account/notifications — how many of this customer's orders need
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
   const orders = await getOrdersByEmail(user.email, user.id);
   const revisionMap = await getDesignRevisionsForOrders(orders.map((o) => o.id));
 
-  const awaitingReviewCount = orders.filter((order) => {
+  const awaitingReview = orders.filter((order) => {
     const revisions = revisionMap.get(order.id) ?? [];
     const latest = [...revisions].sort((a, b) => b.version - a.version)[0];
     const stage = deriveDisplayStage({
@@ -40,7 +41,10 @@ export async function GET(request: NextRequest) {
       latestRevisionStatus: latest?.status,
     });
     return stage === 'awaiting_review';
-  }).length;
+  }).map((order) => ({ id: order.id, serviceType: order.service_type }));
 
-  return NextResponse.json<ApiResponse<NotificationsSummary>>({ success: true, data: { awaitingReviewCount } });
+  return NextResponse.json<ApiResponse<NotificationsSummary>>({
+    success: true,
+    data: { awaitingReviewCount: awaitingReview.length, awaitingReview },
+  });
 }

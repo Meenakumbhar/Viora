@@ -15,7 +15,7 @@ export default function JobTicket({ name, memberSince, logoutSlot }: JobTicketPr
     <div className="relative border border-border bg-bg-primary shadow-[0_1px_0_rgba(28,37,48,0.04)]">
       <div className="flex items-start justify-between px-6 py-6 sm:px-8 sm:py-7">
         <div>
-          <p className="font-mono text-base uppercase tracking-[0.18em] text-text-muted">
+          <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-muted">
             Memories in Prints · User Profile
           </p>
           <h1 className="mt-3 font-display text-4xl font-light text-text-heading sm:text-5xl" style={{ letterSpacing: '-0.02em' }}>
@@ -35,7 +35,7 @@ export default function JobTicket({ name, memberSince, logoutSlot }: JobTicketPr
       </div>
 
       <div className="flex items-center justify-between px-6 py-4 sm:px-8">
-        <p className="font-mono text-base uppercase tracking-widest text-text-muted">
+        <p className="font-mono text-sm uppercase tracking-widest text-text-muted">
           Member since <span className="text-text-heading">{memberSince}</span>
         </p>
         {logoutSlot}

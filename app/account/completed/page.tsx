@@ -24,8 +24,8 @@ export default async function CompletedOrdersPage() {
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-base uppercase tracking-[0.18em] text-text-heading">Completed</p>
-          <p className="mt-1.5 font-body text-base text-text-muted">
+          <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-heading">Completed</p>
+          <p className="mt-1.5 font-body text-sm text-text-muted">
             Jobs that have finished production and shipped.
           </p>
         </div>

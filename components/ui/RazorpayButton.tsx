@@ -86,12 +86,15 @@ export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps
         return;
       }
 
-      const { razorpayOrderId, amount, currency } = createJson.data;
+      const { razorpayOrderId } = createJson.data;
 
+      // Deliberately not passing amount/currency here — Razorpay derives
+      // both from order_id itself, and separately supplying them opens the
+      // door to "payment amount is different from your order amount"
+      // whenever the two happen to disagree (a stale order, a duplicate
+      // create-order call, etc.). order_id alone can't disagree with itself.
       const razorpay = new window.Razorpay({
         key: keyId,
-        amount,
-        currency,
         order_id: razorpayOrderId,
         name: 'Memories in Prints',
         description: order.service_type,

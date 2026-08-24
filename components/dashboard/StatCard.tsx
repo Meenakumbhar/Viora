@@ -23,11 +23,11 @@ export default function StatCard({ label, value, sub, theme = 'dark', accent }: 
   const t = THEME[theme];
   return (
     <div className={`border p-6 ${t.card}`}>
-      <p className={`font-mono text-base uppercase tracking-widest ${t.label}`}>{label}</p>
+      <p className={`font-mono text-sm uppercase tracking-widest ${t.label}`}>{label}</p>
       <p className="mt-2 font-display text-5xl font-light" style={{ color: accent ?? '#C6A85C' }}>
         {value}
       </p>
-      {sub && <p className={`mt-1.5 font-mono text-base ${t.sub}`}>{sub}</p>}
+      {sub && <p className={`mt-1.5 font-mono text-sm ${t.sub}`}>{sub}</p>}
     </div>
   );
 }

@@ -24,8 +24,8 @@ function formatDate(value: string | null) {
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <p className="font-mono text-base uppercase tracking-widest text-white/30">{label}</p>
-      <p className="mt-1 font-body text-base text-white/80">{value ?? '—'}</p>
+      <p className="font-mono text-sm uppercase tracking-widest text-white/30">{label}</p>
+      <p className="mt-1 font-body text-sm text-white/80">{value ?? '—'}</p>
     </div>
   );
 }
@@ -33,7 +33,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border border-white/10 bg-white/[0.02] p-5">
-      <h2 className="mb-4 font-mono text-base uppercase tracking-widest text-white/40">{title}</h2>
+      <h2 className="mb-4 font-mono text-sm uppercase tracking-widest text-white/40">{title}</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
     </div>
   );
@@ -42,7 +42,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enquiry; orderForm: OrderForm | null }) {
   if (!orderForm) {
     return (
-      <div className="dash-legacy border border-white/10 bg-white/[0.02] p-10 text-center font-mono text-base text-white/30">
+      <div className="dash-legacy border border-white/10 bg-white/[0.02] p-10 text-center font-mono text-sm text-white/30">
         {enquiry.name} hasn&apos;t filled in an order form yet.
       </div>
     );
@@ -54,7 +54,7 @@ export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enqu
     <div className="dash-legacy space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <span
-          className={`inline-flex items-center border px-2.5 py-1 font-mono text-base uppercase tracking-wider ${
+          className={`inline-flex items-center border px-2.5 py-1 font-mono text-sm uppercase tracking-wider ${
             f.status === 'submitted'
               ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
               : 'border-amber-500/30 bg-amber-500/15 text-amber-400'
@@ -62,7 +62,7 @@ export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enqu
         >
           {f.status === 'submitted' ? 'Submitted' : 'Draft — not yet submitted'}
         </span>
-        <span className="font-mono text-base text-white/30">
+        <span className="font-mono text-sm text-white/30">
           Last updated {formatDate(f.updated_at)}
         </span>
       </div>
@@ -121,7 +121,7 @@ export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enqu
       {f.backpage_information && (
         <Section title="Backpage information">
           <div className="sm:col-span-2 lg:col-span-3">
-            <span className="whitespace-pre-wrap font-body text-base text-white/80">{f.backpage_information}</span>
+            <span className="whitespace-pre-wrap font-body text-sm text-white/80">{f.backpage_information}</span>
           </div>
         </Section>
       )}
@@ -133,12 +133,12 @@ export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enqu
               href={f.attachment_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-base text-[#C6A85C] hover:text-white hover:underline"
+              className="font-mono text-sm text-[#C6A85C] hover:text-white hover:underline"
             >
               {f.attachment_url.split('/').pop()} — view / download →
             </a>
           ) : (
-            <span className="font-mono text-base text-white/30">No file attached.</span>
+            <span className="font-mono text-sm text-white/30">No file attached.</span>
           )}
         </div>
       </Section>
