@@ -168,15 +168,17 @@ export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps
         type="button"
         onClick={handleClick}
         disabled={!scriptLoaded || status === 'loading'}
+        aria-label={status === 'loading' ? 'Processing…' : `Pay £${order.payment_amount!.toFixed(2)} with Razorpay`}
         className="flex w-full items-center justify-center gap-2 bg-accent-gold px-4 py-3 font-mono text-base font-semibold uppercase tracking-widest text-text-heading transition-colors hover:bg-accent-gold-hover disabled:opacity-60"
       >
         {status === 'loading' ? (
           'Processing…'
         ) : (
           <>
-            Pay with
+            {`Pay £${order.payment_amount!.toFixed(2)} with`}
+            {/* Decorative — the button's aria-label already says "Razorpay" */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/payment/razorpay-wordmark.svg" alt="Razorpay" className="h-4 w-auto" />
+            <img src="/images/payment/razorpay-wordmark.svg" alt="" className="h-4 w-auto" />
           </>
         )}
       </button>
