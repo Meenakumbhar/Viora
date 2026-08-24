@@ -49,10 +49,10 @@ export default function ProfileCard({ user: initialUser }: ProfileCardProps) {
   if (editing) {
     return (
       <div className="border border-accent-gold/40 p-6 sm:p-7">
-        <p className="font-mono text-base uppercase tracking-[0.18em] text-text-heading">Editing your details</p>
+        <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-heading">Editing your details</p>
         <div className="mt-5 space-y-4">
           <div>
-            <label htmlFor="profile-name" className="block font-mono text-base uppercase tracking-widest text-text-muted">
+            <label htmlFor="profile-name" className="block font-mono text-sm uppercase tracking-widest text-text-muted">
               Name
             </label>
             <input
@@ -60,11 +60,11 @@ export default function ProfileCard({ user: initialUser }: ProfileCardProps) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1.5 w-full border border-border bg-bg-primary px-3 py-2.5 font-body text-base text-text-heading outline-none transition-colors focus:border-accent-gold"
+              className="mt-1.5 w-full border border-border bg-bg-primary px-3 py-2.5 font-body text-sm text-text-heading outline-none transition-colors focus:border-accent-gold"
             />
           </div>
           <div>
-            <label htmlFor="profile-phone" className="block font-mono text-base uppercase tracking-widest text-text-muted">
+            <label htmlFor="profile-phone" className="block font-mono text-sm uppercase tracking-widest text-text-muted">
               Phone
             </label>
             <input
@@ -72,11 +72,11 @@ export default function ProfileCard({ user: initialUser }: ProfileCardProps) {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="mt-1.5 w-full border border-border bg-bg-primary px-3 py-2.5 font-body text-base text-text-heading outline-none transition-colors focus:border-accent-gold"
+              className="mt-1.5 w-full border border-border bg-bg-primary px-3 py-2.5 font-body text-sm text-text-heading outline-none transition-colors focus:border-accent-gold"
             />
           </div>
           <div>
-            <label htmlFor="profile-country" className="block font-mono text-base uppercase tracking-widest text-text-muted">
+            <label htmlFor="profile-country" className="block font-mono text-sm uppercase tracking-widest text-text-muted">
               Country
             </label>
             <input
@@ -84,11 +84,11 @@ export default function ProfileCard({ user: initialUser }: ProfileCardProps) {
               type="text"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="mt-1.5 w-full border border-border bg-bg-primary px-3 py-2.5 font-body text-base text-text-heading outline-none transition-colors focus:border-accent-gold"
+              className="mt-1.5 w-full border border-border bg-bg-primary px-3 py-2.5 font-body text-sm text-text-heading outline-none transition-colors focus:border-accent-gold"
             />
           </div>
           <div>
-            <label htmlFor="profile-address" className="block font-mono text-base uppercase tracking-widest text-text-muted">
+            <label htmlFor="profile-address" className="block font-mono text-sm uppercase tracking-widest text-text-muted">
               Default delivery address
             </label>
             <textarea
@@ -97,18 +97,18 @@ export default function ProfileCard({ user: initialUser }: ProfileCardProps) {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Used to prefill new quotes — you can still enter a different address per order."
-              className="mt-1.5 w-full resize-none border border-border bg-bg-primary px-3 py-2.5 font-body text-base text-text-heading outline-none transition-colors focus:border-accent-gold"
+              className="mt-1.5 w-full resize-none border border-border bg-bg-primary px-3 py-2.5 font-body text-sm text-text-heading outline-none transition-colors focus:border-accent-gold"
             />
           </div>
 
-          {error && <p className="font-body text-base text-accent-blush" role="alert">{error}</p>}
+          {error && <p className="font-body text-sm text-accent-blush" role="alert">{error}</p>}
 
           <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="bg-accent-gold px-5 py-2.5 font-mono text-base font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="bg-accent-gold px-5 py-2.5 font-mono text-sm font-semibold uppercase tracking-widest text-bg-primary transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -116,7 +116,7 @@ export default function ProfileCard({ user: initialUser }: ProfileCardProps) {
               type="button"
               onClick={() => setEditing(false)}
               disabled={saving}
-              className="font-mono text-base uppercase tracking-widest text-text-muted hover:text-text-heading"
+              className="font-mono text-sm uppercase tracking-widest text-text-muted hover:text-text-heading"
             >
               Cancel
             </button>
@@ -141,11 +141,11 @@ export default function ProfileCard({ user: initialUser }: ProfileCardProps) {
   return (
     <div className="border border-border p-6 sm:p-7">
       <div className="flex items-start justify-between gap-4">
-        <p className="font-mono text-base uppercase tracking-[0.18em] text-text-heading">Account spec</p>
+        <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-heading">Account spec</p>
         <button
           type="button"
           onClick={startEditing}
-          className="font-mono text-base uppercase tracking-widest text-accent-gold link-underline"
+          className="font-mono text-sm uppercase tracking-widest text-accent-gold link-underline"
         >
           Edit
         </button>
@@ -154,8 +154,8 @@ export default function ProfileCard({ user: initialUser }: ProfileCardProps) {
       <dl className="mt-5 divide-y divide-dashed divide-border">
         {fields.map((field) => (
           <div key={field.label} className="grid grid-cols-[8rem_1fr] gap-4 py-2.5 first:pt-0 last:pb-0 sm:grid-cols-[9rem_1fr]">
-            <dt className="font-mono text-base uppercase tracking-widest text-text-muted">{field.label}</dt>
-            <dd className="truncate font-body text-base text-text-heading">{field.value}</dd>
+            <dt className="font-mono text-sm uppercase tracking-widest text-text-muted">{field.label}</dt>
+            <dd className="truncate font-body text-sm text-text-heading">{field.value}</dd>
           </div>
         ))}
       </dl>

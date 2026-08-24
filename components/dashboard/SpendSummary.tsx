@@ -65,25 +65,25 @@ export default function SpendSummary({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="font-mono text-base uppercase tracking-[0.18em] text-text-heading">Spend sheet</p>
+        <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-heading">Spend sheet</p>
         <RegistrationBar />
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-6 border-y border-dashed border-border py-6 sm:grid-cols-3">
         <div>
-          <p className="font-mono text-base uppercase tracking-widest text-text-muted">Total spent</p>
+          <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Total spent</p>
           <p className="mt-1 font-display text-4xl font-light text-accent-gold" style={{ fontVariantNumeric: 'lining-nums' }}>
             {formatGBP(totalSpent)}
           </p>
         </div>
         <div>
-          <p className="font-mono text-base uppercase tracking-widest text-text-muted">Payment due</p>
+          <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Payment due</p>
           <p className="mt-1 font-display text-4xl font-light text-text-heading" style={{ fontVariantNumeric: 'lining-nums' }}>
             {formatGBP(totalPending)}
           </p>
         </div>
         <div>
-          <p className="font-mono text-base uppercase tracking-widest text-text-muted">Average job</p>
+          <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Average job</p>
           <p className="mt-1 font-display text-4xl font-light text-text-heading" style={{ fontVariantNumeric: 'lining-nums' }}>
             {formatGBP(avgOrderValue)}
           </p>
@@ -94,11 +94,11 @@ export default function SpendSummary({
         {hasAnySpend && (
           <div>
             <div className="flex items-center justify-between">
-              <p className="font-mono text-base uppercase tracking-widest text-text-muted">Spend by month</p>
+              <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Spend by month</p>
               <button
                 type="button"
                 onClick={() => setTableView((v) => !v)}
-                className="font-mono text-base uppercase tracking-widest text-text-muted underline hover:text-accent-gold"
+                className="font-mono text-sm uppercase tracking-widest text-text-muted underline hover:text-accent-gold"
               >
                 {tableView ? 'Chart' : 'Table'}
               </button>
@@ -110,10 +110,10 @@ export default function SpendSummary({
                 <tbody>
                   {byMonth.map((m) => (
                     <tr key={m.fullLabel} className="border-b border-border last:border-0">
-                      <th scope="row" className="py-1.5 text-left font-mono text-base font-normal uppercase tracking-wider text-text-muted">
+                      <th scope="row" className="py-1.5 text-left font-mono text-sm font-normal uppercase tracking-wider text-text-muted">
                         {m.fullLabel}
                       </th>
-                      <td className="py-1.5 text-right font-mono text-base text-text-heading">{formatGBP(m.amount)}</td>
+                      <td className="py-1.5 text-right font-mono text-sm text-text-heading">{formatGBP(m.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -169,7 +169,7 @@ export default function SpendSummary({
                   })}
                 </svg>
                 {hovered !== null && (
-                  <p className="mt-2 font-mono text-base text-text-heading">
+                  <p className="mt-2 font-mono text-sm text-text-heading">
                     {byMonth[hovered].fullLabel}: {formatGBP(byMonth[hovered].amount)}
                   </p>
                 )}
@@ -180,7 +180,7 @@ export default function SpendSummary({
 
         {totalJobs > 0 && (
           <div>
-            <p className="font-mono text-base uppercase tracking-widest text-text-muted">Jobs by stage</p>
+            <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Jobs by stage</p>
             <div className="mt-4 flex h-2.5 w-full overflow-hidden">
               {STATUS_ORDER.filter((s) => (statusCounts[s] ?? 0) > 0).map((s) => (
                 <div
@@ -192,7 +192,7 @@ export default function SpendSummary({
             </div>
             <ul className="mt-3 space-y-1.5">
               {STATUS_ORDER.filter((s) => (statusCounts[s] ?? 0) > 0).map((s) => (
-                <li key={s} className="flex items-center gap-2 font-mono text-base uppercase tracking-wider text-text-muted">
+                <li key={s} className="flex items-center gap-2 font-mono text-sm uppercase tracking-wider text-text-muted">
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: RAW_STATUS_COLORS[s] }} />
                   {RAW_STATUS_LABELS[s]}
                   <span className="ml-auto text-text-heading">{statusCounts[s]}</span>
@@ -204,11 +204,11 @@ export default function SpendSummary({
 
         {byCategory.length > 0 && (
           <div>
-            <p className="font-mono text-base uppercase tracking-widest text-text-muted">Spend by category</p>
+            <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Spend by category</p>
             <ul className="mt-4 space-y-3">
               {byCategory.map((c) => (
                 <li key={c.label}>
-                  <div className="flex items-center justify-between font-mono text-base uppercase tracking-wider">
+                  <div className="flex items-center justify-between font-mono text-sm uppercase tracking-wider">
                     <span className="text-text-heading">{c.label}</span>
                     <span className="text-text-muted">{formatGBP(c.amount)}</span>
                   </div>
@@ -223,15 +223,15 @@ export default function SpendSummary({
 
         {byProvider.length > 0 && (
           <div>
-            <p className="font-mono text-base uppercase tracking-widest text-text-muted">Payment method</p>
+            <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Payment method</p>
             <ul className="mt-4 divide-y divide-dashed divide-border">
               {byProvider.map((p) => (
                 <li key={p.label} className="flex items-center justify-between py-2 first:pt-0">
-                  <span className="flex items-center gap-2 font-mono text-base uppercase tracking-wider text-text-heading">
+                  <span className="flex items-center gap-2 font-mono text-sm uppercase tracking-wider text-text-heading">
                     {p.provider && <PaymentProviderIcon provider={p.provider} />}
                     {p.label}
                   </span>
-                  <span className="font-mono text-base text-text-muted">
+                  <span className="font-mono text-sm text-text-muted">
                     {p.count} job{p.count === 1 ? '' : 's'} · {formatGBP(p.amount)}
                   </span>
                 </li>
