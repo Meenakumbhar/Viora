@@ -15,8 +15,8 @@ export default function AboutPage() {
       {/* Hero Section */}
       <HeroVideo poster="/images/About_us_banner.jpg">
         <span
-          className="block font-mono text-label uppercase tracking-wider text-text-heading"
-          style={{ textShadow: '0 1px 8px rgba(255,255,255,0.5)' }}
+          className="block font-mono text-label uppercase tracking-wider text-white"
+          style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}
         >
           Our Story
         </span>
@@ -26,7 +26,7 @@ export default function AboutPage() {
         >
           Designed with
           <br />
-          <em className="not-italic font-semibold">Intention</em>
+          <em className="not-italic font-semibold text-white">Intention</em>
         </h1>
         <p
           className="mt-6 font-body text-body-lg text-white max-w-2xl leading-relaxed"
@@ -46,7 +46,7 @@ export default function AboutPage() {
                   Philosophy
                 </span>
                 <h2 className="mt-4 font-display text-display-lg text-text-primary">
-                  Where craft meets <em className="not-italic font-semibold text-accent-gold">care</em>
+                  Where Craft Meets <em className="not-italic font-semibold text-accent-gold">Care</em>
                 </h2>
                 <div className="mt-6 space-y-6 font-body text-body-lg text-text-muted leading-relaxed">
                   <p>
@@ -80,7 +80,7 @@ export default function AboutPage() {
                 The Founder
               </span>
               <h2 className="mt-4 text-center font-display text-display-lg text-text-primary">
-                A note from the <em className="not-italic font-semibold text-accent-gold">founder</em>
+                A Note from the <em className="not-italic font-semibold text-accent-gold">Founder</em>
               </h2>
 
               <div className="relative mt-8 aspect-[5463/3875] border border-border overflow-hidden">
@@ -116,7 +116,7 @@ export default function AboutPage() {
                 Principles
               </span>
               <h2 className="mt-4 font-display text-display-lg text-text-primary">
-                What we stand <em className="not-italic font-semibold text-accent-gold">for</em>
+                What We Stand <em className="not-italic font-semibold text-accent-gold">For</em>
               </h2>
             </div>
 
@@ -144,7 +144,7 @@ export default function AboutPage() {
                   Global Perspective
                 </h3>
                 <p className="mt-4 font-body text-body-base text-text-muted leading-relaxed">
-                  We serve families, clubs, and brands in over 30 countries. Our logistics are designed to handle express custom print packages worldwide.
+                  We serve families and brands worldwide. Our logistics are designed to handle express custom print packages, wherever you are.
                 </p>
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function AboutPage() {
                 History
               </span>
               <h2 className="mt-4 font-display text-display-lg text-text-primary">
-                Our <em className="not-italic font-semibold text-accent-gold">journey</em>
+                Our <em className="not-italic font-semibold text-accent-gold">Journey</em>
               </h2>
             </div>
 
@@ -240,7 +240,7 @@ export default function AboutPage() {
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">
-              Work with <em className="not-italic font-semibold text-accent-gold">us</em>
+              Work with <em className="not-italic font-semibold text-accent-gold">Us</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-text-muted leading-relaxed">
               Have an upcoming event or branding requirement? Our designers are ready to help shape your print project.

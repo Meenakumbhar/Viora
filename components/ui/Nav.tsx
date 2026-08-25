@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { isCategoryActive } from '@/lib/active-services';
 import { groupProductsByType } from '@/lib/product-types';
 import type { Product, PublicUser } from '@/types/database';
@@ -115,8 +115,23 @@ function getHoverColorClass(href: string): string {
   return 'hover:text-accent-gold';
 }
 
+// Same per-category colour as getHoverColorClass, but as a persistent
+// text + left-border + tinted-background block for whichever dropdown item
+// matches where the visitor currently is — so the nav shows which service
+// they're looking at, not just what they're hovering.
+function getActiveColorClasses(href: string): string {
+  const path = href.toLowerCase();
+  if (path.includes('wedding') || path.includes('category=wedding')) return 'text-[#C4958F] border-[#C4958F] bg-[#C4958F]/10';
+  if (path.includes('funeral') || path.includes('category=funeral')) return 'text-[#8A6F35] border-[#8A6F35] bg-[#8A6F35]/10';
+  if (path.includes('sports') || path.includes('category=sports')) return 'text-[#3D7A3A] border-[#3D7A3A] bg-[#3D7A3A]/10';
+  if (path.includes('branding') || path.includes('category=branding') || path.includes('design')) return 'text-[#2D5FA8] border-[#2D5FA8] bg-[#2D5FA8]/10';
+  if (path.includes('events') || path.includes('category=events') || path.includes('production')) return 'text-[#D4883A] border-[#D4883A] bg-[#D4883A]/10';
+  return 'text-accent-gold border-accent-gold bg-accent-gold/10';
+}
+
 export default function Nav({ products }: { products: Product[] }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const NAV_LINKS = getNavLinks(products);
   const MOBILE_NAV = getMobileNav(products);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -294,6 +309,20 @@ export default function Nav({ products }: { products: Product[] }) {
     return pathname.startsWith(href);
   };
 
+  // Dropdown items differentiate by query string (e.g. every portfolio
+  // category shares the /portfolio pathname), so this checks the path AND
+  // every query param the item's href carries — not just pathname.startsWith.
+  const isDropdownItemActive = (href: string): boolean => {
+    const [itemPath, itemQuery] = href.split('?');
+    if (pathname !== itemPath) return false;
+    if (!itemQuery) return true;
+    const itemParams = new URLSearchParams(itemQuery);
+    for (const [key, value] of itemParams) {
+      if (searchParams.get(key) !== value) return false;
+    }
+    return true;
+  };
+
   return (
     <>
       {/* Skip to main content */}
@@ -361,13 +390,17 @@ export default function Nav({ products }: { products: Product[] }) {
                       role="menu"
                     >
                       {link.dropdown.filter((item) => isNavHrefActive(item.href)).map((item) => {
-                        const hoverColor = getHoverColorClass(item.href);
+                        const active = isDropdownItemActive(item.href);
                         return (
                           <Link
                             key={item.href}
                             href={item.href}
                             role="menuitem"
-                            className={`block px-5 py-3 text-body-base font-body text-text-heading hover:bg-bg-secondary border-l-2 border-transparent hover:border-current transition-all ${hoverColor}`}
+                            aria-current={active ? 'page' : undefined}
+                            className={`block px-5 py-3 text-body-base font-body border-l-2 transition-all ${active
+                              ? `font-semibold ${getActiveColorClasses(item.href)}`
+                              : `text-text-heading border-transparent hover:bg-bg-secondary hover:border-current ${getHoverColorClass(item.href)}`
+                              }`}
                           >
                             {item.label}
                           </Link>
@@ -515,16 +548,23 @@ export default function Nav({ products }: { products: Product[] }) {
 
               {section.children && (
                 <div className="mt-2 flex flex-col items-center gap-1">
-                  {section.children.filter((child) => isNavHrefActive(child.href)).map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`font-body text-body-base text-text-muted transition-colors ${getHoverColorClass(child.href)}`}
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
+                  {section.children.filter((child) => isNavHrefActive(child.href)).map((child) => {
+                    const active = isDropdownItemActive(child.href);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        onClick={() => setMobileOpen(false)}
+                        aria-current={active ? 'page' : undefined}
+                        className={`font-body text-body-base transition-colors ${active
+                          ? `rounded-full px-3 py-1 font-semibold ${getActiveColorClasses(child.href)}`
+                          : `text-text-muted ${getHoverColorClass(child.href)}`
+                          }`}
+                      >
+                        {child.label}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>

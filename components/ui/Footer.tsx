@@ -193,7 +193,7 @@ export default function Footer() {
         {/* ── Bottom Bar ─────────────────────────────────────────────── */}
         <div className="border-t border-dark-border mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="font-body text-base text-dark-text-muted">
-            &copy; 2026 Memories in Prints &middot; Worldwide design &amp; print
+            &copy; 2025 Memories in Prints &middot; Worldwide design &amp; print
           </p>
           <p className="font-mono text-label text-dark-text-muted">
             memoriesinprints.com

@@ -13,6 +13,10 @@ const sections: LegalSection[] = [
     paragraphs: [
       'Welcome to Memories in Prints. By accessing or using our services, you agree to comply with these Terms & Conditions. Please read them carefully before placing an order.',
     ],
+    list: [
+      'Registered company name: Viora Memories in Prints.',
+      'Trading/brand name: Memories in Prints.',
+    ],
   },
   {
     heading: 'Services Provided',

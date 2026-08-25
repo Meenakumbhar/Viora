@@ -12,7 +12,10 @@ interface JobTicketProps {
 // who it's issued to, and a tear-off stub with the housekeeping details.
 export default function JobTicket({ name, memberSince, logoutSlot }: JobTicketProps) {
   return (
-    <div className="relative border border-border bg-bg-primary shadow-[0_1px_0_rgba(28,37,48,0.04)]">
+    <div
+      className="relative border border-border shadow-[0_1px_0_rgba(28,37,48,0.04)]"
+      style={{ background: 'linear-gradient(to right, #FDFCFA 0%, #E5D3AE 100%)' }}
+    >
       <div className="flex items-start justify-between px-6 py-6 sm:px-8 sm:py-7">
         <div>
           <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-muted">
@@ -30,8 +33,8 @@ export default function JobTicket({ name, memberSince, logoutSlot }: JobTicketPr
 
       {/* Perforation — a dashed tear line with notches cut into each edge */}
       <div className="relative border-t border-dashed border-border">
-        <span className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-bg-primary" aria-hidden="true" />
-        <span className="absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full bg-bg-primary" aria-hidden="true" />
+        <span className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full" style={{ background: '#FDFCFA' }} aria-hidden="true" />
+        <span className="absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full" style={{ background: '#E5D3AE' }} aria-hidden="true" />
       </div>
 
       <div className="flex items-center justify-between px-6 py-4 sm:px-8">

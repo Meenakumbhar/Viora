@@ -33,14 +33,20 @@ export default function ProcessPage() {
   return (
     <div>
       {/* Hero Section */}
-      <HeroVideo poster="/images/Process_banner.jpg">
+      <HeroVideo
+        image="/images/Process-Banner.jpg"
+        imagePosition="60% 45%"
+        overlayGradient="linear-gradient(to bottom, transparent 0%, transparent 88%, rgba(253,252,250,0.2) 96%, #FDFCFA 100%)"
+        minHeightClassName="min-h-[620px] md:min-h-[680px] lg:min-h-[760px]"
+        contentPaddingClassName="px-6 pt-24 pb-44 md:px-12 md:pt-28 md:pb-56 lg:px-20 lg:pt-32 lg:pb-64"
+      >
         <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
           Studio Workflow
         </span>
-        <h1 className="mt-4 font-display text-display-xl text-text-primary max-w-4xl">
-          Simple from start to <em className="not-italic font-semibold text-accent-gold">delivery</em>
+        <h1 className="mt-4 font-display text-display-lg text-white max-w-4xl">
+          Simple from Start to <br /><em className="not-italic font-normal text-white">Delivery</em>
         </h1>
-        <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
+        <p className="mt-6 font-body text-body-lg text-white/90 max-w-2xl leading-relaxed">
           We manage the design, coordination, and print details so you can focus on the event itself. Here is how we bring your project to life.
         </p>
       </HeroVideo>
@@ -99,7 +105,7 @@ export default function ProcessPage() {
                 Support
               </span>
               <h2 className="mt-4 font-display text-display-lg text-text-primary">
-                Process & production <em className="not-italic font-semibold text-accent-gold">FAQs</em>
+                Process & Production <em className="not-italic font-semibold text-accent-gold">FAQs</em>
               </h2>
             </div>
 
@@ -113,7 +119,7 @@ export default function ProcessPage() {
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">
-              Ready to <em className="not-italic font-semibold text-accent-gold">start?</em>
+              Ready to <em className="not-italic font-semibold text-accent-gold">Start?</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-text-muted leading-relaxed">
               Fill in our brief form and we will review your requirements and respond with a detailed quote within 24 hours.

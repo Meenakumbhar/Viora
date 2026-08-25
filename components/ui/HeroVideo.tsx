@@ -5,20 +5,49 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 interface HeroVideoProps {
   src?: string;
   poster?: string;
+  /** Static background photo shown whenever no video is playing — a richer
+   *  alternative to `poster` with its own position/overlay/sizing controls.
+   *  Falls back to `poster` when omitted, so pages that only need a plain
+   *  static image can keep using that simpler prop. */
+  image?: string;
+  /** CSS object-position for the static image. Defaults to centered. */
+  imagePosition?: string;
+  /** CSS background for the fade overlay sat on top of the image/video.
+   *  Omit for no overlay at all — the image shows crisp, edge-to-edge. */
+  overlayGradient?: string;
+  /** Tailwind min-height class for the section. Defaults to `min-h-[440px]`. */
+  minHeightClassName?: string;
+  /** Tailwind padding classes for the content wrapper. */
+  contentPaddingClassName?: string;
   children: ReactNode;
 }
 
-export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
+const DEFAULT_CONTENT_PADDING = 'px-6 pt-24 pb-16 md:px-12 md:pt-28 md:pb-24 lg:px-20 lg:pt-32 lg:pb-32';
+
+export default function HeroVideo({
+  src,
+  poster,
+  image,
+  imagePosition = 'center',
+  overlayGradient,
+  minHeightClassName = 'min-h-[440px]',
+  contentPaddingClassName = DEFAULT_CONTENT_PADDING,
+  children,
+}: HeroVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
-  const [posterFailed, setPosterFailed] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+
+  // `image` is the richer prop; `poster` doubles as the plain fallback when
+  // a page only needs a static photo with no position/overlay tuning.
+  const staticImage = image ?? poster;
 
   // A placeholder filename that hasn't been replaced with a real file yet
   // (404) falls back to the gradient rather than showing a broken-image icon.
   useEffect(() => {
-    setPosterFailed(false);
-  }, [poster]);
+    setImageFailed(false);
+  }, [staticImage]);
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -45,17 +74,16 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
     return () => el.removeEventListener('error', handleNativeError);
   }, [src]);
 
-  // Someone who's asked their OS not to autoplay motion gets the poster (if
-  // any) instead — same visual moment, no movement. A video that fails to
+  // Someone who's asked their OS not to autoplay motion gets the static
+  // image instead — same visual moment, no movement. A video that fails to
   // load (wrong path, file not added yet) falls back to the gradient rather
-  // than showing a broken/black rectangle. `poster` alone (no `src`) is also
-  // valid — a plain static-image hero, no video involved at all.
+  // than showing a broken/black rectangle.
   const showVideo = Boolean(src) && !videoFailed && !reducedMotion;
-  const showPosterOnly = Boolean(poster) && !posterFailed && !showVideo;
+  const showImage = Boolean(staticImage) && !imageFailed && !showVideo;
 
   return (
-    <section className="relative flex min-h-[440px] flex-col justify-end overflow-hidden">
-      {/* Background — video, poster (reduced motion), or animated warm light gradient */}
+    <section className={`relative flex ${minHeightClassName} flex-col justify-end overflow-hidden`}>
+      {/* Background — video, static image, or animated warm light gradient */}
       {showVideo ? (
         <video
           ref={videoRef}
@@ -68,13 +96,14 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
           playsInline
           onError={() => setVideoFailed(true)}
         />
-      ) : showPosterOnly ? (
+      ) : showImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={poster}
+          src={staticImage}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
-          onError={() => setPosterFailed(true)}
+          style={{ objectPosition: imagePosition }}
+          onError={() => setImageFailed(true)}
         />
       ) : (
         <div className="absolute inset-0 h-full w-full overflow-hidden">
@@ -91,11 +120,16 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
         </div>
       )}
 
+      {/* Optional fade overlay — omitted entirely by default so the image
+          shows crisp; pass overlayGradient for pages that need one. */}
+      {overlayGradient && overlayGradient !== 'none' && (
+        <div className="absolute inset-0" style={{ background: overlayGradient }} />
+      )}
 
       {/* Content — bottom-aligned via the section's own flex layout, so it
           grows the section instead of clipping when a heading wraps to two
           lines (a fixed/capped height would push it up under the fixed nav). */}
-      <div className="relative z-10 px-6 pt-24 pb-16 md:px-12 md:pt-28 md:pb-24 lg:px-20 lg:pt-32 lg:pb-32">
+      <div className={`relative z-10 ${contentPaddingClassName}`}>
         {children}
       </div>
 

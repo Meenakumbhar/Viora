@@ -222,11 +222,7 @@ const PortfolioCard = memo(function PortfolioCard({
           </p>
         )}
 
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
-          <span className="font-mono text-base text-cat-muted uppercase tracking-wider">
-            {item.location || 'Worldwide'}
-          </span>
-
+        <div className="mt-3 flex items-center justify-end gap-3 border-t border-border/50 pt-3">
           <button
             type="button"
             onClick={() => onBuy(item)}
@@ -341,15 +337,28 @@ export default function PortfolioGrid({
   }, [categoryItems]);
 
   const filtered = useMemo(() => {
-    return categoryItems.filter((item) => {
-      const matchesFilters = (Object.keys(activeFilters) as (keyof PortfolioFilters)[]).every((group) => {
-        const selected = activeFilters[group] ?? [];
-        return selected.length === 0 || selected.some((value) => (item.filters?.[group] ?? []).includes(value));
+    return categoryItems
+      .filter((item) => {
+        const matchesFilters = (Object.keys(activeFilters) as (keyof PortfolioFilters)[]).every((group) => {
+          const selected = activeFilters[group] ?? [];
+          return selected.length === 0 || selected.some((value) => (item.filters?.[group] ?? []).includes(value));
+        });
+        const matchesTemplate =
+          selectedTemplates.length === 0 || (item.template_number != null && selectedTemplates.includes(item.template_number));
+        return matchesFilters && matchesTemplate;
+      })
+      // Highest template number first, for every category. Parsed from the
+      // title's own leading number ("011 - Rolling Hills...") rather than
+      // the template_number column — that column is reliably populated for
+      // some categories (funeral) but not others (wedding), while every
+      // title consistently carries the number regardless.
+      .sort((a, b) => {
+        const parseLeadingNumber = (title: string) => {
+          const match = title.match(/^\s*(\d+)/);
+          return match ? Number(match[1]) : -Infinity;
+        };
+        return parseLeadingNumber(b.title) - parseLeadingNumber(a.title);
       });
-      const matchesTemplate =
-        selectedTemplates.length === 0 || (item.template_number != null && selectedTemplates.includes(item.template_number));
-      return matchesFilters && matchesTemplate;
-    });
   }, [categoryItems, activeFilters, selectedTemplates]);
 
   const visible = filtered.slice(0, visibleCount);
@@ -472,6 +481,14 @@ export default function PortfolioGrid({
       if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
       return a.localeCompare(b);
     });
+  }
+
+  // Template No. dropdown specifically lists highest-first, matching the
+  // grid's own order — unlike the other filter groups (style/religion/etc,
+  // which stay alphabetical via sortFilterValues above), these are always
+  // numeric so a plain descending compare is enough.
+  function sortTemplateNumbersDescending(values: string[]): string[] {
+    return [...values].sort((a, b) => Number(b) - Number(a));
   }
 
   // Long lists (template numbers especially can run to 100+) are easier to
@@ -617,7 +634,7 @@ export default function PortfolioGrid({
                     )}
                     <div className="max-h-80 overflow-y-auto p-2">
                       {(() => {
-                        const values = searchFilterValues(sortFilterValues([...templateOptions.keys()]), filterSearch);
+                        const values = searchFilterValues(sortTemplateNumbersDescending([...templateOptions.keys()]), filterSearch);
                         if (values.length === 0) {
                           return <p className="px-3 py-4 font-mono text-base text-cat-muted">No matches.</p>;
                         }

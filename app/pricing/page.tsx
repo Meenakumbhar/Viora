@@ -114,22 +114,25 @@ export default function PricingPage() {
 
   return (
     <div>
-      <HeroVideo poster="/images/Pricing_banner.jpg">
-        <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
-          Quote cart
+      <HeroVideo
+        image="/images/Cart-Banner.jpg"
+        overlayGradient="linear-gradient(to bottom, transparent 0%, transparent 75%, rgba(253,252,250,0.06) 84%, rgba(253,252,250,0.16) 91%, rgba(253,252,250,0.35) 96%, rgba(253,252,250,0.65) 98.5%, #FDFCFA 100%)"
+      >
+        <span className="block font-mono text-label uppercase tracking-wider text-[#6B5726]">
+          Quote Cart
         </span>
-        <h1 className="mt-4 font-display text-display-xl text-text-primary max-w-4xl">
-          Review your <em className="not-italic font-semibold text-accent-gold">ordered items</em>
+        <h1 className="mt-4 font-display text-display-lg text-text-primary max-w-4xl">
+          Review Your <em className="not-italic font-semibold text-accent-gold">Ordered Items</em>
         </h1>
-        <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
+        <p className="mt-6 font-body text-body-lg text-text-heading max-w-2xl leading-relaxed">
           This lightweight cart keeps your chosen pieces together so you can review them before requesting a final quote.
         </p>
       </HeroVideo>
 
-      {/* Top padding trimmed from the bottom's: HeroVideo above already ends
-          in its own pb-16/24/32 + gradient fade, so a full py-16/24/28 here
-          on top of that read as a dead gap before the cart card. */}
-      <section className="border-t border-border bg-cat-bg pt-10 pb-16 md:pt-14 md:pb-24 lg:pt-20 lg:pb-28 transition-colors duration-500">
+      {/* No border here: HeroVideo's own gradient fades to the exact same
+          cream (#FDFCFA) this section's bg-cat-bg resolves to by default, so
+          a hard rule would just read as a seam. */}
+      <section className="bg-cat-bg pt-14 pb-16 md:pt-20 md:pb-24 lg:pt-24 lg:pb-28 transition-colors duration-500">
         <div className="container-wide">
           <SectionReveal>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.5fr_0.8fr]">
@@ -140,7 +143,7 @@ export default function PricingPage() {
                       Selected items
                     </p>
                     <h2 className="mt-2 font-display text-3xl text-cat-heading">
-                      Your quote request
+                      Your Quote Request
                     </h2>
                   </div>
                   <span className="rounded-full border border-border px-3 py-1 font-mono text-label uppercase tracking-wider text-text-muted">

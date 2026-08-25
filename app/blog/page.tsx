@@ -33,8 +33,8 @@ export default async function BlogPage() {
         <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
           Studio Journal
         </span>
-        <h1 className="mt-4 font-display text-display-xl text-text-primary max-w-4xl">
-          Stories & print <em className="not-italic font-semibold text-accent-gold">guides</em>
+        <h1 className="mt-4 font-display text-display-lg text-text-primary max-w-4xl">
+          Stories & Print <em className="not-italic font-semibold text-accent-gold">Guides</em>
         </h1>
         <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
           Technical advice on preparing artwork, guides on choosing paper stocks, and stories behind our custom print designs.
@@ -103,7 +103,7 @@ export default async function BlogPage() {
                 Latest Publications
               </span>
               <h2 className="mt-4 font-display text-display-lg text-text-primary">
-                Latest <em className="not-italic font-semibold text-accent-gold">articles</em>
+                Latest <em className="not-italic font-semibold text-accent-gold">Articles</em>
               </h2>
             </div>
 
@@ -163,7 +163,7 @@ export default async function BlogPage() {
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-text-primary">
-              Stay in the <em className="not-italic font-semibold text-accent-gold">loop</em>
+              Stay in the <em className="not-italic font-semibold text-accent-gold">Loop</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-text-muted leading-relaxed">
               We send updates from our studio including print tutorials, project showcases, and paper announcements once a month.
