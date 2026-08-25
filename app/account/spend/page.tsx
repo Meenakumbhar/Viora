@@ -12,7 +12,7 @@ import type { RawOrderDisplayStatus } from '@/lib/order-status';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Spend sheet',
+  title: 'Payment analysis',
   robots: { index: false, follow: false },
 };
 
@@ -101,11 +101,10 @@ export default async function SpendPage() {
     >
       {orders.length === 0 ? (
         <p className="border border-dashed border-border px-5 py-8 text-center font-body text-body-base text-text-muted">
-          Nothing to show yet — your spend sheet fills in once you place an order.
+          Nothing to show yet — your payment analysis fills in once you place an order.
         </p>
       ) : (
         <SpendSummary
-          totalSpent={totalSpent}
           totalPending={totalPending}
           avgOrderValue={avgOrderValue}
           byMonth={byMonth}

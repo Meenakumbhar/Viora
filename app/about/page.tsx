@@ -13,14 +13,25 @@ export default function AboutPage() {
   return (
     <div>
       {/* Hero Section */}
-      <HeroVideo>
-        <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
+      <HeroVideo poster="/images/About_us_banner.jpg">
+        <span
+          className="block font-mono text-label uppercase tracking-wider text-white"
+          style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}
+        >
           Our Story
         </span>
-        <h1 className="mt-4 font-display text-display-lg text-text-primary max-w-4xl">
-          Designed with <br /> <em className="not-italic font-semibold text-accent-gold">Intention</em>
+        <h1
+          className="mt-4 font-display text-display-lg text-white max-w-4xl"
+          style={{ textShadow: '0 1px 10px rgba(0,0,0,0.55)' }}
+        >
+          Designed with
+          <br />
+          <em className="not-italic font-semibold text-white">Intention</em>
         </h1>
-        <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
+        <p
+          className="mt-6 font-body text-body-lg text-white max-w-2xl leading-relaxed"
+          style={{ textShadow: '0 1px 10px rgba(0,0,0,0.55)' }}
+        >
           We produce design and print that honours life&apos;s most meaningful occasions — and the organisations that shape communities.
         </p>
       </HeroVideo>
@@ -133,7 +144,7 @@ export default function AboutPage() {
                   Global Perspective
                 </h3>
                 <p className="mt-4 font-body text-body-base text-text-muted leading-relaxed">
-                  We serve families, clubs, and brands in over 30 countries. Our logistics are designed to handle express custom print packages worldwide.
+                  We serve families and brands worldwide. Our logistics are designed to handle express custom print packages, wherever you are.
                 </p>
               </div>
             </div>

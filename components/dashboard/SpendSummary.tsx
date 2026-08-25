@@ -28,7 +28,6 @@ export interface ProviderSpend {
 }
 
 interface SpendSummaryProps {
-  totalSpent: number;
   totalPending: number;
   avgOrderValue: number;
   byMonth: MonthlySpend[];
@@ -46,7 +45,6 @@ function formatGBP(amount: number): string {
 }
 
 export default function SpendSummary({
-  totalSpent,
   totalPending,
   avgOrderValue,
   byMonth,
@@ -65,17 +63,11 @@ export default function SpendSummary({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-heading">Spend sheet</p>
+        <p className="font-mono text-sm uppercase tracking-[0.18em] text-text-heading">Payment analysis</p>
         <RegistrationBar />
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-6 border-y border-dashed border-border py-6 sm:grid-cols-3">
-        <div>
-          <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Total spent</p>
-          <p className="mt-1 font-display text-4xl font-light text-accent-gold" style={{ fontVariantNumeric: 'lining-nums' }}>
-            {formatGBP(totalSpent)}
-          </p>
-        </div>
+      <div className="mt-6 grid grid-cols-2 gap-6 border-y border-dashed border-border py-6">
         <div>
           <p className="font-mono text-sm uppercase tracking-widest text-text-muted">Payment due</p>
           <p className="mt-1 font-display text-4xl font-light text-text-heading" style={{ fontVariantNumeric: 'lining-nums' }}>

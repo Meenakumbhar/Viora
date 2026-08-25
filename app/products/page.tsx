@@ -23,7 +23,7 @@ export default async function ProductsPage() {
 
   return (
     <div data-category="funeral">
-      <HeroVideo>
+      <HeroVideo poster="/images/Products_banner.jpg">
         <span className="block font-mono text-label uppercase tracking-wider text-cat-muted">
           What We Offer
         </span>
@@ -91,17 +91,17 @@ export default async function ProductsPage() {
         </div>
       </section>
 
-      <section className="bg-cat-surface border-t border-border py-16 md:py-20 text-center">
+      <section className="bg-cat-accent border-t border-border py-16 md:py-20 text-center">
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-cat-heading">
-              Don&apos;t See What You&apos;re <em className="not-italic font-semibold text-accent-gold">Looking For?</em>
+              Don&apos;t See What You&apos;re <em className="not-italic font-semibold text-white">Looking For?</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-cat-body leading-relaxed">
               We create bespoke memorial stationery too — share your ideas and we&apos;ll bring them to life.
             </p>
             <div className="mt-10">
-              <Button variant="primary" size="lg" href="/contact">
+              <Button variant="primary" size="lg" href="/contact" className="!bg-cat-surface !text-cat-heading hover:!bg-cat-surface/80">
                 Request a Quote
               </Button>
             </div>

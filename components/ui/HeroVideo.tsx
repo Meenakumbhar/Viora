@@ -5,34 +5,22 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 interface HeroVideoProps {
   src?: string;
   poster?: string;
-  /** Static background photo shown whenever no video is playing (i.e. on
-   *  pages with no `src` at all) — an alternative to the animated gradient,
-   *  not tied to the video/reduced-motion fallback the way `poster` is. */
+  /** Static background photo shown whenever no video is playing — a richer
+   *  alternative to `poster` with its own position/overlay/sizing controls.
+   *  Falls back to `poster` when omitted, so pages that only need a plain
+   *  static image can keep using that simpler prop. */
   image?: string;
-  /** CSS object-position for `image`, tuned per-photo so the subject stays
-   *  framed correctly once the container crops it. Defaults to a right-of-
-   *  center bias, which suits a photo with its subject on the right. */
+  /** CSS object-position for the static image. Defaults to centered. */
   imagePosition?: string;
-  /** CSS background for the fade overlay sat on top of `image`. Defaults to
-   *  a light feather that keeps a bright photo crisp. A photo with dark
-   *  content behind the copy (e.g. soil, shadow) needs a stronger wash so
-   *  the text stays legible — pass a heavier gradient in that case. */
+  /** CSS background for the fade overlay sat on top of the image/video.
+   *  Omit for no overlay at all — the image shows crisp, edge-to-edge. */
   overlayGradient?: string;
-  /** Tailwind min-height class for the section. Defaults to `min-h-[440px]`.
-   *  A taller value gives a background photo more room before the bottom
-   *  feather kicks in, so the fade stays a tight band at the very bottom
-   *  edge instead of eating a large share of a short section. */
+  /** Tailwind min-height class for the section. Defaults to `min-h-[440px]`. */
   minHeightClassName?: string;
-  /** Tailwind padding classes for the content wrapper. Defaults to the
-   *  standard px/pt/pb scale. Pass a larger pb-* to lift the text further
-   *  off the bottom edge — useful when the photo has detail down there
-   *  (e.g. soil, a busy foreground) the text would otherwise sit on top of. */
+  /** Tailwind padding classes for the content wrapper. */
   contentPaddingClassName?: string;
   children: ReactNode;
 }
-
-const DEFAULT_OVERLAY =
-  'linear-gradient(to bottom, transparent 0%, transparent 60%, rgba(253,252,250,0.08) 70%, rgba(253,252,250,0.22) 80%, rgba(253,252,250,0.55) 90%, #FDFCFA 100%)';
 
 const DEFAULT_CONTENT_PADDING = 'px-6 pt-24 pb-16 md:px-12 md:pt-28 md:pb-24 lg:px-20 lg:pt-32 lg:pb-32';
 
@@ -40,8 +28,8 @@ export default function HeroVideo({
   src,
   poster,
   image,
-  imagePosition = '78% 42%',
-  overlayGradient = DEFAULT_OVERLAY,
+  imagePosition = 'center',
+  overlayGradient,
   minHeightClassName = 'min-h-[440px]',
   contentPaddingClassName = DEFAULT_CONTENT_PADDING,
   children,
@@ -50,6 +38,16 @@ export default function HeroVideo({
   const [videoFailed, setVideoFailed] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+
+  // `image` is the richer prop; `poster` doubles as the plain fallback when
+  // a page only needs a static photo with no position/overlay tuning.
+  const staticImage = image ?? poster;
+
+  // A placeholder filename that hasn't been replaced with a real file yet
+  // (404) falls back to the gradient rather than showing a broken-image icon.
+  useEffect(() => {
+    setImageFailed(false);
+  }, [staticImage]);
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -76,17 +74,16 @@ export default function HeroVideo({
     return () => el.removeEventListener('error', handleNativeError);
   }, [src]);
 
-  // Someone who's asked their OS not to autoplay motion gets the poster (if
-  // any) instead — same visual moment, no movement. A video that fails to
+  // Someone who's asked their OS not to autoplay motion gets the static
+  // image instead — same visual moment, no movement. A video that fails to
   // load (wrong path, file not added yet) falls back to the gradient rather
   // than showing a broken/black rectangle.
   const showVideo = Boolean(src) && !videoFailed && !reducedMotion;
-  const showPosterOnly = Boolean(src) && !videoFailed && reducedMotion && Boolean(poster);
-  const showImage = !showVideo && !showPosterOnly && Boolean(image) && !imageFailed;
+  const showImage = Boolean(staticImage) && !imageFailed && !showVideo;
 
   return (
     <section className={`relative flex ${minHeightClassName} flex-col justify-end overflow-hidden`}>
-      {/* Background — video, poster (reduced motion), static image, or animated warm light gradient */}
+      {/* Background — video, static image, or animated warm light gradient */}
       {showVideo ? (
         <video
           ref={videoRef}
@@ -99,13 +96,10 @@ export default function HeroVideo({
           playsInline
           onError={() => setVideoFailed(true)}
         />
-      ) : showPosterOnly ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
       ) : showImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={image}
+          src={staticImage}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
           style={{ objectPosition: imagePosition }}
@@ -126,13 +120,11 @@ export default function HeroVideo({
         </div>
       )}
 
-      {/* Gradient overlay — clear near the top so the photo stays crisp,
-          then a gradual feather through the bottom so it dissolves into the
-          section below rather than showing a hard edge. */}
-      <div
-        className="absolute inset-0"
-        style={{ background: overlayGradient }}
-      />
+      {/* Optional fade overlay — omitted entirely by default so the image
+          shows crisp; pass overlayGradient for pages that need one. */}
+      {overlayGradient && overlayGradient !== 'none' && (
+        <div className="absolute inset-0" style={{ background: overlayGradient }} />
+      )}
 
       {/* Content — bottom-aligned via the section's own flex layout, so it
           grows the section instead of clipping when a heading wraps to two

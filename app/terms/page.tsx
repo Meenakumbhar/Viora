@@ -6,12 +6,16 @@ export const metadata: Metadata = {
   description: 'The terms and conditions governing orders, payments, revisions, delivery, and intellectual property for Memories in Prints.',
   robots: { index: false, follow: true },
 };
-
+//change hi
 const sections: LegalSection[] = [
   {
     heading: 'Introduction',
     paragraphs: [
       'Welcome to Memories in Prints. By accessing or using our services, you agree to comply with these Terms & Conditions. Please read them carefully before placing an order.',
+    ],
+    list: [
+      'Registered company name: Viora Memories in Prints.',
+      'Trading/brand name: Memories in Prints.',
     ],
   },
   {

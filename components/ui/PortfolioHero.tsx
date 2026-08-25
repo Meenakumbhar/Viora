@@ -15,6 +15,7 @@ const CATEGORY_VIDEOS: Partial<Record<string, string>> = {};
 // no video (or the video fails to load). Falls back to the animated gradient
 // for any category without one configured here.
 const CATEGORY_IMAGES: Partial<Record<string, string>> = {
+  all: '/images/Portfolio_banner.jpg',
   wedding: '/images/Wedding-Background.jpg',
   // Cropped from the original upload (Portfolio-funeral-Image.jpg) — that
   // photo's own sky fades to white well before the 100% mark, and this
@@ -22,7 +23,7 @@ const CATEGORY_IMAGES: Partial<Record<string, string>> = {
   // headroom to dodge the haze via object-position). This crop keeps the
   // vivid sky and the full dandelion, cutting most of the built-in fade
   // before it ever reaches the overlay.
-  funeral: '/images/Portfolio-funeral-Hero.jpg',
+  funeral: '/images/Portfolio-funeral-Image.jpg',
 };
 
 interface CategoryContent {
@@ -43,8 +44,7 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'A curated selection of our bespoke designs, wedding suites, celebration of life books, designs delivered to clients globally.',
     bgGradient:
       'linear-gradient(135deg, #F7F4EF 0%, #FAF8F5 30%, #FDFCFA 60%, #F7F4EF 100%)',
-    overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,252,250,0.6) 65%, #FDFCFA 100%)',
+    overlayGradient: 'none',
   },
   funeral: {
     eyebrow: '',
@@ -53,9 +53,8 @@ const categoryContentMap: Record<string, CategoryContent> = {
     description:
       'Orders of service, memorial cards, and keepsake books — handled with warmth, care, and unhurried attention to detail.',
     bgGradient:
-      'linear-gradient(135deg, #FBF7EE 0%, #F7EFDA 30%, #F3E7C9 60%, #FBF7EE 100%)',
-    overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 92%, rgba(251,247,238,0.4) 96%, #FBF7EE 100%)',
+      'linear-gradient(135deg, #FBF7EE 0%, #c5a34e 30%, #F3E7C9 60%, #FBF7EE 100%)',
+    overlayGradient: 'none',
   },
   wedding: {
     eyebrow: '',

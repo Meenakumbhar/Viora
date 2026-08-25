@@ -118,13 +118,13 @@ export default function PricingPage() {
         image="/images/Cart-Banner.jpg"
         overlayGradient="linear-gradient(to bottom, transparent 0%, transparent 75%, rgba(253,252,250,0.06) 84%, rgba(253,252,250,0.16) 91%, rgba(253,252,250,0.35) 96%, rgba(253,252,250,0.65) 98.5%, #FDFCFA 100%)"
       >
-        <span className="block font-mono text-label uppercase tracking-wider text-[#A88A40]">
+        <span className="block font-mono text-label uppercase tracking-wider text-[#6B5726]">
           Quote Cart
         </span>
         <h1 className="mt-4 font-display text-display-lg text-text-primary max-w-4xl">
           Review Your <em className="not-italic font-semibold text-accent-gold">Ordered Items</em>
         </h1>
-        <p className="mt-6 font-body text-body-lg text-text-muted max-w-2xl leading-relaxed">
+        <p className="mt-6 font-body text-body-lg text-text-heading max-w-2xl leading-relaxed">
           This lightweight cart keeps your chosen pieces together so you can review them before requesting a final quote.
         </p>
       </HeroVideo>

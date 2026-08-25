@@ -54,17 +54,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
 
   return (
     <main id="main-content" className="bg-bg-primary min-h-screen">
-      {/* ── Page header — the dandelion photo as the hero's own background,
-          not a separate strip below it. No divider after: HeroVideo's own
-          gradient already blends into this page's bg-bg-primary. */}
-      <HeroVideo
-        image="/images/Quote-Banner.jpg"
-        imagePosition="75% 45%"
-        minHeightClassName="min-h-[360px] md:min-h-[400px] lg:min-h-[440px]"
-        contentPaddingClassName="px-6 pt-28 pb-12 md:px-12 md:pt-32 md:pb-14 lg:px-20 lg:pt-36 lg:pb-16"
-        overlayGradient="linear-gradient(to bottom, transparent 0%, transparent 55%, rgba(253,252,250,0.08) 65%, rgba(253,252,250,0.18) 75%, rgba(253,252,250,0.32) 85%, rgba(253,252,250,0.5) 92%, rgba(253,252,250,0.75) 97%, #FDFCFA 100%)"
-      >
-        <span className="font-mono text-label uppercase tracking-wider text-text-heading">
+      {/* ── Page header ────────────────────────────────────────────── */}
+      <HeroVideo poster="/images/Quote-Banner.jpg">
+        <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
           Request a Quote
         </span>
         <h1 className="mt-3 font-display text-display-lg text-text-heading max-w-xl">
@@ -75,6 +67,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
           Tell us what you need — we respond within 24 hours.
         </p>
       </HeroVideo>
+
+      {/* ── Divider ────────────────────────────────────────────────── */}
+      <div className="border-t border-border" />
 
       {/* ── Form (left) + socials (right) ─────────────────────────── */}
       <section className="container-wide py-16">

@@ -29,7 +29,7 @@ export default async function BlogPage() {
   return (
     <div>
       {/* Hero Section */}
-      <HeroVideo>
+      <HeroVideo poster="/images/Blog_banner.jpg">
         <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
           Studio Journal
         </span>

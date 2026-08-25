@@ -560,7 +560,7 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
 
           <Link
             href="/portfolio"
-            className="mt-8 inline-flex items-center gap-2 font-body text-label uppercase tracking-wider text-accent-gold link-underline"
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-bg-primary/90 px-5 py-2.5 font-body text-label uppercase tracking-wider text-text-heading shadow-[0_2px_10px_rgba(28,37,48,0.12)] transition-colors hover:bg-bg-primary hover:text-accent-gold"
           >
             Browse our portfolio &rarr;
           </Link>
