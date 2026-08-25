@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Analytics } from '@vercel/analytics/next';
 import { Cormorant_Garamond, DM_Sans, DM_Mono } from 'next/font/google';
 import Nav from '@/components/ui/Nav';
@@ -133,7 +134,13 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-body bg-bg-primary text-text-body antialiased" suppressHydrationWarning>
-        <Nav products={products} />
+        {/* Suspense boundary required because Nav reads the ?category=
+            query param (via useSearchParams) to highlight the active
+            portfolio filter — without it, useSearchParams forces this whole
+            layout out of static rendering. */}
+        <Suspense fallback={null}>
+          <Nav products={products} />
+        </Suspense>
         <CategoryWrapper>
           <PageTransition>{children}</PageTransition>
         </CategoryWrapper>

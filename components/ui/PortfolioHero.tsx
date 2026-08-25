@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import HeroDoodles from '@/components/ui/HeroDoodles';
+import PortfolioPrintArt from '@/components/ui/PortfolioPrintArt';
 
 // No category currently uses a background video — funeral now uses the
 // static Portfolio-funeral-Image.jpg (see CATEGORY_IMAGES) instead of the
@@ -15,7 +16,13 @@ const CATEGORY_VIDEOS: Partial<Record<string, string>> = {};
 // for any category without one configured here.
 const CATEGORY_IMAGES: Partial<Record<string, string>> = {
   wedding: '/images/Wedding-Background.jpg',
-  funeral: '/images/Portfolio-funeral-Image.jpg',
+  // Cropped from the original upload (Portfolio-funeral-Image.jpg) — that
+  // photo's own sky fades to white well before the 100% mark, and this
+  // hero's aspect ratio always renders its full height (no vertical crop
+  // headroom to dodge the haze via object-position). This crop keeps the
+  // vivid sky and the full dandelion, cutting most of the built-in fade
+  // before it ever reaches the overlay.
+  funeral: '/images/Portfolio-funeral-Hero.jpg',
 };
 
 interface CategoryContent {
@@ -30,8 +37,8 @@ interface CategoryContent {
 const categoryContentMap: Record<string, CategoryContent> = {
   all: {
     eyebrow: '',
-    headline: 'Print that',
-    headlineAccent: 'speaks',
+    headline: 'Print That',
+    headlineAccent: 'Speaks',
     description:
       'A curated selection of our bespoke designs, wedding suites, celebration of life books, designs delivered to clients globally.',
     bgGradient:
@@ -41,30 +48,30 @@ const categoryContentMap: Record<string, CategoryContent> = {
   },
   funeral: {
     eyebrow: '',
-    headline: 'Print that honours a',
-    headlineAccent: 'life',
+    headline: 'Print That Honours a',
+    headlineAccent: 'Life',
     description:
       'Orders of service, memorial cards, and keepsake books — handled with warmth, care, and unhurried attention to detail.',
     bgGradient:
       'linear-gradient(135deg, #FBF7EE 0%, #F7EFDA 30%, #F3E7C9 60%, #FBF7EE 100%)',
     overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 55%, rgba(251,247,238,0.45) 78%, rgba(251,247,238,0.88) 100%)',
+      'linear-gradient(to bottom, transparent 0%, transparent 92%, rgba(251,247,238,0.4) 96%, #FBF7EE 100%)',
   },
   wedding: {
     eyebrow: '',
-    headline: 'Stationery for your',
-    headlineAccent: 'forever',
+    headline: 'Stationery for Your',
+    headlineAccent: 'Forever',
     description:
       'Invitation suites, orders of service, table plans, and bespoke signage — each piece crafted to mirror the joy of the day.',
     bgGradient:
       'linear-gradient(135deg, #FDF7F5 0%, #F5E6DF 30%, #E8D5C4 60%, #FDF7F5 100%)',
     overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,247,245,0.6) 65%, #FDF7F5 100%)',
+      'linear-gradient(to bottom, transparent 0%, transparent 80%, rgba(253,247,245,0.4) 92%, #FDF7F5 100%)',
   },
   events: {
     eyebrow: 'Events Portfolio',
-    headline: 'Print that sets the',
-    headlineAccent: 'scene',
+    headline: 'Print That Sets the',
+    headlineAccent: 'Scene',
     description:
       'Invitations, programmes, signage, and keepsakes for celebrations, galas, and gatherings that deserve memorable details.',
     bgGradient:
@@ -74,8 +81,8 @@ const categoryContentMap: Record<string, CategoryContent> = {
   },
   sports: {
     eyebrow: 'Sports Portfolio',
-    headline: 'Print built for the',
-    headlineAccent: 'pitch',
+    headline: 'Print Built for the',
+    headlineAccent: 'Pitch',
     description:
       'Matchday programmes, team branding, sponsor packs, and event signage — confident, sharp, and built to perform.',
     bgGradient:
@@ -85,8 +92,8 @@ const categoryContentMap: Record<string, CategoryContent> = {
   },
   branding: {
     eyebrow: 'Branding Portfolio',
-    headline: 'Identity designed to',
-    headlineAccent: 'endure',
+    headline: 'Identity Designed to',
+    headlineAccent: 'Endure',
     description:
       'Logo systems, brand guidelines, stationery suites, and packaging — strategic design that builds recognition.',
     bgGradient:
@@ -194,6 +201,7 @@ export default function PortfolioHero({ activeCategory }: PortfolioHeroProps) {
           }}
         >
           <HeroDoodles />
+          {key === 'all' && <PortfolioPrintArt />}
         </div>
       )}
 

@@ -86,7 +86,7 @@ export default async function Home() {
       {/* ──────────────────── SECTION 1 — HERO ──────────────────── */}
       <section
         id="hero"
-        className="hero-section relative h-[88vh] min-h-[680px] max-h-[880px] overflow-hidden bg-bg-primary flex items-center pt-28 pb-16"
+        className="hero-section relative h-[96vh] min-h-[720px] max-h-[980px] overflow-hidden bg-bg-primary flex items-center pt-28 pb-16"
       >
         {/* Banner photo — starts below the fixed nav's height (h-20) plus a
             little breathing room, so the nav always sits on the section's
@@ -116,8 +116,8 @@ export default async function Home() {
           <div className="hero-content">
 
             <AnimatedHeadline
-              text="Made for every moment"
-              accentWord="moment"
+              text="Made for Every Moment"
+              accentWord="Moment"
               className="font-display text-display-lg text-white max-w-lg mt-5 [text-shadow:0_2px_16px_rgba(0,0,0,0.35)]"
             />
 
@@ -184,7 +184,7 @@ export default async function Home() {
 
         <SectionReveal>
           <div className="container-wide">
-            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+            <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
               {/* Divider line — centered in the gap between the two columns */}
               <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px -translate-x-1/2 bg-border lg:block" />
 
@@ -223,15 +223,15 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Right column — a single studio-made photo matching the headline,
-                  kept at its own true proportions rather than stretched/cropped
-                  to match the taller text column beside it */}
-              <div data-delay="3" className="self-center">
+              {/* Right column — a single studio-made photo, stretched to
+                  match the text column's exact height so there's no extra
+                  gap above or below it. */}
+              <div data-delay="3">
                 <ImageRevealCard
                   src="/images/design_with_intention.jpeg"
                   alt="Designed with Intention"
                   delay={0.1}
-                  className="aspect-square rounded-[2rem]"
+                  className="h-full min-h-[320px] rounded-[2rem]"
                   sizes="(min-width: 1024px) 45vw, 90vw"
                   priority
                 />
@@ -252,8 +252,8 @@ export default async function Home() {
               </span>
 
               <AnimatedHeadline
-                text="Print that speaks"
-                accentWord="speaks"
+                text="Print That Speaks"
+                accentWord="Speaks"
                 className="font-display text-display-md text-text-heading mt-4"
               />
 
@@ -297,10 +297,7 @@ export default async function Home() {
                       )}
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between">
-                      <span className="font-mono text-base text-cat-muted uppercase tracking-wider">
-                        {item.location || 'Worldwide'}
-                      </span>
+                    <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-end">
                       <Link
                         href={`/portfolio/${item.id}`}
                         className="inline-flex items-center gap-1 font-body text-base font-semibold uppercase tracking-wider text-cat-accent-dark"
@@ -337,7 +334,7 @@ export default async function Home() {
           </span>
 
           <h2 className="font-display text-display-lg text-text-heading mt-3">
-            Where craft meets <em className="not-italic font-semibold text-accent-gold">care</em>
+            Where Craft Meets <em className="not-italic font-semibold text-accent-gold">Care</em>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 w-full">
@@ -504,7 +501,7 @@ export default async function Home() {
 
         <div className="relative z-10 container-wide max-w-4xl text-center">
           <h2 className="font-display text-display-lg text-white">
-            Heard from our clients
+            Heard from Our Clients
           </h2>
 
           <div className="mt-8">
@@ -532,12 +529,12 @@ export default async function Home() {
               {/* Right — copy */}
               <div data-delay="2">
                 <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
-                  Delivery network
+                  Delivery Network
                 </span>
 
                 <h2 className="font-display text-display-md text-text-heading mt-3">
-                  Designed here.{' '}
-                  <em className="not-italic font-semibold text-accent-gold">Delivered everywhere.</em>
+                  Designed Here.{' '}
+                  <em className="not-italic font-semibold text-accent-gold">Delivered Everywhere.</em>
                 </h2>
 
                 <p className="font-body text-body-lg text-text-muted mt-4 leading-relaxed">
@@ -576,7 +573,7 @@ export default async function Home() {
         <SectionReveal>
           <div className="container-wide">
             <h2 className="font-display text-display-lg text-text-heading">
-              From the <em className="not-italic font-semibold text-accent-gold">studio</em>
+              From the <em className="not-italic font-semibold text-accent-gold">Studio</em>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">

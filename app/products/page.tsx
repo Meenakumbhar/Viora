@@ -27,8 +27,8 @@ export default async function ProductsPage() {
         <span className="block font-mono text-label uppercase tracking-wider text-cat-muted">
           What We Offer
         </span>
-        <h1 className="mt-4 font-display text-display-xl text-cat-heading max-w-4xl">
-          Our <em className="not-italic font-semibold text-accent-gold">products</em>
+        <h1 className="mt-4 font-display text-display-lg text-cat-heading max-w-4xl">
+          Our <em className="not-italic font-semibold text-accent-gold">Products</em>
         </h1>
         <p className="mt-6 font-body text-body-lg text-cat-body max-w-2xl leading-relaxed">
           A collection of memorial keepsakes and stationery, each designed to be thoughtfully personalised and produced with care.
@@ -95,7 +95,7 @@ export default async function ProductsPage() {
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-cat-heading">
-              Don&apos;t see what you&apos;re <em className="not-italic font-semibold text-accent-gold">looking for?</em>
+              Don&apos;t See What You&apos;re <em className="not-italic font-semibold text-accent-gold">Looking For?</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-cat-body leading-relaxed">
               We create bespoke memorial stationery too — share your ideas and we&apos;ll bring them to life.

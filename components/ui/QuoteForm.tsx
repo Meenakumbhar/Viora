@@ -10,6 +10,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { readPortfolioCart, clearPortfolioCart, type PortfolioCartItem } from '@/utils/portfolio-cart';
 import type { PublicUser } from '@/types/database';
 import {
@@ -516,43 +517,54 @@ export default function QuoteForm({ initialService, initialDetails, fromCart }: 
 
   if (state === 'success') {
     return (
-      <div className="flex flex-col items-center py-16 text-center">
-        <div
-          className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent-gold"
-          style={{ animation: 'successPop 0.4s ease' }}
-        >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-gold" />
-          </svg>
-        </div>
-        <h3 className="font-display text-display-md text-text-primary">
-          Thank you, {data.name.split(' ')[0]}
-        </h3>
-        <p className="mt-4 max-w-md font-body text-body-base text-text-muted">
-          Your request is with us. We&apos;ll be in touch within 24 hours.
-        </p>
+      <div className="relative flex flex-col items-center overflow-hidden rounded-[2rem] border border-border py-16 text-center">
+        {/* Background — watercolor thank-you card art */}
+        <Image
+          src="/images/ThankYou-Banner.jpg"
+          alt=""
+          fill
+          className="object-cover"
+          sizes="(min-width: 1024px) 60vw, 100vw"
+        />
 
-        {enquiryId && (
-          <div className="mt-8 w-full max-w-md rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-6 text-left">
-            <p className="font-mono text-base uppercase tracking-widest text-accent-gold">Next step</p>
-            <p className="mt-2 font-body text-body-base text-text-heading">
-              Fill out your order form now so we can start on the design straight away — you don&apos;t need to wait for our reply.
-            </p>
-            <Link
-              href={`/order-form/${enquiryId}`}
-              className="mt-4 inline-flex items-center justify-center gap-2 bg-accent-gold px-6 py-3 font-body font-medium uppercase tracking-wider text-bg-primary transition-all duration-300 hover:bg-accent-gold-dark"
-            >
-              Fill out order form &rarr;
-            </Link>
+        <div className="relative z-10 flex flex-col items-center px-6">
+          <div
+            className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent-gold"
+            style={{ animation: 'successPop 0.4s ease' }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent-gold" />
+            </svg>
           </div>
-        )}
+          <h3 className="font-display text-display-md text-text-primary">
+            Thank you, {data.name.split(' ')[0]}
+          </h3>
+          <p className="mt-4 max-w-md font-body text-body-base text-text-muted">
+            Your request is with us. We&apos;ll be in touch within 24 hours.
+          </p>
 
-        <Link
-          href="/portfolio"
-          className="mt-8 inline-flex items-center gap-2 font-body text-label uppercase tracking-wider text-accent-gold link-underline"
-        >
-          Browse our portfolio &rarr;
-        </Link>
+          {enquiryId && (
+            <div className="mt-8 w-full max-w-md rounded-2xl border border-accent-gold/40 bg-accent-gold/5 p-6 text-left">
+              <p className="font-mono text-base uppercase tracking-widest text-accent-gold">Next step</p>
+              <p className="mt-2 font-body text-body-base text-text-heading">
+                Fill out your order form now so we can start on the design straight away — you don&apos;t need to wait for our reply.
+              </p>
+              <Link
+                href={`/order-form/${enquiryId}`}
+                className="mt-4 inline-flex items-center justify-center gap-2 bg-accent-gold px-6 py-3 font-body font-medium uppercase tracking-wider text-bg-primary transition-all duration-300 hover:bg-accent-gold-dark"
+              >
+                Fill out order form &rarr;
+              </Link>
+            </div>
+          )}
+
+          <Link
+            href="/portfolio"
+            className="mt-8 inline-flex items-center gap-2 font-body text-label uppercase tracking-wider text-accent-gold link-underline"
+          >
+            Browse our portfolio &rarr;
+          </Link>
+        </div>
       </div>
     );
   }
