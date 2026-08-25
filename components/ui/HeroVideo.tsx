@@ -11,7 +11,14 @@ interface HeroVideoProps {
 export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+
+  // A placeholder filename that hasn't been replaced with a real file yet
+  // (404) falls back to the gradient rather than showing a broken-image icon.
+  useEffect(() => {
+    setPosterFailed(false);
+  }, [poster]);
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -41,9 +48,10 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
   // Someone who's asked their OS not to autoplay motion gets the poster (if
   // any) instead — same visual moment, no movement. A video that fails to
   // load (wrong path, file not added yet) falls back to the gradient rather
-  // than showing a broken/black rectangle.
+  // than showing a broken/black rectangle. `poster` alone (no `src`) is also
+  // valid — a plain static-image hero, no video involved at all.
   const showVideo = Boolean(src) && !videoFailed && !reducedMotion;
-  const showPosterOnly = Boolean(src) && !videoFailed && reducedMotion && Boolean(poster);
+  const showPosterOnly = Boolean(poster) && !posterFailed && !showVideo;
 
   return (
     <section className="relative flex min-h-[440px] flex-col justify-end overflow-hidden">
@@ -62,7 +70,12 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
         />
       ) : showPosterOnly ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src={poster}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={() => setPosterFailed(true)}
+        />
       ) : (
         <div className="absolute inset-0 h-full w-full overflow-hidden">
           <div
@@ -78,14 +91,6 @@ export default function HeroVideo({ src, poster, children }: HeroVideoProps) {
         </div>
       )}
 
-      {/* Gradient overlay — transparent top, solid warm bottom */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,252,250,0.6) 65%, #FDFCFA 100%)',
-        }}
-      />
 
       {/* Content — bottom-aligned via the section's own flex layout, so it
           grows the section instead of clipping when a heading wraps to two

@@ -23,7 +23,7 @@ export default async function ProductsPage() {
 
   return (
     <div data-category="funeral">
-      <HeroVideo>
+      <HeroVideo poster="/images/Products_banner.jpg">
         <span className="block font-mono text-label uppercase tracking-wider text-cat-muted">
           What We Offer
         </span>

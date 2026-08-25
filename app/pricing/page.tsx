@@ -114,7 +114,7 @@ export default function PricingPage() {
 
   return (
     <div>
-      <HeroVideo>
+      <HeroVideo poster="/images/Pricing_banner.jpg">
         <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
           Quote cart
         </span>

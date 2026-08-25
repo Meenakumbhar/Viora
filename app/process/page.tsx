@@ -33,7 +33,7 @@ export default function ProcessPage() {
   return (
     <div>
       {/* Hero Section */}
-      <HeroVideo>
+      <HeroVideo poster="/images/Process_banner.jpg">
         <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
           Studio Workflow
         </span>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import QuoteForm from '@/components/ui/QuoteForm';
+import HeroVideo from '@/components/ui/HeroVideo';
 
 export const metadata: Metadata = {
   title: 'Get a Quote',
@@ -54,8 +55,8 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
   return (
     <main id="main-content" className="bg-bg-primary min-h-screen">
       {/* ── Page header ────────────────────────────────────────────── */}
-      <div className="container-wide pt-32 pb-12">
-        <span className="font-mono text-label uppercase tracking-wider text-accent-gold">
+      <HeroVideo poster="/images/Contact_banner.jpg">
+        <span className="block font-mono text-label uppercase tracking-wider text-accent-gold">
           Request a Quote
         </span>
         <h1 className="mt-3 font-display text-display-lg text-text-heading max-w-xl">
@@ -65,7 +66,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
         <p className="mt-4 font-body text-body-lg text-text-muted max-w-lg">
           Tell us what you need — we respond within 24 hours.
         </p>
-      </div>
+      </HeroVideo>
 
       {/* ── Divider ────────────────────────────────────────────────── */}
       <div className="border-t border-border" />

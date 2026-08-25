@@ -246,7 +246,7 @@ export default async function Home() {
         <SectionReveal>
           <div className="flex flex-col lg:flex-row">
             {/* Left — sticky text */}
-            <div className="lg:w-1/3 lg:sticky lg:top-32 lg:self-start px-6 md:px-12 lg:pl-20 mb-12 lg:mb-0">
+            <div className="lg:w-1/3 lg:relative lg:top-0 lg:self-start px-6 md:px-12 lg:pl-20 mb-12 lg:mb-0" style={{ marginTop: '-4rem' }}>
               <span className="font-mono text-label uppercase text-accent-gold tracking-wider">
                 Our Work
               </span>
@@ -254,7 +254,7 @@ export default async function Home() {
               <AnimatedHeadline
                 text="Print that speaks"
                 accentWord="speaks"
-                className="font-display text-display-md text-text-heading mt-4"
+                className="font-display text-display-md text-text-heading mt-2 -translate-y-1"
               />
 
               <div className="mt-8">

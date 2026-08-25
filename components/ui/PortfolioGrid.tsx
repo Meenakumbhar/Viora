@@ -419,6 +419,15 @@ export default function PortfolioGrid({
     if (onCategoryChange) {
       onCategoryChange(categoryKey);
     }
+
+    // Picking a category hides this filter bar (see showFilters) and swaps
+    // the hero above it — the page shrinks right where the user is scrolled,
+    // leaving them looking at whatever content shifted into that spot rather
+    // than the new hero/heading, which reads as "nothing happened." Scrolling
+    // back to the top makes the change immediately visible instead.
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   function handleFilterValueChange(group: keyof PortfolioFilters, value: string) {

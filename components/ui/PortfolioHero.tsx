@@ -14,6 +14,7 @@ const CATEGORY_VIDEOS: Partial<Record<string, string>> = {};
 // no video (or the video fails to load). Falls back to the animated gradient
 // for any category without one configured here.
 const CATEGORY_IMAGES: Partial<Record<string, string>> = {
+  all: '/images/Portfolio_banner.jpg',
   wedding: '/images/Wedding-Background.jpg',
   funeral: '/images/Portfolio-funeral-Image.jpg',
 };
@@ -36,8 +37,7 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'A curated selection of our bespoke designs, wedding suites, celebration of life books, designs delivered to clients globally.',
     bgGradient:
       'linear-gradient(135deg, #F7F4EF 0%, #FAF8F5 30%, #FDFCFA 60%, #F7F4EF 100%)',
-    overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(253,252,250,0.6) 65%, #FDFCFA 100%)',
+    overlayGradient: 'none',
   },
   funeral: {
     eyebrow: '',
