@@ -108,7 +108,7 @@ export default async function ProductPage({ params }: PageProps) {
           {related.length > 0 && (
             <SectionReveal>
               <div className="mt-24 border-t border-border pt-16">
-                <h2 className="font-display text-2xl text-cat-heading">You might also like</h2>
+                <h2 className="font-display text-2xl text-cat-heading">You Might Also Like</h2>
                 <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {related.map((rel) => (
                     <Link

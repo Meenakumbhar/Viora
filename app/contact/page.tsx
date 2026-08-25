@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import HeroVideo from '@/components/ui/HeroVideo';
 import QuoteForm from '@/components/ui/QuoteForm';
 
 export const metadata: Metadata = {
@@ -53,22 +54,27 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
 
   return (
     <main id="main-content" className="bg-bg-primary min-h-screen">
-      {/* ── Page header ────────────────────────────────────────────── */}
-      <div className="container-wide pt-32 pb-12">
-        <span className="font-mono text-label uppercase tracking-wider text-accent-gold">
+      {/* ── Page header — the dandelion photo as the hero's own background,
+          not a separate strip below it. No divider after: HeroVideo's own
+          gradient already blends into this page's bg-bg-primary. */}
+      <HeroVideo
+        image="/images/Quote-Banner.jpg"
+        imagePosition="75% 45%"
+        minHeightClassName="min-h-[360px] md:min-h-[400px] lg:min-h-[440px]"
+        contentPaddingClassName="px-6 pt-28 pb-12 md:px-12 md:pt-32 md:pb-14 lg:px-20 lg:pt-36 lg:pb-16"
+        overlayGradient="linear-gradient(to bottom, transparent 0%, transparent 55%, rgba(253,252,250,0.08) 65%, rgba(253,252,250,0.18) 75%, rgba(253,252,250,0.32) 85%, rgba(253,252,250,0.5) 92%, rgba(253,252,250,0.75) 97%, #FDFCFA 100%)"
+      >
+        <span className="font-mono text-label uppercase tracking-wider text-text-heading">
           Request a Quote
         </span>
         <h1 className="mt-3 font-display text-display-lg text-text-heading max-w-xl">
-          Start your{' '}
-          <em className="not-italic font-semibold text-accent-gold">project</em>
+          Start Your{' '}
+          <em className="not-italic font-semibold text-text-heading">Project</em>
         </h1>
-        <p className="mt-4 font-body text-body-lg text-text-muted max-w-lg">
+        <p className="mt-4 font-body text-body-lg text-text-heading max-w-lg">
           Tell us what you need — we respond within 24 hours.
         </p>
-      </div>
-
-      {/* ── Divider ────────────────────────────────────────────────── */}
-      <div className="border-t border-border" />
+      </HeroVideo>
 
       {/* ── Form (left) + socials (right) ─────────────────────────── */}
       <section className="container-wide py-16">
