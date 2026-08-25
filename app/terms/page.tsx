@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'The terms and conditions governing orders, payments, revisions, delivery, and intellectual property for Memories in Prints.',
   robots: { index: false, follow: true },
 };
-//change
+//change hi
 const sections: LegalSection[] = [
   {
     heading: 'Introduction',
