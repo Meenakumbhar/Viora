@@ -30,7 +30,7 @@ export default function PortfolioPageContent({
           below already carries its own top border, and with the padding
           this tight the two rules sat close enough to read as a doubled
           line with nothing between them. */}
-      <section className="bg-cat-bg pt-12 pb-24 md:pt-16 md:pb-36 transition-colors duration-500">
+      <section className="bg-cat-bg pt-6 pb-24 md:pt-8 md:pb-36 transition-colors duration-500">
         <div className="container-wide">
           <SectionReveal>
             <PortfolioGrid
@@ -51,7 +51,7 @@ export default function PortfolioPageContent({
         <SectionReveal>
           <div className="container-wide max-w-3xl">
             <h2 className="font-display text-display-lg text-cat-heading">
-              Have a project <em className="not-italic font-semibold text-accent-gold">in mind?</em>
+              Have a Project <em className="not-italic font-semibold text-accent-gold">in Mind?</em>
             </h2>
             <p className="mt-6 font-body text-body-lg text-cat-body leading-relaxed">
               We work closely with individuals, couples, brands, and organizers to create premium design and print assets.

@@ -16,7 +16,7 @@ export default function FaqPage() {
           Support
         </span>
         <h1 className="mt-4 font-display text-display-lg text-text-primary">
-          Frequently asked <em className="not-italic font-semibold text-accent-gold">questions</em>
+          Frequently Asked <em className="not-italic font-semibold text-accent-gold">Questions</em>
         </h1>
         <p className="mt-4 font-body text-body-lg text-text-muted leading-relaxed">
           Everything you need to know about ordering, worldwide delivery, payment, and revisions. Can&apos;t find your answer?{' '}

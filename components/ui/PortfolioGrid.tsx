@@ -222,11 +222,7 @@ const PortfolioCard = memo(function PortfolioCard({
           </p>
         )}
 
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/50 pt-3">
-          <span className="font-mono text-base text-cat-muted uppercase tracking-wider">
-            {item.location || 'Worldwide'}
-          </span>
-
+        <div className="mt-3 flex items-center justify-end gap-3 border-t border-border/50 pt-3">
           <button
             type="button"
             onClick={() => onBuy(item)}
