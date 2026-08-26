@@ -13,6 +13,10 @@ const RazorpayButton = dynamic(() => import('@/components/ui/RazorpayButton'), {
 interface CheckoutViewProps {
   order: Order;
   latestRevision?: DesignRevision;
+  /** From the customer's own account profile — gives Razorpay's checkout a
+   *  verified contact number to prefill, alongside name/email, so its risk
+   *  scoring has one more genuine identity signal for the transaction. */
+  customerPhone?: string | null;
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
@@ -121,7 +125,7 @@ const TRUST_BADGES = [
 // same way DashboardShell does (fixed, above the site nav/footer) so
 // payment gets a distraction-free moment rather than sitting mid-scroll on
 // a page with unrelated nav/footer chrome.
-export default function CheckoutView({ order: initialOrder, latestRevision }: CheckoutViewProps) {
+export default function CheckoutView({ order: initialOrder, latestRevision, customerPhone }: CheckoutViewProps) {
   const [order, setOrder] = useState(initialOrder);
   const [method, setMethod] = useState<'card' | 'paypal'>('card');
 
@@ -302,7 +306,7 @@ export default function CheckoutView({ order: initialOrder, latestRevision }: Ch
 
                     <div className="mt-6">
                       {method === 'card' ? (
-                        <RazorpayButton order={order} onSuccess={setOrder} />
+                        <RazorpayButton order={order} customerPhone={customerPhone} onSuccess={setOrder} />
                       ) : (
                         <PayPalButton order={order} onSuccess={setOrder} />
                       )}

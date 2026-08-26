@@ -257,7 +257,13 @@ export default function DesignReviewCanvas({
             <div>
               <p className={`mb-2 font-mono text-base uppercase tracking-widest ${t.muted}`}>Current</p>
               <ZoomPanStage onTap={canAddPins ? handleTap : undefined} borderClassName={borderClass}>
-                <Image src={images[activeImage]} alt={`Design proof — ${labelFor(activeImage)}`} fill className="object-contain" />
+                <Image
+                  src={images[activeImage]}
+                  alt={`Design proof — ${labelFor(activeImage)}`}
+                  fill
+                  unoptimized
+                  className="object-contain"
+                />
                 {renderPersistedPins()}
                 {renderDraftPins()}
                 {renderPendingPin()}
@@ -272,6 +278,7 @@ export default function DesignReviewCanvas({
                   src={compareTarget.image_urls[activeImage] ?? compareTarget.image_urls[0]}
                   alt={`Design proof — ${compareTarget.label?.trim() || `v${compareTarget.version}`}`}
                   fill
+                  unoptimized
                   className="object-contain"
                 />
               </ZoomPanStage>
@@ -279,7 +286,13 @@ export default function DesignReviewCanvas({
           </div>
         ) : (
           <ZoomPanStage onTap={canAddPins ? handleTap : undefined} borderClassName={borderClass}>
-            <Image src={images[activeImage]} alt={`Design proof — ${labelFor(activeImage)}`} fill className="object-contain" />
+            <Image
+              src={images[activeImage]}
+              alt={`Design proof — ${labelFor(activeImage)}`}
+              fill
+              unoptimized
+              className="object-contain"
+            />
             {renderPersistedPins()}
             {renderDraftPins()}
             {renderPendingPin()}

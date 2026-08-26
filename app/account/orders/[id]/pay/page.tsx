@@ -33,5 +33,5 @@ export default async function OrderPaymentPage({ params }: { params: Promise<{ i
   const revisions = await getDesignRevisionsForCustomer(id);
   const latestRevision = [...revisions].sort((a, b) => b.version - a.version)[0];
 
-  return <CheckoutView order={order} latestRevision={latestRevision} />;
+  return <CheckoutView order={order} latestRevision={latestRevision} customerPhone={user.phone} />;
 }

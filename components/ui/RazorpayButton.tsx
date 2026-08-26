@@ -18,13 +18,14 @@ declare global {
 
 interface RazorpayButtonProps {
   order: Order;
+  customerPhone?: string | null;
   onSuccess: (updatedOrder: Order) => void;
 }
 
 // Unlike PayPal's inline-rendered button, Razorpay Checkout.js opens a modal
 // on demand — this is a plain button that loads the script once, then drives
 // create-order → open modal → verify on its own click handler.
-export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps) {
+export default function RazorpayButton({ order, customerPhone, onSuccess }: RazorpayButtonProps) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -101,7 +102,13 @@ export default function RazorpayButton({ order, onSuccess }: RazorpayButtonProps
         image: `${SITE_URL}/images/logo.png`,
         // Skips re-typing what we already know from the account — Razorpay
         // still asks for the card itself, this just saves the contact step.
-        prefill: { name: order.customer_name, email: order.customer_email },
+        // The phone number also gives Razorpay's own risk/fraud scoring a
+        // genuine verified-identity signal beyond just name + email.
+        prefill: {
+          name: order.customer_name,
+          email: order.customer_email,
+          ...(customerPhone ? { contact: customerPhone } : {}),
+        },
         theme: { color: '#C6A85C' },
 
         handler: async (response: RazorpayCheckoutResponse) => {
