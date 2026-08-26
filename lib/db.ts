@@ -1215,7 +1215,18 @@ export async function syncOrderPricingFromCatalog(order: Order, knownUserId?: st
   const items = order.portfolio_items;
   const singleItemId = items && items.length === 1 ? items[0].id : null;
 
-  const effective = await getEffectivePrice(userId, singleItemId);
+  // Product cart entries use a composite `slug::size[::templateNumber]` id
+  // (see PortfolioCartItem) instead of a real portfolio-item UUID — route
+  // those through the product catalog, or getEffectivePrice below fails the
+  // UUID column check for portfolio_item_id.
+  let effective: EffectivePrice | null = null;
+  if (singleItemId?.includes('::')) {
+    const [slug, sizeLabel] = singleItemId.split('::');
+    const product = await getProductBySlug(slug);
+    effective = product ? await getEffectiveProductPrice(userId, product.id, sizeLabel) : null;
+  } else {
+    effective = await getEffectivePrice(userId, singleItemId);
+  }
   if (!effective) return order;
   if (order.payment_amount === effective.price) return order;
 
