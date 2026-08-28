@@ -132,20 +132,25 @@ export default function TestimonialSlider({ dark = false }: { dark?: boolean }) 
           </svg>
         </button>
 
-        {/* Dot indicators */}
-        <div className="flex items-center gap-2">
+        {/* Dot indicators — each button keeps a >=24px tap target via padding,
+            while the visible dot itself stays small (span inside). */}
+        <div className="flex items-center">
           {testimonials.map((_, i) => (
             <button
               key={i}
               onClick={() => goTo(i)}
               aria-label={`Go to testimonial ${i + 1}`}
-              className={[
-                'h-2 rounded-full transition-all duration-300',
-                i === current
-                  ? 'w-6 bg-accent-gold'
-                  : 'w-2 bg-border hover:bg-text-muted',
-              ].join(' ')}
-            />
+              className="flex items-center justify-center p-2"
+            >
+              <span
+                className={[
+                  'block h-2 rounded-full transition-all duration-300',
+                  i === current
+                    ? 'w-6 bg-accent-gold'
+                    : 'w-2 bg-border hover:bg-text-muted',
+                ].join(' ')}
+              />
+            </button>
           ))}
         </div>
 

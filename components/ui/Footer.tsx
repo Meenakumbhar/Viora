@@ -149,13 +149,13 @@ export default function Footer() {
             </p>
 
             {/* Social Icons */}
-            <div className="flex items-center gap-4 mt-6">
+            <div className="flex items-center gap-2 mt-6">
               <a
                 href="https://www.instagram.com/memoriesin.prints/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="text-dark-text-muted hover:text-accent-gold transition-colors"
+                className="p-1 text-dark-text-muted hover:text-accent-gold transition-colors"
               >
                 <InstagramIcon />
               </a>
@@ -164,7 +164,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="text-dark-text-muted hover:text-accent-gold transition-colors"
+                className="p-1 text-dark-text-muted hover:text-accent-gold transition-colors"
               >
                 <FacebookIcon />
               </a>
@@ -173,7 +173,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
-                className="text-dark-text-muted hover:text-accent-gold transition-colors"
+                className="p-1 text-dark-text-muted hover:text-accent-gold transition-colors"
               >
                 <LinkedInIcon />
               </a>

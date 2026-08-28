@@ -6,15 +6,19 @@ export function AnimatedHeadline({
   text,
   className = '',
   accentWord = '',
+  as: Tag = 'h1',
 }: {
   text: string;
   className?: string;
   accentWord?: string;
+  // A page should only ever have one real <h1> — pass as="h2" (etc.) for
+  // every other headline on the page so heading levels stay sequential.
+  as?: 'h1' | 'h2' | 'h3' | 'h4';
 }) {
   const words = text.split(' ');
 
   return (
-    <h1 className={className}>
+    <Tag className={className}>
       {words.map((word, i) => {
         // Normalize checking for accent word (e.g. remove trailing punctuation if any)
         const isAccent = word.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '') === accentWord.toLowerCase();
@@ -41,7 +45,7 @@ export function AnimatedHeadline({
           </motion.span>
         );
       })}
-    </h1>
+    </Tag>
   );
 }
 
