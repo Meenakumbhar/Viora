@@ -519,9 +519,12 @@ export default async function Home() {
               {/* Left — modern delivery map */}
               <div className="flex items-center justify-center" data-delay="1">
                 <div className="w-full max-w-lg rounded-[2rem] bg-[#f7efe6] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.08)] md:p-6">
-                  <img
+                  <Image
                     src="/world_map.png"
                     alt="World map showing delivery coverage"
+                    width={1200}
+                    height={655}
+                    sizes="(min-width: 1024px) 512px, 90vw"
                     className="w-full h-auto rounded-[1.25rem] object-contain"
                   />
                 </div>
