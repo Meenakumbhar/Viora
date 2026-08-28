@@ -97,7 +97,7 @@ export default async function Home() {
             alt=""
             fill
             priority
-            quality={90}
+            quality={80}
             sizes="100vw"
             className="object-cover"
             style={{ objectPosition: '65% 30%' }}
@@ -198,6 +198,7 @@ export default async function Home() {
                 </span>
 
                 <AnimatedHeadline
+                  as="h2"
                   text="Designed with Intention"
                   accentWord="Intention"
                   className="font-display text-display-md text-text-heading mt-3"
@@ -233,7 +234,6 @@ export default async function Home() {
                   delay={0.1}
                   className="h-full min-h-[320px] rounded-[2rem]"
                   sizes="(min-width: 1024px) 45vw, 90vw"
-                  priority
                 />
               </div>
             </div>
@@ -252,6 +252,7 @@ export default async function Home() {
               </span>
 
               <AnimatedHeadline
+                as="h2"
                 text="Print That Speaks"
                 accentWord="Speaks"
                 className="font-display text-display-md text-text-heading mt-4"
