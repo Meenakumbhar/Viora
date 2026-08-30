@@ -332,7 +332,7 @@ body {
 }
 
 [data-category="funeral"] {
-  --cat-bg:         #FBF7EE;   /* Champagne Mist */
+  --cat-bg:         #FFFFFF;   /* White */
   --cat-surface:    #F3E7C9;   /* Gold Mist */
   --cat-accent:     #E5CB90;   /* Champagne Gold */
   --cat-accent-dark:#8A6F35;   /* Antique Bronze — deep companion, used

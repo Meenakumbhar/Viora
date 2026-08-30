@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PortfolioFilters } from '@/types/database';
@@ -69,6 +70,69 @@ const categoryGradients: Record<string, string> = {
   events:
     'linear-gradient(145deg, #F8EDDA 0%, #F5DFB8 50%, #D4883A 100%)',
 };
+
+// Best-effort CSS colour per "Colour" filter value (data is free text typed
+// by whoever adds a portfolio piece — see PortfolioAdminManager — so this is
+// a lookup with a neutral fallback swatch, not an exhaustive enum).
+const COLOUR_SWATCHES: Record<string, string> = {
+  Natural: '#D8CBB8', White: '#FFFFFF', Gold: '#C9A227', Green: '#4C7A3D',
+  Blue: '#3B6EA5', Burgundy: '#6B2635', Purple: '#6B4C8A', Brown: '#6B4A2F',
+  Cream: '#F2E8D5', Pink: '#D98CA0', Grey: '#8C8C8C', Beige: '#D8C7A8',
+  Black: '#1A1A1A',
+};
+
+function ColourSwatch({ value }: { value: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="h-3 w-3 shrink-0 rounded-full border border-black/10"
+      style={{ backgroundColor: COLOUR_SWATCHES[value] ?? '#B9AE9C' }}
+    />
+  );
+}
+
+// Same idea for "Content" (the style filter, relabelled) — keyword-matched
+// against whatever free text is actually in the data rather than a fixed
+// enum, so a new style tag someone types in still gets a sensible icon
+// instead of nothing.
+function ContentIcon({ value }: { value: string }) {
+  const v = value.toLowerCase();
+  const common = { viewBox: '0 0 20 20', fill: 'none', className: 'h-3.5 w-3.5 shrink-0', 'aria-hidden': true } as const;
+  if (v.includes('floral') || v.includes('flower') || v.includes('garden')) {
+    return (
+      <svg {...common}><path d="M10 10c0-2.5-1.5-4.5-3-5.5C8.5 5.5 10 7.5 10 10Zm0 0c0-2.5 1.5-4.5 3-5.5C11.5 5.5 10 7.5 10 10Zm0 0c-2.5 0-4.5 1.5-5.5 3C5.5 11.5 7.5 10 10 10Zm0 0c2.5 0 4.5 1.5 5.5 3C14.5 11.5 12.5 10 10 10Zm0 0v6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    );
+  }
+  if (v.includes('landscape') || v.includes('nature') || v.includes('countryside') || v.includes('country')) {
+    return (
+      <svg {...common}><path d="M2.5 15 7 8l3 4 2-2.5L17.5 15Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
+    );
+  }
+  if (v.includes('faith') || v.includes('religio')) {
+    return (
+      <svg {...common}><path d="M10 3v14M5 7h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></svg>
+    );
+  }
+  if (v.includes('hobby')) {
+    return (
+      <svg {...common}><path d="M10 3.5 11.8 8l4.7.4-3.6 3 1.1 4.6L10 13.5l-4 2.5 1.1-4.6-3.6-3L8.2 8Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>
+    );
+  }
+  if (v.includes('contemporary') || v.includes('modern')) {
+    return (
+      <svg {...common}><rect x="3.5" y="3.5" width="5.5" height="5.5" stroke="currentColor" strokeWidth="1.3" /><circle cx="13.5" cy="13.5" r="3" stroke="currentColor" strokeWidth="1.3" /></svg>
+    );
+  }
+  if (v.includes('classic') || v.includes('traditional')) {
+    return (
+      <svg {...common}><circle cx="10" cy="10" r="6" stroke="currentColor" strokeWidth="1.3" /><circle cx="10" cy="10" r="2" stroke="currentColor" strokeWidth="1.3" /></svg>
+    );
+  }
+  // Generic fallback — a small sparkle, matching the reference image's "Popular" star.
+  return (
+    <svg {...common}><path d="M10 3v3M10 14v3M3 10h3M14 10h3M5.5 5.5l2 2M12.5 12.5l2 2M14.5 5.5l-2 2M7.5 12.5l-2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></svg>
+  );
+}
 
 // Real portfolio photos are print pieces on ~A-series paper (ratio ~0.7),
 // so every card uses the same portrait aspect — mixing in landscape/square
@@ -242,6 +306,7 @@ export default function PortfolioGrid({
   onCategoryChange,
   initialCategory = 'all',
 }: PortfolioGridProps) {
+  const router = useRouter();
   const initialFilter = useMemo(() => {
     const matched = FILTERS.find(
       (f) => f.toLowerCase() === initialCategory.toLowerCase()
@@ -318,7 +383,11 @@ export default function PortfolioGrid({
     };
     categoryItems.forEach((item) => {
       (Object.keys(groups) as (keyof PortfolioFilters)[]).forEach((group) => {
-        (item.filters?.[group] ?? []).forEach((value) => {
+        // Guards against legacy rows where a filter key was saved as ""
+        // instead of an array or being omitted (an empty string has no
+        // .forEach and would crash the whole grid) — see PortfolioAdminManager.
+        const raw = item.filters?.[group];
+        (Array.isArray(raw) ? raw : []).forEach((value) => {
           groups[group].set(value, (groups[group].get(value) ?? 0) + 1);
         });
       });
@@ -341,7 +410,9 @@ export default function PortfolioGrid({
       .filter((item) => {
         const matchesFilters = (Object.keys(activeFilters) as (keyof PortfolioFilters)[]).every((group) => {
           const selected = activeFilters[group] ?? [];
-          return selected.length === 0 || selected.some((value) => (item.filters?.[group] ?? []).includes(value));
+          const raw = item.filters?.[group];
+          const itemValues = Array.isArray(raw) ? raw : [];
+          return selected.length === 0 || selected.some((value) => itemValues.includes(value));
         });
         const matchesTemplate =
           selectedTemplates.length === 0 || (item.template_number != null && selectedTemplates.includes(item.template_number));
@@ -400,6 +471,16 @@ export default function PortfolioGrid({
   }, [openFilter]);
 
   function handleFilterChange(filter: string) {
+    // Updates local state immediately (below) for instant visual feedback,
+    // but the URL update itself goes through Next's router, not a raw
+    // window.history.pushState — a raw call doesn't tell Next.js a
+    // navigation happened, so app/portfolio/page.tsx (a Server Component)
+    // never re-runs with the new ?category=, and its key={normalizedCategory}
+    // (which is what's supposed to give this whole page a clean remount on
+    // a real category change) never fires. The address bar updated, but the
+    // page silently kept showing the previous category until some other
+    // interaction happened to force a resync — router.push is what actually
+    // triggers that remount correctly, every time.
     setActiveFilter(filter);
     setActiveFilters({});
     setSelectedTemplates([]);
@@ -413,16 +494,18 @@ export default function PortfolioGrid({
 
     const categoryKey = filter === 'All' ? 'all' : filter.toLowerCase();
 
-    // Update URL query parameters without triggering full page reload
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      if (categoryKey === 'all') {
-        url.searchParams.delete('category');
-      } else {
-        url.searchParams.set('category', categoryKey);
-      }
-      window.history.pushState({}, '', url.pathname + url.search);
+    // Update the URL through Next's router (see the comment above) so
+    // app/portfolio/page.tsx actually re-runs with the new category and its
+    // key-based remount does its job. scroll: false since the explicit
+    // window.scrollTo below already handles that, deliberately (smooth,
+    // not instant).
+    const url = new URL(window.location.href);
+    if (categoryKey === 'all') {
+      url.searchParams.delete('category');
+    } else {
+      url.searchParams.set('category', categoryKey);
     }
+    router.push(url.pathname + url.search, { scroll: false });
 
     // Notify parent about category change
     if (onCategoryChange) {
@@ -450,6 +533,15 @@ export default function PortfolioGrid({
     setVisibleCount(ITEMS_PER_PAGE);
   }
 
+  // Per-group clear for the always-visible content/colour pill grids — resets
+  // only that one group, unlike handleResetFilters below which clears
+  // everything (category tabs are untouched either way; they're a separate
+  // single-select mechanism, not part of activeFilters at all).
+  function handleClearGroup(group: keyof PortfolioFilters) {
+    setActiveFilters((current) => ({ ...current, [group]: [] }));
+    setVisibleCount(ITEMS_PER_PAGE);
+  }
+
   function handleTemplateValueChange(value: string) {
     setSelectedTemplates((current) =>
       current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
@@ -466,10 +558,6 @@ export default function PortfolioGrid({
 
   const hasActiveFilters =
     Object.values(activeFilters).some((values) => (values?.length ?? 0) > 0) || selectedTemplates.length > 0;
-
-  const filterLabels: Record<keyof PortfolioFilters, string> = {
-    style: 'Style', religion: 'Religion', colour: 'Colour', children: 'Children',
-  };
 
   // Template numbers are numeric strings ("9", "10", "100") — a plain string
   // sort would put "10" before "2", so compare numerically when both sides
@@ -526,6 +614,58 @@ export default function PortfolioGrid({
 
   const savedIds = useMemo(() => new Set(savedItems.map((item) => item.id)), [savedItems]);
 
+  // Shared renderer for every always-visible pill filter group (content,
+  // colour, religion, children) — one flat, always-on grid of toggleable
+  // pills plus its own Clear pill, instead of the old click-to-open
+  // dropdown. A group with only one real value (children currently only
+  // ever has "Children") naturally renders as a single pill, which is
+  // exactly the "one toggle instead of a dropdown" simplification without
+  // needing special-case code for that group.
+  function renderFilterPillGroup(group: keyof PortfolioFilters, label: string, icon?: (value: string) => React.ReactNode) {
+    if (filterOptions[group].size === 0) return null;
+    return (
+      <div>
+        <p className="mb-4 font-mono text-label uppercase tracking-wider text-cat-heading">
+          Filter by {label}…:
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {sortFilterValues([...filterOptions[group].keys()]).map((value) => {
+            const isActive = activeFilters[group]?.includes(value) ?? false;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handleFilterValueChange(group, value)}
+                aria-pressed={isActive}
+                className={[
+                  'flex min-h-8 items-center gap-2 rounded-full border px-4 py-2 font-mono text-[13px] uppercase tracking-[0.08em] shadow-[0_2px_10px_rgba(24,31,39,0.06)] transition-colors duration-150',
+                  isActive
+                    ? 'border-cat-heading bg-cat-heading text-cat-bg'
+                    : 'border-cat-muted/60 bg-cat-bg text-cat-heading hover:border-cat-accent-dark',
+                ].join(' ')}
+              >
+                {icon?.(value)}
+                {value}
+              </button>
+            );
+          })}
+          {(activeFilters[group]?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => handleClearGroup(group)}
+              className="flex min-h-8 items-center gap-2 rounded-full border border-cat-heading bg-cat-bg px-4 py-2 font-mono text-[13px] uppercase tracking-[0.08em] text-cat-heading transition-colors hover:bg-cat-heading hover:text-cat-bg"
+            >
+              <svg viewBox="0 0 20 20" fill="none" className="h-3 w-3" aria-hidden="true">
+                <path d="M15 5 5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div data-category={activeFilter === 'All' ? 'all' : activeFilter.toLowerCase()}>
       {/* Filter bar */}
@@ -567,198 +707,121 @@ export default function PortfolioGrid({
                 type="button"
                 onClick={handleResetFilters}
                 disabled={!hasActiveFilters}
-                className="flex items-center gap-1.5 font-mono text-base uppercase tracking-[0.14em] text-cat-muted underline decoration-cat-muted/50 underline-offset-2 transition-colors hover:text-cat-accent hover:decoration-cat-accent disabled:pointer-events-none disabled:opacity-40"
+                className="flex items-center gap-1.5 font-mono text-base uppercase tracking-[0.14em] text-cat-heading underline decoration-cat-heading/50 underline-offset-2 transition-colors hover:text-cat-accent-dark hover:decoration-cat-accent-dark disabled:pointer-events-none disabled:opacity-40"
               >
                 <svg viewBox="0 0 20 20" fill="none" className="h-3 w-3" aria-hidden="true">
                   <path d="M15 5 5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                 </svg>
                 Reset filters
               </button>
-              <span className="font-mono text-base text-cat-muted">{filtered.length} projects</span>
+              <span className="font-mono text-base text-cat-heading">{filtered.length} projects</span>
             </div>
           </div>
-          <div ref={filterPanelRef} className="flex flex-wrap gap-6">
-            {templateOptions.size > 0 && (
-              <div className="relative">
-                <motion.button
-                  type="button"
-                  aria-expanded={openFilter === 'template'}
-                  aria-controls="portfolio-filter-template"
-                  onClick={() => setOpenFilter(openFilter === 'template' ? null : 'template')}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                  className={[
-                    'glass group/filter flex min-h-8 items-center gap-2 rounded-full border px-4 py-2 font-mono text-[13px] uppercase tracking-[0.1em] shadow-[0_2px_10px_rgba(24,31,39,0.05)] transition-[background-color,border-color,box-shadow] duration-200',
-                    openFilter === 'template'
-                      ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
-                      : 'border-cat-muted/35 text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.1)]',
-                  ].join(' ')}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`h-1 w-1 shrink-0 rounded-full transition-colors duration-200 ${selectedTemplates.length > 0 ? 'bg-cat-accent' : 'bg-cat-muted/70'}`}
-                  />
-                  <span>Template No.</span>
-                  {selectedTemplates.length > 0 && <span className="opacity-70">({selectedTemplates.length})</span>}
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    className={['h-3 w-3 transition-transform duration-200', openFilter === 'template' ? 'rotate-180' : ''].join(' ')}
-                  >
-                    <path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </motion.button>
 
-                {openFilter === 'template' && (
-                  <div
-                    id="portfolio-filter-template"
-                    data-lenis-prevent
-                    className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden rounded-2xl border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
-                    style={{ backgroundColor: 'var(--cat-bg)', opacity: 1 }}
-                    role="region"
-                    aria-label="Template No. filter options"
-                  >
-                    {templateOptions.size > 6 && (
-                      <div className="border-b border-border/60 p-2">
-                        <input
-                          type="text"
-                          value={filterSearch}
-                          onChange={(e) => setFilterSearch(e.target.value)}
-                          placeholder="Search template no.…"
-                          autoFocus
-                          className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-base text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
-                        />
+          {/* Content + Religion on the left, Colour + Children + Template
+              No. on the right — two clean columns instead of alternating
+              full-width rows. Stacks to one column on mobile. */}
+          <div className="grid grid-cols-1 gap-x-16 gap-y-8 lg:grid-cols-2">
+            {/* Left block */}
+            <div className="flex flex-col gap-8">
+              {renderFilterPillGroup('style', 'content', (v) => <ContentIcon value={v} />)}
+              {/* Religion — no icon: there's no single symbol that represents
+                  every faith equally, and the text label alone is already
+                  unambiguous. */}
+              {renderFilterPillGroup('religion', 'religion')}
+            </div>
+
+            {/* Right block */}
+            <div className="flex flex-col gap-8">
+              {renderFilterPillGroup('colour', 'colour', (v) => <ColourSwatch value={v} />)}
+              {/* Children — was a dropdown for what's normally a single value
+                  ("Children"); the shared pill renderer naturally collapses
+                  to one toggle when there's only one option. */}
+              {renderFilterPillGroup('children', 'children')}
+
+              <div ref={filterPanelRef} className="flex flex-wrap gap-6">
+                {templateOptions.size > 0 && (
+                  <div className="relative">
+                    <motion.button
+                      type="button"
+                      aria-expanded={openFilter === 'template'}
+                      aria-controls="portfolio-filter-template"
+                      onClick={() => setOpenFilter(openFilter === 'template' ? null : 'template')}
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      className={[
+                        'glass group/filter flex min-h-8 items-center gap-2 rounded-full border px-4 py-2 font-mono text-[13px] uppercase tracking-[0.1em] shadow-[0_2px_10px_rgba(24,31,39,0.05)] transition-[background-color,border-color,box-shadow] duration-200',
+                        openFilter === 'template'
+                          ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
+                          : 'border-cat-muted/35 text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.1)]',
+                      ].join(' ')}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`h-1 w-1 shrink-0 rounded-full transition-colors duration-200 ${selectedTemplates.length > 0 ? 'bg-cat-accent' : 'bg-cat-muted/70'}`}
+                      />
+                      <span>Template No.</span>
+                      {selectedTemplates.length > 0 && <span className="opacity-70">({selectedTemplates.length})</span>}
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        className={['h-3 w-3 transition-transform duration-200', openFilter === 'template' ? 'rotate-180' : ''].join(' ')}
+                      >
+                        <path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </motion.button>
+
+                    {openFilter === 'template' && (
+                      <div
+                        id="portfolio-filter-template"
+                        className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden rounded-2xl border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
+                        style={{ backgroundColor: 'var(--cat-bg)', opacity: 1 }}
+                        role="region"
+                        aria-label="Template No. filter options"
+                      >
+                        {templateOptions.size > 6 && (
+                          <div className="border-b border-border/60 p-2">
+                            <input
+                              type="text"
+                              value={filterSearch}
+                              onChange={(e) => setFilterSearch(e.target.value)}
+                              placeholder="Search template no.…"
+                              autoFocus
+                              className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-base text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
+                            />
+                          </div>
+                        )}
+                        <div className="max-h-80 overflow-y-auto p-2">
+                          {(() => {
+                            const values = searchFilterValues(sortTemplateNumbersDescending([...templateOptions.keys()]), filterSearch);
+                            if (values.length === 0) {
+                              return <p className="px-3 py-4 font-mono text-base text-cat-heading">No matches.</p>;
+                            }
+                            return values.map((value) => (
+                              <label
+                                key={value}
+                                className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-base uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedTemplates.includes(value)}
+                                  onChange={() => handleTemplateValueChange(value)}
+                                  className="h-4 w-4 shrink-0 accent-[var(--cat-accent)]"
+                                />
+                                <span>{value}</span>
+                                <span className="ml-auto text-cat-heading">{templateOptions.get(value)}</span>
+                              </label>
+                            ));
+                          })()}
+                        </div>
                       </div>
                     )}
-                    <div className="max-h-80 overflow-y-auto p-2">
-                      {(() => {
-                        const values = searchFilterValues(sortTemplateNumbersDescending([...templateOptions.keys()]), filterSearch);
-                        if (values.length === 0) {
-                          return <p className="px-3 py-4 font-mono text-base text-cat-muted">No matches.</p>;
-                        }
-                        return values.map((value) => (
-                          <label
-                            key={value}
-                            className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-base uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedTemplates.includes(value)}
-                              onChange={() => handleTemplateValueChange(value)}
-                              className="h-4 w-4 shrink-0 accent-[var(--cat-accent)]"
-                            />
-                            <span>{value}</span>
-                            <span className="ml-auto text-cat-muted">{templateOptions.get(value)}</span>
-                          </label>
-                        ));
-                      })()}
-                    </div>
                   </div>
                 )}
               </div>
-            )}
-
-            {(Object.keys(filterOptions) as (keyof PortfolioFilters)[]).map((group) => (
-              filterOptions[group].size > 0 && (
-                <div key={group} className="relative">
-                  <motion.button
-                    type="button"
-                    aria-expanded={openFilter === group}
-                    aria-controls={`portfolio-filter-${group}`}
-                    onClick={() => setOpenFilter(openFilter === group ? null : group)}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className={[
-                      'glass group/filter flex min-h-8 items-center gap-2 rounded-full border px-4 py-2 font-mono text-[13px] uppercase tracking-[0.1em] shadow-[0_2px_10px_rgba(24,31,39,0.05)] transition-[background-color,border-color,box-shadow] duration-200',
-                      openFilter === group
-                        ? 'border-cat-heading bg-cat-heading text-cat-bg shadow-[0_10px_24px_rgba(24,31,39,0.16)]'
-                        : 'border-cat-muted/35 text-cat-heading hover:border-cat-accent hover:shadow-[0_10px_24px_rgba(24,31,39,0.1)]',
-                    ].join(' ')}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`h-1 w-1 shrink-0 rounded-full transition-colors duration-200 ${(activeFilters[group]?.length ?? 0) > 0 ? 'bg-cat-accent' : 'bg-cat-muted/70'
-                        }`}
-                    />
-                    <span>{filterLabels[group]}</span>
-                    {(activeFilters[group]?.length ?? 0) > 0 && (
-                      <span className="opacity-70">({activeFilters[group]?.length})</span>
-                    )}
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      className={[
-                        'h-3 w-3 transition-transform duration-200',
-                        openFilter === group ? 'rotate-180' : '',
-                      ].join(' ')}
-                    >
-                      <path
-                        d="m5 7.5 5 5 5-5"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </motion.button>
-
-                  {openFilter === group && (
-                    <div
-                      id={`portfolio-filter-${group}`}
-                      data-lenis-prevent
-                      className="animate-[filter-menu-in_180ms_cubic-bezier(0.22,1,0.36,1)] absolute left-0 top-[calc(100%+8px)] z-[110] w-72 overflow-hidden rounded-2xl border border-border shadow-[0_18px_40px_rgba(24,31,39,0.18)]"
-                      style={{ backgroundColor: 'var(--cat-bg)', opacity: 1 }}
-                      role="region"
-                      aria-label={`${filterLabels[group]} filter options`}
-                    >
-                      {filterOptions[group].size > 6 && (
-                        <div className="border-b border-border/60 p-2">
-                          <input
-                            type="text"
-                            value={filterSearch}
-                            onChange={(e) => setFilterSearch(e.target.value)}
-                            placeholder={`Search ${filterLabels[group].toLowerCase()}…`}
-                            autoFocus
-                            className="w-full rounded-full border border-border bg-transparent px-3 py-2 font-mono text-base text-cat-heading outline-none placeholder:text-cat-muted focus:border-cat-accent"
-                          />
-                        </div>
-                      )}
-                      <div className="max-h-80 overflow-y-auto p-2">
-                        {(() => {
-                          const values = searchFilterValues(sortFilterValues([...filterOptions[group].keys()]), filterSearch);
-                          if (values.length === 0) {
-                            return (
-                              <p className="px-3 py-4 font-mono text-base text-cat-muted">No matches.</p>
-                            );
-                          }
-                          return values.map((value) => (
-                            <label
-                              key={value}
-                              className="flex min-h-12 cursor-pointer items-center gap-3 px-3 font-mono text-base uppercase tracking-[0.1em] text-cat-heading transition-colors hover:bg-cat-bg"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={activeFilters[group]?.includes(value) ?? false}
-                                onChange={() => handleFilterValueChange(group, value)}
-                                className="h-4 w-4 shrink-0 accent-[var(--cat-accent)]"
-                              />
-                              <span>{value}</span>
-                              <span className="ml-auto text-cat-muted">{filterOptions[group].get(value)}</span>
-                            </label>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            ))}
-
-
+            </div>
           </div>
         </div>
       )}

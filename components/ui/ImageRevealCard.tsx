@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
@@ -34,13 +34,33 @@ export function ImageRevealCard({
   const [errored, setErrored] = useState(false);
   const showImage = Boolean(src) && !errored;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  // whileInView's IntersectionObserver can fire before a page transition has
+  // settled into its final scroll position, wrongly conclude the card is out
+  // of view, and — since viewport.once is true — never re-check, leaving the
+  // curtain stuck fully closed over the image (or the image stuck zoomed in,
+  // its reveal never fired) until a real scroll forces a recheck. Checking
+  // the real position ourselves before paint sidesteps that; below-the-fold
+  // cards are untouched, still using the normal scroll-triggered reveal.
+  const [forceVisible, setForceVisible] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setForceVisible(true);
+    }
+  }, []);
+
   return (
-    <div className={`relative overflow-hidden border border-border ${className}`}>
+    <div ref={containerRef} className={`relative overflow-hidden border border-border ${className}`}>
       {showImage ? (
         <motion.div
           className="absolute inset-0"
           initial={{ scale: 1.28 }}
-          whileInView={{ scale: 1 }}
+          animate={forceVisible ? { scale: 1 } : undefined}
+          whileInView={forceVisible ? undefined : { scale: 1 }}
           viewport={{ once: true, margin: '-10%' }}
           transition={{ duration: 1.2, delay: delay + 0.1, ease: [0.16, 1, 0.3, 1] }}
         >
@@ -67,7 +87,8 @@ export function ImageRevealCard({
       {/* Curtain wipe */}
       <motion.div
         initial={{ scaleX: 1 }}
-        whileInView={{ scaleX: 0 }}
+        animate={forceVisible ? { scaleX: 0 } : undefined}
+        whileInView={forceVisible ? undefined : { scaleX: 0 }}
         viewport={{ once: true, margin: '-10%' }}
         transition={{ duration: 0.8, delay, ease: [0.77, 0, 0.18, 1] }}
         style={{ transformOrigin: 'left', background: curtainColor }}

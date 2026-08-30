@@ -53,8 +53,16 @@ const categoryContentMap: Record<string, CategoryContent> = {
     description:
       'Orders of service, memorial cards, and keepsake books — handled with warmth, care, and unhurried attention to detail.',
     bgGradient:
-      'linear-gradient(135deg, #FBF7EE 0%, #c5a34e 30%, #F3E7C9 60%, #FBF7EE 100%)',
-    overlayGradient: 'none',
+      'linear-gradient(135deg, #FFFFFF 0%, #c5a34e 30%, #F3E7C9 60%, #FFFFFF 100%)',
+    // The photo (Portfolio-funeral-Image.jpg) fades to white near its own
+    // bottom edge, but only on narrower crops — on a wide desktop viewport,
+    // object-cover crops more off the top/bottom to fill the width, cutting
+    // off that fade and leaving solid sky-blue to hard-cut straight into
+    // the section's background. An explicit overlay (matching every other
+    // category below) blends it into that same background (white, for this
+    // category) regardless of how the photo gets cropped.
+    overlayGradient:
+      'linear-gradient(to bottom, transparent 0%, transparent 55%, rgba(255,255,255,0.65) 80%, #FFFFFF 100%)',
   },
   wedding: {
     eyebrow: '',

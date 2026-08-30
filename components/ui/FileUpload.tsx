@@ -4,6 +4,61 @@ import { useState, useRef, type DragEvent, type ChangeEvent } from 'react';
 import Image from 'next/image';
 import { uploadFileDirect } from '@/utils/presigned-upload';
 
+// Uploads go straight from the browser to R2 (see the comment on
+// maxSizeMB below) — nothing server-side ever gets a chance to touch the
+// file, so an admin picking a straight-off-camera photo (routinely
+// 15-30MB, several thousand pixels wide) ends up served to every visitor
+// at full size forever. Shrinking oversized images client-side, before
+// they ever leave the browser, is the only place left to catch this.
+// Only JPEG/PNG — the two formats an actual camera/screenshot produces —
+// get touched; PDFs, SVGs (already tiny/vector), HEIC (canvas can't
+// reliably decode it) and anything already a sane size pass through
+// untouched. Any failure here just falls back to the original file rather
+// than blocking the upload.
+const RESIZABLE_TYPES = new Set(['image/jpeg', 'image/png']);
+const MAX_DIMENSION = 2500; // comfortably covers even a full-bleed hero on a retina display
+
+async function shrinkIfOversized(file: File): Promise<File> {
+  if (!RESIZABLE_TYPES.has(file.type)) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const { width, height } = bitmap;
+    if (Math.max(width, height) <= MAX_DIMENSION) {
+      bitmap.close();
+      return file;
+    }
+
+    const scale = MAX_DIMENSION / Math.max(width, height);
+    const targetWidth = Math.round(width * scale);
+    const targetHeight = Math.round(height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      bitmap.close();
+      return file;
+    }
+    ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+    bitmap.close();
+
+    // PNG stays PNG (preserves transparency) — everything else becomes a
+    // quality-85 JPEG, same target quality used elsewhere in this app.
+    const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, outputType, 0.85)
+    );
+    if (!blob) return file;
+
+    return new File([blob], file.name, { type: outputType });
+  } catch (err) {
+    console.error('[FileUpload] client-side resize failed, uploading original:', err);
+    return file;
+  }
+}
+
 interface FileUploadProps {
   value?: string;
   onChange: (url: string, key?: string) => void;
@@ -61,7 +116,8 @@ export default function FileUpload({
     setProgress(0);
 
     try {
-      const uploaded = await uploadFileDirect(file, {
+      const toUpload = await shrinkIfOversized(file);
+      const uploaded = await uploadFileDirect(toUpload, {
         folder,
         filenamePrefix,
         onProgress: setProgress,
