@@ -100,7 +100,7 @@ const nextConfig: NextConfig = {
     // Serve modern formats (WebP, AVIF) automatically
     formats: ['image/avif', 'image/webp'],
     // Allowed quality values (satisfies Next.js 16 requirement)
-    qualities: [75, 90],
+    qualities: [75, 80, 90],
     // In dev, expire immediately so replaced images show straight away;
     // in production, cache for 7 days.
     minimumCacheTTL: process.env.NODE_ENV === 'development' ? 1 : 60 * 60 * 24 * 7,

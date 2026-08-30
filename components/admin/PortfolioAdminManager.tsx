@@ -44,7 +44,10 @@ function emptyForm(): FormState {
 function toFormState(item: PortfolioItem): FormState {
   const filterText: Record<keyof PortfolioFilters, string> = { style: '', religion: '', colour: '', children: '' };
   (Object.keys(filterText) as (keyof PortfolioFilters)[]).forEach((key) => {
-    filterText[key] = (item.filters?.[key] ?? []).join(', ');
+    // Some legacy rows have a filter key saved as "" instead of an array —
+    // a bare string has no .join and would crash this form on open.
+    const raw = item.filters?.[key];
+    filterText[key] = Array.isArray(raw) ? raw.join(', ') : '';
   });
 
   return {

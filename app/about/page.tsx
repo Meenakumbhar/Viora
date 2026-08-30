@@ -15,8 +15,8 @@ export default function AboutPage() {
       {/* Hero Section */}
       <HeroVideo poster="/images/About_us_banner.jpg">
         <span
-          className="block font-mono text-label uppercase tracking-wider text-white"
-          style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}
+          className="block font-mono text-label uppercase tracking-wider text-text-heading"
+          style={{ textShadow: '0 1px 8px rgba(255,255,255,0.5)' }}
         >
           Our Story
         </span>
@@ -26,7 +26,7 @@ export default function AboutPage() {
         >
           Designed with
           <br />
-          <em className="not-italic font-semibold text-white">Intention</em>
+          <em className="not-italic font-semibold">Intention</em>
         </h1>
         <p
           className="mt-6 font-body text-body-lg text-white max-w-2xl leading-relaxed"
@@ -144,7 +144,7 @@ export default function AboutPage() {
                   Global Perspective
                 </h3>
                 <p className="mt-4 font-body text-body-base text-text-muted leading-relaxed">
-                  We serve families and brands worldwide. Our logistics are designed to handle express custom print packages, wherever you are.
+                  We serve families, clubs, and brands in over 30 countries. Our logistics are designed to handle express custom print packages worldwide.
                 </p>
               </div>
             </div>

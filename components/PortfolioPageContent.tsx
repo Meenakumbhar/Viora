@@ -16,6 +16,13 @@ export default function PortfolioPageContent({
   initialItems,
   initialCategory = 'all',
 }: PortfolioPageContentProps) {
+  // No effect needed to keep this in sync with the URL on a real navigation
+  // — app/portfolio/page.tsx renders this component with
+  // key={normalizedCategory}, so React fully remounts it (fresh state, from
+  // the new initialCategory) whenever the category actually changes via a
+  // real navigation. That only works, though, if the URL change actually
+  // goes through Next's router — see the fix in PortfolioGrid's
+  // handleFilterChange for the piece that was breaking it.
   const [activeCategory, setActiveCategory] = useState(initialCategory);
 
   return (
