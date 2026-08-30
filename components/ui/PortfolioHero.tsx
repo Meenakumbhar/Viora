@@ -54,15 +54,13 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'Orders of service, memorial cards, and keepsake books — handled with warmth, care, and unhurried attention to detail.',
     bgGradient:
       'linear-gradient(135deg, #FFFFFF 0%, #c5a34e 30%, #F3E7C9 60%, #FFFFFF 100%)',
-    // The photo (Portfolio-funeral-Image.jpg) fades to white near its own
-    // bottom edge, but only on narrower crops — on a wide desktop viewport,
-    // object-cover crops more off the top/bottom to fill the width, cutting
-    // off that fade and leaving solid sky-blue to hard-cut straight into
-    // the section's background. An explicit overlay (matching every other
-    // category below) blends it into that same background (white, for this
-    // category) regardless of how the photo gets cropped.
-    overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 55%, rgba(255,255,255,0.65) 80%, #FFFFFF 100%)',
+    // No fade overlay, by request — the photo (Portfolio-funeral-Image.jpg)
+    // crops straight into the section background with a hard edge. Note:
+    // on a wide desktop viewport, object-cover crops more off the top/bottom
+    // to fill the width, which cuts off this photo's own built-in fade
+    // toward white near its bottom edge — the hard edge will show solid
+    // sky-blue meeting the background there, not a blend.
+    overlayGradient: 'none',
   },
   wedding: {
     eyebrow: '',
@@ -72,8 +70,9 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'Invitation suites, orders of service, table plans, and bespoke signage — each piece crafted to mirror the joy of the day.',
     bgGradient:
       'linear-gradient(135deg, #FDF7F5 0%, #F5E6DF 30%, #E8D5C4 60%, #FDF7F5 100%)',
-    overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 80%, rgba(253,247,245,0.4) 92%, #FDF7F5 100%)',
+    // No fade overlay, by request — the illustration crops straight into
+    // the section background with a hard edge.
+    overlayGradient: 'none',
   },
   events: {
     eyebrow: 'Events Portfolio',
