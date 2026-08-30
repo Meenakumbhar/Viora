@@ -53,7 +53,13 @@ const categoryContentMap: Record<string, CategoryContent> = {
     description:
       'Orders of service, memorial cards, and keepsake books — handled with warmth, care, and unhurried attention to detail.',
     bgGradient:
-      'linear-gradient(135deg, #FBF7EE 0%, #c5a34e 30%, #F3E7C9 60%, #FBF7EE 100%)',
+      'linear-gradient(135deg, #FFFFFF 0%, #c5a34e 30%, #F3E7C9 60%, #FFFFFF 100%)',
+    // No fade overlay, by request — the photo (Portfolio-funeral-Image.jpg)
+    // crops straight into the section background with a hard edge. Note:
+    // on a wide desktop viewport, object-cover crops more off the top/bottom
+    // to fill the width, which cuts off this photo's own built-in fade
+    // toward white near its bottom edge — the hard edge will show solid
+    // sky-blue meeting the background there, not a blend.
     overlayGradient: 'none',
   },
   wedding: {
@@ -64,8 +70,9 @@ const categoryContentMap: Record<string, CategoryContent> = {
       'Invitation suites, orders of service, table plans, and bespoke signage — each piece crafted to mirror the joy of the day.',
     bgGradient:
       'linear-gradient(135deg, #FDF7F5 0%, #F5E6DF 30%, #E8D5C4 60%, #FDF7F5 100%)',
-    overlayGradient:
-      'linear-gradient(to bottom, transparent 0%, transparent 80%, rgba(253,247,245,0.4) 92%, #FDF7F5 100%)',
+    // No fade overlay, by request — the illustration crops straight into
+    // the section background with a hard edge.
+    overlayGradient: 'none',
   },
   events: {
     eyebrow: 'Events Portfolio',

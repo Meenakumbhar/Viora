@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Cormorant_Garamond, DM_Sans, DM_Mono } from 'next/font/google';
 import Nav from '@/components/ui/Nav';
 import Footer from '@/components/ui/Footer';
@@ -146,6 +147,7 @@ export default async function RootLayout({
         </CategoryWrapper>
         <Footer />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
