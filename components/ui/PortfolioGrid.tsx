@@ -230,7 +230,10 @@ const PortfolioCard = memo(function PortfolioCard({
         // Swapped back to a light caption background — the accent (now a
         // pale champagne gold) reads as a proper "colour" on the Buy button
         // instead, rather than being buried as white-on-dark card text.
-        'group relative mb-4 break-inside-avoid overflow-hidden border border-border bg-cat-surface',
+        // No mb-4/break-inside-avoid here — those were for the old CSS
+        // multi-column layout; the grid container's own gap-4 handles
+        // spacing on both axes now.
+        'group relative overflow-hidden border border-border bg-cat-surface',
         'transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-cat-accent hover:shadow-[0_20px_44px_rgba(24,31,39,0.12)]',
         isAppearing ? 'animate-slide-up' : '',
       ].join(' ')}
@@ -826,10 +829,19 @@ export default function PortfolioGrid({
         </div>
       )}
 
-      {/* Masonry grid */}
+      {/* Grid — every card renders at the same CARD_ASPECT (see above), so
+          this was never actually variable-height masonry; it was a plain
+          uniform grid implemented with CSS multi-column (`columns-*`),
+          which by default rebalances ALL items across columns for
+          equal-height columns whenever content is added. That's exactly
+          what made Load More visibly shift already-seen items into a
+          different column/position. CSS Grid lays out strictly in DOM
+          order and only ever appends new rows at the bottom — nothing
+          already placed can move — with an identical visual result since
+          every card is the same size anyway. */}
       <div
         ref={gridRef}
-        className="columns-1 gap-4 md:columns-2 lg:columns-3 xl:columns-4"
+        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
         {visible.map((item, i) => (
           <PortfolioCard

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { insertEnquiry, updateUserProfile } from '@/lib/db';
 import { auth } from '@/lib/auth';
-import { sendEnquiryAutoReply } from '@/lib/resend';
+import { sendEnquiryAutoReply, sendEnquiryNotification } from '@/lib/resend';
 import { emailSchema, portfolioItemRefsSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Enquiry } from '@/types/database';
@@ -48,6 +48,20 @@ export async function POST(request: NextRequest) {
     // failing to send it shouldn't fail the enquiry submission itself.
     await sendEnquiryAutoReply({ id: enquiry.id, name: enquiry.name, email: enquiry.email }).catch((err) => {
       console.error('[enquiries] confirmation email failed:', err);
+    });
+
+    // Staff-facing alert — this was built but never actually wired up, so
+    // new enquiries were only ever visible by someone checking the admin
+    // dashboard. Same fire-and-forget treatment: a failure here shouldn't
+    // fail the customer's submission.
+    await sendEnquiryNotification({
+      name: enquiry.name,
+      email: enquiry.email,
+      service_type: enquiry.service_type,
+      description: enquiry.description,
+      country: enquiry.country,
+    }).catch((err) => {
+      console.error('[enquiries] staff notification email failed:', err);
     });
 
     // If this came from a logged-in customer, capture their contact details
