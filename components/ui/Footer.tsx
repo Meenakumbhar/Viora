@@ -103,7 +103,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="font-body text-label uppercase tracking-wider text-accent-gold mb-6">
+      <h3 className="font-body text-label uppercase tracking-wider text-accent-forest mb-6">
         {heading}
       </h3>
       <ul className="space-y-0">
@@ -111,7 +111,7 @@ function FooterColumn({
           <li key={link.href + link.label}>
             <Link
               href={link.href}
-              className="block py-1.5 font-body text-body-base text-dark-text-muted hover:text-dark-text-primary transition-colors"
+              className="block py-1.5 font-body text-body-base text-text-muted hover:text-text-heading transition-colors"
             >
               {link.label}
             </Link>
@@ -128,7 +128,7 @@ function FooterColumn({
 
 export default function Footer() {
   return (
-    <footer className="bg-dark-bg-secondary border-t border-dark-border">
+    <footer className="bg-bg-primary border-t border-border">
       <div className="container-wide py-20 md:py-24">
         {/* ── 4-Column Grid ──────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
@@ -139,13 +139,13 @@ export default function Footer() {
                 wordmark="Memories in Prints"
                 containerWidth={240}
                 containerHeight={60}
-                textClassName="font-display font-light text-2xl text-dark-text-primary"
+                textClassName="font-display font-light text-2xl text-text-heading"
               />
             </Link>
-            <p className="font-body text-body-base text-dark-text-muted mt-4">
+            <p className="font-body text-body-base text-text-muted mt-4">
               A full-service design and print studio.
               <br />
-              Serving families, brands, and clubs worldwide.
+              Serving families, brands, and Organisations worldwide.
             </p>
 
             {/* Social Icons */}
@@ -155,7 +155,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="p-1 text-dark-text-muted hover:text-accent-gold transition-colors"
+                className="p-1 text-text-muted hover:text-accent-forest transition-colors"
               >
                 <InstagramIcon />
               </a>
@@ -164,7 +164,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="p-1 text-dark-text-muted hover:text-accent-gold transition-colors"
+                className="p-1 text-text-muted hover:text-accent-forest transition-colors"
               >
                 <FacebookIcon />
               </a>
@@ -173,7 +173,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
-                className="p-1 text-dark-text-muted hover:text-accent-gold transition-colors"
+                className="p-1 text-text-muted hover:text-accent-forest transition-colors"
               >
                 <LinkedInIcon />
               </a>
@@ -191,12 +191,12 @@ export default function Footer() {
         </div>
 
         {/* ── Bottom Bar ─────────────────────────────────────────────── */}
-        <div className="border-t border-dark-border mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="font-body text-base text-dark-text-muted">
-            &copy; 2025 Memories in Prints &middot; Worldwide design &amp; print
+        <div className="border-t border-border mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="font-body text-base text-text-muted">
+            &copy;{new Date().getFullYear()} Memories in Prints&trade; — A brand of Viora Memories In Prints Pvt Ltd. All rights reserved
           </p>
-          <p className="font-mono text-label text-dark-text-muted">
-            memoriesinprints.com
+          <p className="font-mono text-label text-text-muted">
+            www.memoriesinprints.com
           </p>
         </div>
       </div>
