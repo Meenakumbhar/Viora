@@ -1,12 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useNotifications } from '@/lib/hooks/use-notifications';
 import Link from 'next/link';
-
-interface AwaitingReviewItem {
-  id: string;
-  serviceType: string;
-}
 
 // Self-fetching — reads its own data from /api/account/notifications rather
 // than taking it as a prop, so it can sit in shared chrome (JobTicket) used
@@ -18,22 +14,14 @@ interface AwaitingReviewItem {
 // what it says — the previous version only had that, so the badge existed
 // but nobody could tell what it was for without guessing.
 export default function NotificationBell() {
-  const [items, setItems] = useState<AwaitingReviewItem[]>([]);
+  // Shared SWR cache: this bell sits in chrome rendered on every /account/*
+  // page, and the endpoint behind it fans out to the customer's orders and
+  // their design revisions. Fetching per mount re-paid that on every
+  // navigation; SWR reuses the answer and refreshes it on tab focus, which
+  // is when a stale count would actually be noticed.
+  const { items } = useNotifications();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/account/notifications')
-      .then((res) => (res.ok ? res.json() : { success: false }))
-      .then((json) => {
-        if (!cancelled && json.success) setItems(json.data.awaitingReview ?? []);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (!open) return;

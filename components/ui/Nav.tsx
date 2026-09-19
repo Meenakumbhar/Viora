@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useSession } from '@/lib/hooks/use-session';
 import { isCategoryActive } from '@/lib/active-services';
 import { groupProductsByType } from '@/lib/product-types';
 import type { Product, PublicUser } from '@/types/database';
@@ -146,8 +147,12 @@ export default function Nav({ products }: { products: Product[] }) {
   const [navHidden, setNavHidden] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  // undefined = session not checked yet, null = signed out
-  const [user, setUser] = useState<PublicUser | null | undefined>(undefined);
+  // Shared SWR cache rather than a per-mount fetch: /api/auth/me costs a
+  // better-auth session lookup against Postgres, and several components ask
+  // for the same answer. undefined = session not checked yet (keeps the nav
+  // from flashing a signed-out state on first paint), null = signed out.
+  const { user: sessionUser, isLoading: sessionLoading } = useSession();
+  const user: PublicUser | null | undefined = sessionLoading ? undefined : sessionUser;
 
   useEffect(() => {
     const syncCart = () => {
@@ -158,20 +163,6 @@ export default function Nav({ products }: { products: Product[] }) {
     return () => window.removeEventListener('portfolio-cart-updated', syncCart);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((json) => {
-        if (!cancelled) setUser(json.data?.user ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setUser(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
