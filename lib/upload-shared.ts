@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getUserById } from '@/lib/db';
+import { getUserById } from '@/lib/data/users';
 import { ADMIN_SESSION_COOKIE, verifyAdminToken } from '@/utils/admin-auth';
 
 // The one folder a signed-out visitor is allowed to upload into — the

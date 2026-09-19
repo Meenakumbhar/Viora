@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAllOrders, createOrder } from '@/lib/db';
+import { createOrder, getAllOrders } from '@/lib/data/orders';
 import { sendOrderPlacedEmail } from '@/lib/resend';
 import { emailSchema, portfolioItemRefsSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';

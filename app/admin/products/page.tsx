@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getAllProductsForAdmin } from '@/lib/db';
+import { getAllProductsForAdmin } from '@/lib/data/products';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import ProductAdminManager from '@/components/admin/ProductAdminManager';

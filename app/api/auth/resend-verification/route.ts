@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
-import { getUserByEmail } from '@/lib/db';
+import { getUserByEmail } from '@/lib/data/users';
 import { emailSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse } from '@/types/database';

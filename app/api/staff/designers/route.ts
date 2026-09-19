@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDesigners } from '@/lib/db';
+import { getDesigners } from '@/lib/data/users';
 import type { ApiResponse } from '@/types/database';
 
 // GET /api/staff/designers — list of designer accounts, for the proofreader's assignment dropdown

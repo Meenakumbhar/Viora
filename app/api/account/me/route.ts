@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getUserById, toPublicUser, updateUserProfile } from '@/lib/db';
+import { getUserById, toPublicUser, updateUserProfile } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, PublicUser } from '@/types/database';

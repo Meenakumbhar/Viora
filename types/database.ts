@@ -256,6 +256,18 @@ export interface StaffActivityEvent {
   order_service_type: string;
 }
 
+/**
+ * A designer's current load for the staff workload panel. Declared here
+ * rather than alongside its query in the data layer so the client
+ * components that render it (DesignerWorkloadPanel, StaffDashboardContent)
+ * never have to name a server-only module to get at the type.
+ */
+export interface DesignerWorkload {
+  designerId: string;
+  name: string;
+  openOrders: number;
+}
+
 export interface DesignCommentInput {
   image_index: number;
   x: number;

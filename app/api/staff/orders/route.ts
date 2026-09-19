@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllOrders, getUserById } from '@/lib/db';
+import { getAllOrders } from '@/lib/data/orders';
+import { getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import type { ApiResponse } from '@/types/database';
 

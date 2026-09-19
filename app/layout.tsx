@@ -9,7 +9,7 @@ import CategoryWrapper from '@/components/ui/CategoryWrapper';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { unstable_cache } from 'next/cache';
 import { SITE_URL } from '@/lib/site-url';
-import { getProducts } from '@/lib/db';
+import { getProducts } from '@/lib/data/products';
 import './globals.css';
 
 // getProducts() already swallows DB errors and returns [] rather than
