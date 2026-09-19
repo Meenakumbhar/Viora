@@ -5,7 +5,9 @@ import Image from 'next/image';
 import SectionReveal from '@/components/ui/SectionReveal';
 import ProductGallery from '@/components/ProductGallery';
 import ProductOrderPanel from '@/components/ProductOrderPanel';
-import { getProducts, getProductBySlug, getRelatedProducts, getPortfolioItems, getProductPricesForProduct } from '@/lib/db';
+import { getPortfolioItems } from '@/lib/data/portfolio';
+import { getProductPricesForProduct } from '@/lib/data/pricing';
+import { getProductBySlug, getProducts, getRelatedProducts } from '@/lib/data/products';
 import { SITE_URL } from '@/lib/site-url';
 
 interface PageProps {

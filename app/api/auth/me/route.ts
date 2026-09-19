@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getUserById, toPublicUser } from '@/lib/db';
+import { getUserById, toPublicUser } from '@/lib/data/users';
 import type { ApiResponse } from '@/types/database';
 
 // GET /api/auth/me — the current logged-in user, or null

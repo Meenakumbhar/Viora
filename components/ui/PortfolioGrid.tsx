@@ -140,7 +140,11 @@ function ContentIcon({ value }: { value: string }) {
 // the artwork, making pieces look cut short.
 const CARD_ASPECT = 'aspect-[3/4]';
 
-const IMAGE_SIZES = '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw';
+// Matches the grid's actual column count per breakpoint (2 cols by default,
+// 3 from md, 4 from xl) so next/image requests a properly-sized source
+// instead of over-fetching a full-width image for what's really a half-width
+// mobile card.
+const IMAGE_SIZES = '(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw';
 
 // Product cart entries use a composite `slug::size` id so each size of the
 // same product stays a distinct line — portfolio entries just use the real id.
@@ -293,7 +297,7 @@ const PortfolioCard = memo(function PortfolioCard({
           <button
             type="button"
             onClick={() => onBuy(item)}
-            className="relative z-20 w-1/4 shrink-0 rounded-full border border-cat-accent bg-cat-accent px-2.5 py-1.5 text-center font-mono text-sm font-semibold uppercase tracking-widest text-cat-heading transition-all duration-200 hover:-translate-y-0.5 hover:bg-cat-accent-dark hover:text-white hover:shadow-[0_14px_30px_rgba(198,168,92,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2"
+            className="relative z-20 shrink-0 whitespace-nowrap rounded-full border border-cat-accent bg-cat-accent px-3 py-1.5 text-center font-mono text-sm font-semibold uppercase tracking-widest text-cat-heading transition-all duration-200 hover:-translate-y-0.5 hover:bg-cat-accent-dark hover:text-white hover:shadow-[0_14px_30px_rgba(198,168,92,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2"
           >
             Buy
           </button>
@@ -841,7 +845,7 @@ export default function PortfolioGrid({
           every card is the same size anyway. */}
       <div
         ref={gridRef}
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4"
       >
         {visible.map((item, i) => (
           <PortfolioCard

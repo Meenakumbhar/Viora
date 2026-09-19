@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { upsertPortfolioItemPrice, getPortfolioItemById } from '@/lib/db';
+import { getPortfolioItemById } from '@/lib/data/portfolio';
+import { upsertPortfolioItemPrice } from '@/lib/data/pricing';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, PortfolioItemPrice } from '@/types/database';
 

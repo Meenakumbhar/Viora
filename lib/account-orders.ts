@@ -1,14 +1,11 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import {
-  getUserById,
-  getOrdersByEmail,
-  getOrderHistoriesForOrders,
-  getDesignRevisionsForOrders,
-  getEnquiriesByEmail,
-  syncOrderPricingFromCatalog,
-} from '@/lib/db';
+import { getDesignRevisionsForOrders } from '@/lib/data/design-revisions';
+import { getEnquiriesByEmail } from '@/lib/data/enquiries';
+import { getOrderHistoriesForOrders, getOrdersByEmail } from '@/lib/data/orders';
+import { syncOrderPricingFromCatalog } from '@/lib/data/pricing';
+import { getUserById } from '@/lib/data/users';
 import { deriveDisplayStage } from '@/lib/order-stage';
 import type { AccountRow } from '@/components/dashboard/CustomerOrderList';
 import type { User } from '@/types/database';

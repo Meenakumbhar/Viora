@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getPortfolioItemById } from '@/lib/db';
+import { getPortfolioItemById } from '@/lib/data/portfolio';
 import PortfolioProject from '@/components/PortfolioProject';
 import { isCategoryActive } from '@/lib/active-services';
 

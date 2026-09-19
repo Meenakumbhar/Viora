@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getOrderById,
-  getUserById,
-  getDesignRevisionById,
-  proofreaderApproveRevision,
-  proofreaderReturnToDesigner,
-} from '@/lib/db';
+import { getDesignRevisionById, proofreaderApproveRevision, proofreaderReturnToDesigner } from '@/lib/data/design-revisions';
+import { getOrderById } from '@/lib/data/orders';
+import { getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import { sendDesignReadyEmail, sendDesignReturnedToDesignerEmail } from '@/lib/resend';
 import { designCommentsSchema, proofreadBodySchema } from '@/lib/schemas';

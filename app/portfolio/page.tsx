@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import PortfolioPageContent from '@/components/PortfolioPageContent';
-import { getPortfolioItems } from '@/lib/db';
+import { getPortfolioItems } from '@/lib/data/portfolio';
 import { isCategoryActive } from '@/lib/active-services';
 
 export const metadata: Metadata = {

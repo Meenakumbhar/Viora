@@ -1,5 +1,5 @@
 import { PANEL_THEME, type DashboardTheme } from '@/lib/dashboard-theme';
-import type { DesignerWorkload } from '@/lib/db';
+import type { DesignerWorkload } from '@/types/database';
 
 export default function DesignerWorkloadPanel({ workload, theme }: { workload: DesignerWorkload[]; theme: DashboardTheme }) {
   const p = PANEL_THEME[theme];

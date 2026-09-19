@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { setCommentResolution } from '@/lib/db';
+import { setCommentResolution } from '@/lib/data/design-revisions';
 import { commentResolutionSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, DesignComment } from '@/types/database';
