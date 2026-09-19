@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-import { getBlogPosts, getBlogPostBySlug } from '@/lib/db';
+import { getBlogPostBySlug, getBlogPosts } from '@/lib/data/posts';
 import { SITE_URL } from '@/lib/site-url';
 
 interface PageProps {

@@ -6,32 +6,10 @@ import SectionReveal from '@/components/ui/SectionReveal';
 import TestimonialSlider from '@/components/ui/TestimonialSlider';
 import AnimatedHeadline from '@/components/ui/AnimatedHeadline';
 import ImageRevealCard from '@/components/ui/ImageRevealCard';
-import { ACTIVE_CATEGORIES } from '@/lib/active-services';
-import { getPortfolioItems, getBlogPosts } from '@/lib/db';
+import { getFeaturedPortfolioItems } from '@/lib/data/portfolio';
+import { getBlogPosts } from '@/lib/data/posts';
 import type { PortfolioItem } from '@/types/database';
 
-// Real studio work for "Our Popular Designs" — pulled live from the
-// portfolio so the homepage always reflects what's actually been made, never
-// seed/placeholder data. Interleaved across active categories (rather than
-// one big recency-sorted pull) so the mix doesn't get swamped by whichever
-// category has more items.
-async function getHomepagePortfolioData() {
-  const perCategory = await Promise.all(
-    ACTIVE_CATEGORIES.map((category) => getPortfolioItems(category))
-  );
-  const maxLen = Math.max(0, ...perCategory.map((items) => items.length));
-
-  const featured: PortfolioItem[] = [];
-  for (let i = 0; i < maxLen && featured.length < 3; i++) {
-    for (const items of perCategory) {
-      const item = items[i];
-      if (!item) continue;
-      if (featured.length < 3) featured.push(item);
-    }
-  }
-
-  return { featured };
-}
 
 /* ───────────────────────────────────────────────────────────────────────────
    Portfolio gradient map — light, category-specific pastels (fallback while
@@ -79,7 +57,7 @@ const blogGradients: Record<string, string> = {
 export const revalidate = 60;
 
 export default async function Home() {
-  const { featured } = await getHomepagePortfolioData();
+  const featured = await getFeaturedPortfolioItems();
   const recentPosts = await getBlogPosts(3);
 
   return (

@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
-import { getUserById, getOrderById, getDesignRevisionsForOrder, getDesigners } from '@/lib/db';
+import { getDesignRevisionsForOrder } from '@/lib/data/design-revisions';
+import { getOrderById } from '@/lib/data/orders';
+import { getDesigners, getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import DashboardShell, { type DashboardNavItem } from '@/components/dashboard/DashboardShell';

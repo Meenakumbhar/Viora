@@ -1,3 +1,8 @@
+// Hard boundary: every function here talks to Postgres directly. Client
+// Components must go through the route handlers in app/api instead; this
+// import makes that a compile-time failure rather than a leaked credential.
+import 'server-only';
+
 import { eq, and, or, gt, asc, desc, inArray, sql as dsql } from 'drizzle-orm';
 import { getDrizzle } from '@/db/client';
 import {
@@ -52,6 +57,7 @@ import type {
   EffectivePrice,
   StaffActivityEvent,
   StaffActivityEventType,
+  DesignerWorkload,
 } from '@/types/database';
 
 /**
@@ -1562,12 +1568,6 @@ export async function getRecentStaffActivity(options: { designerId?: string | nu
       order_service_type: order?.service_type ?? '',
     };
   });
-}
-
-export interface DesignerWorkload {
-  designerId: string;
-  name: string;
-  openOrders: number;
 }
 
 // A deliberately coarse "how full is their plate" metric for the team

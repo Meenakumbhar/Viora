@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPortfolioItemById, updatePortfolioItem, deletePortfolioItem } from '@/lib/db';
+import { deletePortfolioItem, getPortfolioItemById, updatePortfolioItem } from '@/lib/data/portfolio';
 import { portfolioItemInputSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, PortfolioItem } from '@/types/database';

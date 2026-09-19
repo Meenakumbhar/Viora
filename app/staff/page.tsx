@@ -1,14 +1,10 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import {
-  getUserById,
-  getAllOrders,
-  getDesignRevisionsForOrder,
-  getDesigners,
-  getRecentStaffActivity,
-  getDesignerWorkload,
-} from '@/lib/db';
+import { getDesignRevisionsForOrder } from '@/lib/data/design-revisions';
+import { getAllOrders } from '@/lib/data/orders';
+import { getDesignerWorkload, getRecentStaffActivity } from '@/lib/data/staff';
+import { getDesigners, getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import DashboardShell, { type DashboardNavItem } from '@/components/dashboard/DashboardShell';
 import UserLogoutButton from '@/components/ui/UserLogoutButton';

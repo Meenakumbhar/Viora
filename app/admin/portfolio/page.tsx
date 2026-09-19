@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getAllPortfolioItemsForAdmin } from '@/lib/db';
+import { getAllPortfolioItemsForAdmin } from '@/lib/data/portfolio';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import PortfolioAdminManager from '@/components/admin/PortfolioAdminManager';

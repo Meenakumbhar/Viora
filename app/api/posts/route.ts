@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBlogPosts, getBlogPostBySlug } from '@/lib/db';
+import { getBlogPostBySlug, getBlogPosts } from '@/lib/data/posts';
 import type { ApiResponse, Post } from '@/types/database';
 
 // GET /api/posts — Fetch published blog posts

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import { getAllOrders, getAllUsers, syncOrderPricingFromCatalog } from '@/lib/db';
+import { getAllOrders } from '@/lib/data/orders';
+import { syncOrderPricingFromCatalog } from '@/lib/data/pricing';
+import { getAllUsers } from '@/lib/data/users';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import OrdersAdminManager from '@/components/admin/OrdersAdminManager';

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPortfolioItems, createPortfolioItem } from '@/lib/db';
+import { createPortfolioItem, getPortfolioItems } from '@/lib/data/portfolio';
 import { portfolioItemInputSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, PortfolioItem } from '@/types/database';

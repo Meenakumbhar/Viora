@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { setOrderPaymentAmount, getOrderById, getOrderHistory } from '@/lib/db';
+import { getOrderById, getOrderHistory, setOrderPaymentAmount } from '@/lib/data/orders';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, OrderWithHistory } from '@/types/database';
 
