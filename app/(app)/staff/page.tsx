@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { getDesignRevisionsForOrder } from '@/lib/data/design-revisions';
+import { getDesignRevisionsForOrders } from '@/lib/data/design-revisions';
 import { getAllOrders } from '@/lib/data/orders';
 import { getDesignerWorkload, getRecentStaffActivity } from '@/lib/data/staff';
 import { getDesigners, getUserById } from '@/lib/data/users';
@@ -81,10 +81,15 @@ export default async function StaffDashboardPage() {
   // and Server → Client props must be JSON-serializable.
   const designerNamesById: Record<string, string> = Object.fromEntries(designers.map((d) => [d.id, d.name ?? d.email]));
 
-  const revisionsByOrder = await Promise.all(orders.map((o) => getDesignRevisionsForOrder(o.id)));
+  // One batched read rather than a query per order: the singular helper costs
+  // two round-trips each, and the neon-http driver opens a fresh HTTP request
+  // per query — so looping it made this page's cost scale with the order
+  // count. getDesignRevisionsForOrders pulls the same data with two queries
+  // total, via inArray.
+  const revisionsByOrder = await getDesignRevisionsForOrders(orders.map((o) => o.id));
 
-  const rows = orders.map((order, i) => {
-    const revisions = revisionsByOrder[i];
+  const rows = orders.map((order) => {
+    const revisions = revisionsByOrder.get(order.id) ?? [];
     const latest = [...revisions].sort((a, b) => b.version - a.version)[0];
     return { order, latest, revisions };
   });
@@ -120,7 +125,10 @@ export default async function StaffDashboardPage() {
     })
     .map((row) => ({ ...row, actionable: needsAction(row) }));
 
-  const allRevisionsInScope = revisionsByOrder.flat();
+  // The map only ever holds the orders in scope for this viewer (a designer
+  // sees just their own), so flattening its values matches the previous
+  // per-order array-of-arrays exactly.
+  const allRevisionsInScope = [...revisionsByOrder.values()].flat();
   const { weeks: turnaroundWeeks, currentAvg: turnaroundAvg } = computeTurnaround(allRevisionsInScope);
 
   return (

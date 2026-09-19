@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getAllOrders } from '@/lib/data/orders';
-import { syncOrderPricingFromCatalog } from '@/lib/data/pricing';
+import { syncOrderPricingForOrders } from '@/lib/data/pricing';
 import { getAllUsers } from '@/lib/data/users';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
@@ -23,8 +23,9 @@ export default async function AdminOrdersPage() {
   // references) instead of requiring a manual re-entry every time either
   // changes; no-ops for orders already paid.
   const userIdByEmail = new Map(users.map((u) => [u.email, u.id]));
-  const orders = await Promise.all(
-    rawOrders.map((order) => syncOrderPricingFromCatalog(order, userIdByEmail.get(order.customer_email) ?? null))
+  const orders = await syncOrderPricingForOrders(
+    rawOrders,
+    (order) => userIdByEmail.get(order.customer_email) ?? null
   );
 
   return (
