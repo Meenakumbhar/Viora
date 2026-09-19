@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllUsers, toPublicUser } from '@/lib/db';
+import { getAllUsers, toPublicUser } from '@/lib/data/users';
 import type { ApiResponse, PublicUser } from '@/types/database';
 
 // GET /api/admin/users — list all accounts with their role (admin only, gated in proxy.ts)

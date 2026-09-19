@@ -2,7 +2,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminToken } from "@/utils/admin-auth";
 import { auth } from "@/lib/auth";
-import { getUserById } from "@/lib/db";
+import { getUserById } from "@/lib/data/users";
 
 // Better Auth's own docs say getSession() in middleware needs the Node.js
 // runtime for full DB-backed session validation — Next.js confirms this

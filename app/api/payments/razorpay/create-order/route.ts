@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getOrderById, getOrderPaymentGate } from '@/lib/db';
+import { getOrderById, getOrderPaymentGate } from '@/lib/data/orders';
 import { auth } from '@/lib/auth';
-import { getUserById } from '@/lib/db';
+import { getUserById } from '@/lib/data/users';
 import { parseJsonBody } from '@/lib/validation';
 import { RAZORPAY_API_BASE, isRazorpayConfigured, razorpayAuthHeader } from '@/lib/razorpay';
 import type { ApiResponse } from '@/types/database';

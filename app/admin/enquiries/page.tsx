@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getAllEnquiries, getAllOrders } from '@/lib/db';
+import { getAllEnquiries } from '@/lib/data/enquiries';
+import { getAllOrders } from '@/lib/data/orders';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import StatusBadge from '@/components/admin/StatusBadge';

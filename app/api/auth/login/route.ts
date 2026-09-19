@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth, forwardSetCookie } from '@/lib/auth';
-import { getUserByEmail, toPublicUser } from '@/lib/db';
+import { getUserByEmail, toPublicUser } from '@/lib/data/users';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { emailSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';

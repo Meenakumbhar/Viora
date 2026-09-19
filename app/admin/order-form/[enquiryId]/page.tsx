@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getEnquiryById, getOrderFormByEnquiryId } from '@/lib/db';
+import { getEnquiryById } from '@/lib/data/enquiries';
+import { getOrderFormByEnquiryId } from '@/lib/data/order-forms';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import OrderFormSummary from '@/components/dashboard/OrderFormSummary';

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getEnquiryById, getOrderFormByEnquiryId, getProducts } from '@/lib/db';
+import { getEnquiryById } from '@/lib/data/enquiries';
+import { getOrderFormByEnquiryId } from '@/lib/data/order-forms';
+import { getProducts } from '@/lib/data/products';
 import OrderFormClient from '@/components/OrderFormClient';
 
 export const dynamic = 'force-dynamic';

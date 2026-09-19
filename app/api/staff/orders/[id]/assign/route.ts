@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getOrderById, getUserById, assignOrderToDesigner } from '@/lib/db';
+import { assignOrderToDesigner, getOrderById } from '@/lib/data/orders';
+import { getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Order } from '@/types/database';

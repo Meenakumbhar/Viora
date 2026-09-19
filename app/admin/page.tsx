@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getAdminDashboardData } from '@/lib/db';
+import { getAdminDashboardData } from '@/lib/data/dashboard';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import StatCard from '@/components/dashboard/StatCard';
 import AnalyticsSidebar from '@/components/dashboard/AnalyticsSidebar';

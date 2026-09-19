@@ -4,7 +4,7 @@ import Image from 'next/image';
 import HeroVideo from '@/components/ui/HeroVideo';
 import SectionReveal from '@/components/ui/SectionReveal';
 import Button from '@/components/ui/Button';
-import { getProducts } from '@/lib/db';
+import { getProducts } from '@/lib/data/products';
 import { groupProductsByType } from '@/lib/product-types';
 
 export const metadata: Metadata = {

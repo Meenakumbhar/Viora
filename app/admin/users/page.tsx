@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getAllUsers, toPublicUser } from '@/lib/db';
+import { getAllUsers, toPublicUser } from '@/lib/data/users';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import UsersAdminManager from '@/components/admin/UsersAdminManager';

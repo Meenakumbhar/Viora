@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserById, getOrdersByEmail, getDesignRevisionsForOrders } from '@/lib/db';
+import { getDesignRevisionsForOrders } from '@/lib/data/design-revisions';
+import { getOrdersByEmail } from '@/lib/data/orders';
+import { getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import { deriveDisplayStage } from '@/lib/order-stage';
 import type { ApiResponse } from '@/types/database';

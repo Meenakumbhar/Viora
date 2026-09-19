@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProducts, createProduct } from '@/lib/db';
+import { createProduct, getProducts } from '@/lib/data/products';
 import { productInputSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Product } from '@/types/database';

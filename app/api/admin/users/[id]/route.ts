@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { updateUserRole, toPublicUser } from '@/lib/db';
+import { toPublicUser, updateUserRole } from '@/lib/data/users';
 import { USER_ROLES } from '@/types/database';
 import { userRoleSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';

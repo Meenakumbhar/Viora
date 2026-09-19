@@ -21,9 +21,9 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'typ
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-accent-gold text-bg-primary hover:bg-accent-gold-hover',
+    'bg-ink text-white hover:bg-ink-hover',
   ghost:
-    'border border-accent-gold text-accent-gold bg-transparent hover:bg-accent-gold hover:text-bg-primary',
+    'border border-ink text-ink bg-transparent hover:bg-ink hover:text-white',
   text:
     'border-none bg-transparent text-accent-gold link-underline',
 };
@@ -46,7 +46,7 @@ export default function Button({
   ...rest
 }: ButtonProps) {
   const base = [
-    'inline-flex items-center justify-center',
+    'inline-flex items-center justify-center whitespace-nowrap',
     'font-body font-medium uppercase tracking-wider text-label',
     'rounded-2xl transition-all duration-300',
     'focus-visible:ring-2 focus-visible:ring-cat-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary',

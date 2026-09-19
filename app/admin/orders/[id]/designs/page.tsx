@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getOrderById, getDesignRevisionsForOrder } from '@/lib/db';
+import { getDesignRevisionsForOrder } from '@/lib/data/design-revisions';
+import { getOrderById } from '@/lib/data/orders';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import DesignManager from '@/components/dashboard/DesignManager';

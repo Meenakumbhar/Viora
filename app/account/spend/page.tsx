@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { getUserById, getOrdersByEmail, getEnquiriesByEmail } from '@/lib/db';
+import { getEnquiriesByEmail } from '@/lib/data/enquiries';
+import { getOrdersByEmail } from '@/lib/data/orders';
+import { getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import UserLogoutButton from '@/components/ui/UserLogoutButton';
 import AccountShell from '@/components/dashboard/AccountShell';

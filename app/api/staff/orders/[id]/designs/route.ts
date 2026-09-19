@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrderById, getUserById, createDesignRevision, getDesignRevisionsForOrder } from '@/lib/db';
+import { createDesignRevision, getDesignRevisionsForOrder } from '@/lib/data/design-revisions';
+import { getOrderById } from '@/lib/data/orders';
+import { getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import { sendDesignReadyForProofreadingEmail } from '@/lib/resend';
 import { designUploadSchema } from '@/lib/schemas';

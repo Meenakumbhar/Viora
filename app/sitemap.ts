@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getBlogPosts } from '@/lib/db';
+import { getBlogPosts } from '@/lib/data/posts';
 import { isCategoryActive } from '@/lib/active-services';
 import { SITE_URL as BASE_URL } from '@/lib/site-url';
 

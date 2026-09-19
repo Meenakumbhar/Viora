@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getEnquiryById, getOrderFormByEnquiryId, upsertOrderForm } from '@/lib/db';
+import { getEnquiryById } from '@/lib/data/enquiries';
+import { getOrderFormByEnquiryId, upsertOrderForm } from '@/lib/data/order-forms';
 import { sendOrderFormSubmittedEmail } from '@/lib/resend';
 import { orderFormInputSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';

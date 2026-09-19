@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getOrderById, getOrderHistory, getLatestDesignRevision, updateOrderStatus } from '@/lib/db';
+import { getLatestDesignRevision } from '@/lib/data/design-revisions';
+import { getOrderById, getOrderHistory, updateOrderStatus } from '@/lib/data/orders';
 import { sendOrderStatusUpdateEmail } from '@/lib/resend';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Order, OrderStatus, OrderWithHistory } from '@/types/database';

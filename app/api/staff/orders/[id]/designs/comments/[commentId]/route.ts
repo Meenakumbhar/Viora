@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { setCommentResolution, getUserById } from '@/lib/db';
+import { setCommentResolution } from '@/lib/data/design-revisions';
+import { getUserById } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import { commentResolutionSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';

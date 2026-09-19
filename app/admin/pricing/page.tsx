@@ -1,14 +1,8 @@
 import type { Metadata } from 'next';
-import {
-  getAllUsers,
-  getAllPortfolioItemsForAdmin,
-  getAllPortfolioItemPrices,
-  getAllCustomerItemPrices,
-  getAllProductsForAdmin,
-  getAllProductPrices,
-  getAllCustomerProductPrices,
-  toPublicUser,
-} from '@/lib/db';
+import { getAllPortfolioItemsForAdmin } from '@/lib/data/portfolio';
+import { getAllCustomerItemPrices, getAllCustomerProductPrices, getAllPortfolioItemPrices, getAllProductPrices } from '@/lib/data/pricing';
+import { getAllProductsForAdmin } from '@/lib/data/products';
+import { getAllUsers, toPublicUser } from '@/lib/data/users';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import LogoutButton from '@/components/admin/LogoutButton';
 import PortfolioItemPricingManager from '@/components/admin/PortfolioItemPricingManager';
