@@ -118,6 +118,7 @@ export const orderFormInputSchema = z.object({
   additional_notes: z.string().trim().max(5000).nullish(),
   backpage_information: z.string().trim().max(5000).nullish(),
   attachment_url: z.string().trim().max(2000).nullish(),
+  attachment_urls: z.array(z.string().trim().max(2000)).max(20).optional(),
 });
 
 export const portfolioItemInputSchema = z.object({

@@ -134,7 +134,9 @@ export interface OrderForm {
   callback_phone: string | null;
   additional_notes: string | null;
   backpage_information: string | null;
+  /** @deprecated Pre-multi-file single attachment — read `attachment_urls`, which always includes it. */
   attachment_url: string | null;
+  attachment_urls: string[];
   status: OrderFormStatus;
   created_at: string;
   updated_at: string;
