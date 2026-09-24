@@ -1,27 +1,10 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Cormorant_Garamond, DM_Sans, DM_Mono } from 'next/font/google';
-import Nav from '@/components/ui/Nav';
-import Footer from '@/components/ui/Footer';
-import CategoryWrapper from '@/components/ui/CategoryWrapper';
-import { PageTransition } from '@/components/ui/PageTransition';
-import { unstable_cache } from 'next/cache';
+import SWRProvider from '@/components/providers/SWRProvider';
 import { SITE_URL } from '@/lib/site-url';
-import { getProducts } from '@/lib/db';
 import './globals.css';
-
-// getProducts() already swallows DB errors and returns [] rather than
-// throwing (see lib/db.ts), so caching it here is safe even if the DB is
-// briefly unreachable — worst case is a stale/empty nav list for up to
-// REVALIDATE_SECONDS, not a crash. Wrapping it lets every route go back to
-// being statically served/ISR'd instead of hitting Neon on every request.
-const REVALIDATE_SECONDS = 60;
-const getCachedProducts = unstable_cache(() => getProducts(), ['nav-products'], {
-  revalidate: REVALIDATE_SECONDS,
-  tags: ['products'],
-});
 
 /* ═══════════════════════════════════════════════════════════════════════════
    FONTS
@@ -120,13 +103,16 @@ export const metadata: Metadata = {
    ROOT LAYOUT
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export default async function RootLayout({
+// Deliberately just the document shell — <html>/<body>, fonts and analytics.
+// Page chrome lives in the route groups: app/(marketing) owns the Nav and
+// Footer, app/(app) owns the dashboard shell. Keeping this layout free of
+// both means a dashboard request no longer renders (or queries for) a
+// marketing nav it never shows.
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const products = await getCachedProducts();
-
   return (
     <html
       lang="en"
@@ -135,17 +121,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-body bg-bg-primary text-text-body antialiased" suppressHydrationWarning>
-        {/* Suspense boundary required because Nav reads the ?category=
-            query param (via useSearchParams) to highlight the active
-            portfolio filter — without it, useSearchParams forces this whole
-            layout out of static rendering. */}
-        <Suspense fallback={null}>
-          <Nav products={products} />
-        </Suspense>
-        <CategoryWrapper>
-          <PageTransition>{children}</PageTransition>
-        </CategoryWrapper>
-        <Footer />
+        <SWRProvider>{children}</SWRProvider>
         <Analytics />
         <SpeedInsights />
       </body>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { insertEnquiry, updateUserProfile } from '@/lib/db';
+import { insertEnquiry } from '@/lib/data/enquiries';
+import { updateUserProfile } from '@/lib/data/users';
 import { auth } from '@/lib/auth';
 import { sendEnquiryAutoReply, sendEnquiryNotification } from '@/lib/resend';
 import { emailSchema, portfolioItemRefsSchema } from '@/lib/schemas';

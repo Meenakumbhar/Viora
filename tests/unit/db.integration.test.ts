@@ -2,18 +2,16 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { getDrizzle } from '@/db/client';
 import { enquiries, orders, subscribers } from '@/db/schema';
+import { insertEnquiry, getEnquiryById, getEnquiriesByEmail } from '@/lib/data/enquiries';
 import {
-  insertEnquiry,
-  getEnquiryById,
-  getEnquiriesByEmail,
   createOrder,
   getOrderById,
   setOrderPaymentAmount,
   markOrderPaid,
   markOrderPaidRazorpay,
   getOrderHistory,
-  upsertSubscriber,
-} from '@/lib/db';
+} from '@/lib/data/orders';
+import { upsertSubscriber } from '@/lib/data/subscribers';
 
 // These hit the real dev database (DATABASE_URL) — every row created here is
 // deleted in afterEach so the suite is safe to run repeatedly against a

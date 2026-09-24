@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrderById, markOrderPaidRazorpay } from '@/lib/db';
+import { getOrderById, markOrderPaidRazorpay } from '@/lib/data/orders';
 import { verifyRazorpayWebhookSignature } from '@/lib/razorpay';
 
 // POST /api/payments/razorpay/webhook

@@ -134,7 +134,9 @@ export interface OrderForm {
   callback_phone: string | null;
   additional_notes: string | null;
   backpage_information: string | null;
+  /** @deprecated Pre-multi-file single attachment — read `attachment_urls`, which always includes it. */
   attachment_url: string | null;
+  attachment_urls: string[];
   status: OrderFormStatus;
   created_at: string;
   updated_at: string;
@@ -254,6 +256,18 @@ export interface StaffActivityEvent {
   // needs a second round-trip per item to say whose order this was.
   order_customer_name: string;
   order_service_type: string;
+}
+
+/**
+ * A designer's current load for the staff workload panel. Declared here
+ * rather than alongside its query in the data layer so the client
+ * components that render it (DesignerWorkloadPanel, StaffDashboardContent)
+ * never have to name a server-only module to get at the type.
+ */
+export interface DesignerWorkload {
+  designerId: string;
+  name: string;
+  openOrders: number;
 }
 
 export interface DesignCommentInput {

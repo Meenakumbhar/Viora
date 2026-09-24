@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { upsertSubscriber } from '@/lib/db';
+import { upsertSubscriber } from '@/lib/data/subscribers';
 import { emailSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, Subscriber } from '@/types/database';

@@ -1,14 +1,11 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import {
-  getUserById,
-  getOrdersByEmail,
-  getOrderHistoriesForOrders,
-  getDesignRevisionsForOrders,
-  getEnquiriesByEmail,
-  syncOrderPricingFromCatalog,
-} from '@/lib/db';
+import { getDesignRevisionsForOrders } from '@/lib/data/design-revisions';
+import { getEnquiriesByEmail } from '@/lib/data/enquiries';
+import { getOrderHistoriesForOrders, getOrdersByEmail } from '@/lib/data/orders';
+import { syncOrderPricingForOrders } from '@/lib/data/pricing';
+import { getUserById } from '@/lib/data/users';
 import { deriveDisplayStage } from '@/lib/order-stage';
 import type { AccountRow } from '@/components/dashboard/CustomerOrderList';
 import type { User } from '@/types/database';
@@ -32,7 +29,7 @@ export async function loadAccountOrders(): Promise<{ user: User; rows: AccountRo
   // price, or the price set on the specific piece it references) instead of
   // showing a stale figure someone would otherwise have to re-enter by hand
   // every time either changes. No-ops for orders already paid.
-  const orders = await Promise.all(rawOrders.map((order) => syncOrderPricingFromCatalog(order, user.id)));
+  const orders = await syncOrderPricingForOrders(rawOrders, () => user.id);
 
   const orderIds = orders.map((o) => o.id);
   const [historyMap, revisionMap] = await Promise.all([

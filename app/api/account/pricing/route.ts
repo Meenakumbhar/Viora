@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEffectivePrice, getEffectiveProductPrice } from '@/lib/db';
+import { getEffectivePrice, getEffectiveProductPrice } from '@/lib/data/pricing';
 import { auth } from '@/lib/auth';
 import type { ApiResponse, EffectivePrice } from '@/types/database';
 

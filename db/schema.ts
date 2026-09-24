@@ -76,10 +76,14 @@ export const orderForms = pgTable('order_forms', {
   // additional_notes above (internal notes for the design team), not a
   // reuse of it.
   backpage_information: text('backpage_information'),
-  // A single supporting file (photo, PDF, etc.) the customer can attach
-  // directly instead of emailing/posting it — see photo_supplied_via above
-  // for the older out-of-band path, which still works alongside this.
+  // Supporting files (photos, PDFs, etc.) the customer can attach directly
+  // instead of emailing/posting them — see photo_supplied_via above for the
+  // older out-of-band path, which still works alongside this.
+  // `attachment_url` is the pre-multi-file single-file column: still written
+  // (first file) so anything reading it keeps working, but attachment_urls
+  // is the source of truth — see normalizeOrderForm.
   attachment_url: text('attachment_url'),
+  attachment_urls: text('attachment_urls').array(),
   status: text('status').notNull().default('draft'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

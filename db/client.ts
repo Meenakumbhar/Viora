@@ -1,3 +1,8 @@
+// Hard boundary: this module opens the Neon connection using DATABASE_URL.
+// Importing it from a Client Component is a build error, not a runtime
+// surprise — that is the whole point of the guard.
+import 'server-only';
+
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import * as appSchema from './schema';

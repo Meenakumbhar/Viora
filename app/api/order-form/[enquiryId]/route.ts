@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getEnquiryById, getOrderFormByEnquiryId, upsertOrderForm } from '@/lib/db';
+import { getEnquiryById, setEnquiryPortfolioItems } from '@/lib/data/enquiries';
+import { getOrderFormByEnquiryId, upsertOrderForm } from '@/lib/data/order-forms';
 import { sendOrderFormSubmittedEmail } from '@/lib/resend';
-import { orderFormInputSchema } from '@/lib/schemas';
+import { orderFormInputSchema, portfolioItemRefsSchema } from '@/lib/schemas';
 import { parseJsonBody } from '@/lib/validation';
 import type { ApiResponse, OrderForm, Enquiry } from '@/types/database';
 
 const orderFormPostSchema = z.object({
   submit: z.boolean().optional(),
   form: orderFormInputSchema.optional(),
+  // The design/product the customer picked on the order form, for quotes
+  // raised without one. Ignored when the quote already carries items — those
+  // are what the studio quoted against, and the form shows them read-only.
+  portfolio_items: portfolioItemRefsSchema,
 });
 
 // The enquiry's own UUID is the access key — no login required, matching how
@@ -55,6 +60,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         { success: false, error: 'Please enter the name of the deceased before submitting.' },
         { status: 400 }
       );
+    }
+
+    const chosenItems = parsed.data.portfolio_items;
+    if (chosenItems && !(enquiry.portfolio_items && enquiry.portfolio_items.length > 0)) {
+      await setEnquiryPortfolioItems(enquiryId, chosenItems);
     }
 
     const orderForm = await upsertOrderForm(enquiryId, input, submit);

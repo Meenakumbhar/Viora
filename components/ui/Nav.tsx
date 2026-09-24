@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useSession } from '@/lib/hooks/use-session';
 import { isCategoryActive } from '@/lib/active-services';
 import { groupProductsByType } from '@/lib/product-types';
 import type { Product, PublicUser } from '@/types/database';
@@ -146,8 +147,12 @@ export default function Nav({ products }: { products: Product[] }) {
   const [navHidden, setNavHidden] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  // undefined = session not checked yet, null = signed out
-  const [user, setUser] = useState<PublicUser | null | undefined>(undefined);
+  // Shared SWR cache rather than a per-mount fetch: /api/auth/me costs a
+  // better-auth session lookup against Postgres, and several components ask
+  // for the same answer. undefined = session not checked yet (keeps the nav
+  // from flashing a signed-out state on first paint), null = signed out.
+  const { user: sessionUser, isLoading: sessionLoading } = useSession();
+  const user: PublicUser | null | undefined = sessionLoading ? undefined : sessionUser;
 
   useEffect(() => {
     const syncCart = () => {
@@ -158,20 +163,6 @@ export default function Nav({ products }: { products: Product[] }) {
     return () => window.removeEventListener('portfolio-cart-updated', syncCart);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((json) => {
-        if (!cancelled) setUser(json.data?.user ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setUser(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
@@ -365,8 +356,8 @@ export default function Nav({ products }: { products: Product[] }) {
                   <Link
                     href={link.href}
                     className={`flex items-center font-body font-normal text-label uppercase tracking-[0.12em] transition-colors duration-200 ${isActive(link.href)
-                      ? 'text-accent-gold'
-                      : 'text-text-heading hover:text-accent-gold'
+                      ? 'text-ink'
+                      : 'text-text-heading hover:text-ink'
                       }`}
                     aria-haspopup={link.dropdown ? 'true' : undefined}
                     aria-expanded={
@@ -415,7 +406,7 @@ export default function Nav({ products }: { products: Product[] }) {
             <Link
               href="/pricing"
               aria-label="View quote cart"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-ink hover:text-ink"
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="20" r="1" />
@@ -423,7 +414,7 @@ export default function Nav({ products }: { products: Product[] }) {
                 <path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L17 7H7" />
               </svg>
               {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-gold px-1 text-base font-semibold text-bg-primary">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-ink px-1 text-base font-semibold text-white">
                   {cartCount}
                 </span>
               )}
@@ -432,7 +423,7 @@ export default function Nav({ products }: { products: Product[] }) {
             {/* CTA */}
             <Link
               href="/contact"
-              className="rounded-2xl border border-accent-gold text-accent-gold bg-transparent px-6 py-2.5 font-body text-label uppercase tracking-wider hover:bg-accent-gold hover:text-bg-primary transition-all duration-300"
+              className="rounded-2xl border border-ink text-ink bg-transparent px-6 py-2.5 font-body text-label uppercase tracking-wider hover:bg-ink hover:text-white transition-all duration-300"
             >
               Get a Quote
             </Link>
@@ -442,7 +433,7 @@ export default function Nav({ products }: { products: Product[] }) {
               <Link
                 href={accountHref(user)}
                 aria-label="Your account"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-accent-gold hover:text-accent-gold"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-heading transition-colors hover:border-ink hover:text-ink"
               >
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="8" r="3.5" />
@@ -455,7 +446,7 @@ export default function Nav({ products }: { products: Product[] }) {
                 onClick={() => setAuthPopupOpen((prev) => !prev)}
                 aria-haspopup="dialog"
                 aria-expanded={authPopupOpen}
-                className="rounded-2xl border border-text-heading bg-text-heading px-5 py-2.5 font-body text-label uppercase tracking-wider text-bg-primary transition-all duration-300 hover:opacity-85"
+                className="rounded-2xl border border-ink bg-ink px-5 py-2.5 font-body text-label uppercase tracking-wider text-white transition-all duration-300 hover:opacity-85"
               >
                 Login / Register
               </button>
@@ -539,8 +530,8 @@ export default function Nav({ products }: { products: Product[] }) {
                 href={section.href}
                 onClick={() => setMobileOpen(false)}
                 className={`font-display text-display-md transition-colors duration-200 ${isActive(section.href)
-                  ? 'text-accent-gold'
-                  : 'text-text-heading hover:text-accent-gold'
+                  ? 'text-ink'
+                  : 'text-text-heading hover:text-ink'
                   }`}
               >
                 {section.label}
@@ -582,7 +573,7 @@ export default function Nav({ products }: { products: Product[] }) {
             <Link
               href="/contact"
               onClick={() => setMobileOpen(false)}
-              className="rounded-2xl border border-accent-gold bg-accent-gold px-6 py-2.5 font-body text-label uppercase tracking-wider text-bg-primary transition-all duration-300 hover:bg-accent-gold-hover"
+              className="rounded-2xl border border-ink bg-ink px-6 py-2.5 font-body text-label uppercase tracking-wider text-white transition-all duration-300 hover:bg-ink-hover"
             >
               Get a Quote
             </Link>
@@ -590,7 +581,7 @@ export default function Nav({ products }: { products: Product[] }) {
               <Link
                 href="/pricing"
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
+                className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-ink hover:text-ink"
               >
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="9" cy="20" r="1" />
@@ -603,7 +594,7 @@ export default function Nav({ products }: { products: Product[] }) {
                 <Link
                   href={accountHref(user)}
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-accent-gold hover:text-accent-gold"
+                  className="flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-label uppercase tracking-wider text-text-heading hover:border-ink hover:text-ink"
                 >
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="8" r="3.5" />
@@ -616,7 +607,7 @@ export default function Nav({ products }: { products: Product[] }) {
                   type="button"
                   onClick={() => setAuthPopupOpen(true)}
                   aria-haspopup="dialog"
-                  className="flex items-center gap-2 rounded-full border border-text-heading bg-text-heading px-4 py-2 font-body text-label uppercase tracking-wider text-bg-primary hover:opacity-85"
+                  className="flex items-center gap-2 rounded-full border border-ink bg-ink px-4 py-2 font-body text-label uppercase tracking-wider text-white hover:opacity-85"
                 >
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="8" r="3.5" />

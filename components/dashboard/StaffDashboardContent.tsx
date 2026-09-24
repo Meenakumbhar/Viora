@@ -7,7 +7,7 @@ import StaffActivityFeed from '@/components/dashboard/StaffActivityFeed';
 import DesignerWorkloadPanel from '@/components/dashboard/DesignerWorkloadPanel';
 import TurnaroundSparkline, { type TurnaroundWeek } from '@/components/dashboard/TurnaroundSparkline';
 import { useDashboardTheme, PANEL_THEME } from '@/lib/dashboard-theme';
-import type { DesignerWorkload } from '@/lib/db';
+import type { DesignerWorkload } from '@/types/database';
 import type { Order, StaffActivityEvent } from '@/types/database';
 
 interface Designer {

@@ -24,20 +24,28 @@
 
 @theme {
   /* ─── COLOR PALETTE ──────────────────────────────────────────────────── */
-  --color-bg-primary: #FDFCFA;       /* Warm Parchment */
-  --color-bg-secondary: #FAF8F5;     /* Linen — cards, surfaces */
-  --color-bg-alternate: #F7F4EF;     /* Cream — alternating sections */
-  --color-bg-surface: #F3EFE9;       /* Warm surface — gradient stops, card fills */
+  /* Figma "memoriesinprints" landing redesign — clean white/ink base with
+     amber and forest-green accents, replacing the previous warm-parchment
+     palette site-wide. Category palettes below (wedding/funeral/etc.) are
+     untouched — the Figma reference only covers the general site chrome. */
+  --color-bg-primary: #FFFFFF;       /* Clean White */
+  --color-bg-secondary: #F7F7F5;     /* Off-white — cards, surfaces */
+  --color-bg-alternate: #F2F2EF;     /* Pale grey — alternating sections */
+  --color-bg-surface: #ECECE8;       /* Surface — gradient stops, card fills */
   --color-bg-cta: #F4E9D3;           /* Pale gold tint — reserved for final CTA panels only */
-  --color-accent-gold: #C6A85C;       /* Warm Gold — universal CTA */
+  --color-ink: #141414;               /* Solid near-black — primary buttons/pills */
+  --color-ink-hover: #2C2C2C;
+  --color-accent-gold: #C6A85C;       /* Warm Amber — links, highlighted copy */
   --color-accent-gold-hover: #A88A40;
+  --color-accent-forest: #3F6B3B;     /* Forest Green — footer headings, small labels */
+  --color-accent-forest-hover: #2E4F2B;
   --color-accent-blush: #D9A79E;      /* Dusty rose — gradient/card accent */
   --color-accent-sage: #9FB393;       /* Soft sage — gradient/card accent */
-  --color-text-primary: #1C2530;      /* Primary Heading Color */
-  --color-text-heading: #1C2530;
+  --color-text-primary: #16181C;      /* Primary Heading Color */
+  --color-text-heading: #16181C;
   --color-text-body: #4A4A4A;
   --color-text-muted: #8A8F96;
-  --color-border: #E8E4DE;
+  --color-border: #E5E5E1;
 
   /* Universal Dark Theme Colors for Dark Sections */
   --color-dark-bg-primary: #0E1117;
@@ -150,6 +158,11 @@
 
 html {
   scroll-behavior: smooth;
+  /* Site was designed/reviewed at ~90% browser zoom — matching that as the
+     default here (rather than relying on visitors to zoom out themselves)
+     shrinks every rem-based Tailwind size (type, spacing, most sizing
+     utilities) proportionally, since the whole site is built on that scale. */
+  font-size: 90%;
 }
 
 body {

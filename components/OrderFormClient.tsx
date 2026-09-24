@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import FileUpload from '@/components/ui/FileUpload';
 import type {
@@ -10,6 +10,8 @@ import type {
   PhotoOption,
   InsidePagesStyle,
   PhotoSuppliedVia,
+  PortfolioItem,
+  PortfolioItemRef,
   Product,
 } from '@/types/database';
 
@@ -130,7 +132,7 @@ interface FormState {
   callback_phone: string;
   additional_notes: string;
   backpage_information: string;
-  attachment_url: string;
+  attachment_urls: string[];
 }
 
 function toFormState(orderForm: OrderForm | null): FormState {
@@ -156,8 +158,33 @@ function toFormState(orderForm: OrderForm | null): FormState {
     callback_phone: orderForm?.callback_phone ?? '',
     additional_notes: orderForm?.additional_notes ?? '',
     backpage_information: orderForm?.backpage_information ?? '',
-    attachment_url: orderForm?.attachment_url ?? '',
+    attachment_urls: orderForm?.attachment_urls ?? [],
   };
+}
+
+// Every design a customer can point the studio at, as the same
+// `PortfolioItemRef` shape a quote raised from the cart produces — portfolio
+// items by their real UUID, products by the `slug::size` composite id that
+// pricing already understands (see syncOrderPricingFromCatalog in lib/db).
+export function buildDesignOptions(
+  portfolioItems: PortfolioItem[],
+  products: Product[]
+): PortfolioItemRef[] {
+  const fromPortfolio = portfolioItems.map((item) => ({
+    id: item.id,
+    title: item.template_number ? `${item.title} — Template #${item.template_number}` : item.title,
+    category: item.category,
+  }));
+
+  const fromProducts = products.flatMap((product) =>
+    product.sizes.map((size) => ({
+      id: `${product.slug}::${size.label}`,
+      title: product.sizes.length > 1 ? `${product.title} — ${size.label}` : product.title,
+      category: product.type_label,
+    }))
+  );
+
+  return [...fromPortfolio, ...fromProducts];
 }
 
 const PAGE_OPTIONS = ['4', '8', '12', '16'];
@@ -169,16 +196,30 @@ export default function OrderFormClient({
   enquiry,
   initialOrderForm,
   products,
+  portfolioItems,
 }: {
   enquiry: Enquiry;
   initialOrderForm: OrderForm | null;
   products: Product[];
+  portfolioItems: PortfolioItem[];
 }) {
   const [data, setData] = useState<FormState>(() => toFormState(initialOrderForm));
   const [status, setStatus] = useState<'idle' | 'saving' | 'submitting' | 'saved' | 'submitted' | 'error'>(
     initialOrderForm?.status === 'submitted' ? 'submitted' : 'idle'
   );
   const [errorMessage, setErrorMessage] = useState('');
+  // Items the quote was raised with are what the studio priced against, so
+  // they're shown read-only; only a quote that arrived without any (raised by
+  // phone, email, or a cart-less form) lets the customer pick here.
+  const quotedItems = enquiry.portfolio_items ?? [];
+  const canChooseDesign = quotedItems.length === 0;
+  const [chosenItems, setChosenItems] = useState<PortfolioItemRef[]>([]);
+  const [designQuery, setDesignQuery] = useState('');
+  const designOptions = useMemo(
+    () => buildDesignOptions(portfolioItems, products),
+    [portfolioItems, products]
+  );
+  const selectedItems = canChooseDesign ? chosenItems : quotedItems;
 
   useEffect(() => {
     if (status === 'saved') {
@@ -189,6 +230,13 @@ export default function OrderFormClient({
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setData((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function chooseDesign(title: string) {
+    const match = designOptions.find((option) => option.title === title);
+    if (!match) return;
+    setDesignQuery('');
+    setChosenItems((prev) => (prev.some((item) => item.id === match.id) ? prev : [...prev, match]));
   }
 
   function setProductQuantity(slug: string, title: string, size: string, quantity: number) {
@@ -209,6 +257,7 @@ export default function OrderFormClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           submit,
+          portfolio_items: canChooseDesign ? chosenItems : null,
           form: {
             ...data,
             funeral_date: data.funeral_date || null,
@@ -280,6 +329,67 @@ export default function OrderFormClient({
         }}
         className="container-wide max-w-2xl space-y-8 py-16"
       >
+        <SectionCard
+          title="What you're ordering"
+          subtitle={
+            canChooseDesign
+              ? 'Search by template or product number — or by name — and add the design this order is for.'
+              : 'The design this quote was raised for.'
+          }
+        >
+          {selectedItems.length > 0 ? (
+            <ul className="space-y-2">
+              {selectedItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center justify-between gap-4 border border-border bg-cat-bg px-4 py-3"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-body text-body-base text-cat-heading">{item.title}</span>
+                    <span className="block font-mono text-base text-text-muted">{item.category}</span>
+                  </span>
+                  {canChooseDesign && (
+                    <button
+                      type="button"
+                      onClick={() => setChosenItems((prev) => prev.filter((entry) => entry.id !== item.id))}
+                      className="shrink-0 font-mono text-base text-accent-blush hover:underline"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="font-body text-base text-text-muted">
+              No design chosen yet — pick one below, or leave this blank and describe what you&apos;d like
+              in the notes further down.
+            </p>
+          )}
+
+          {canChooseDesign && (
+            <div>
+              <FieldLabel hint="template or product number, or name">Find a design</FieldLabel>
+              <input
+                type="text"
+                list="order-form-design-options"
+                value={designQuery}
+                onChange={(e) => {
+                  setDesignQuery(e.target.value);
+                  chooseDesign(e.target.value);
+                }}
+                placeholder="e.g. Template #104, or Memory Cards"
+                className="w-full border border-border bg-cat-surface px-4 py-3 text-cat-heading font-body text-body-base outline-none transition-all duration-200 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold placeholder:text-text-muted/50"
+              />
+              <datalist id="order-form-design-options">
+                {designOptions.map((option) => (
+                  <option key={option.id} value={option.title} />
+                ))}
+              </datalist>
+            </div>
+          )}
+        </SectionCard>
+
         <SectionCard title="The person being honoured">
           <div>
             <FieldLabel>Name of the deceased (as it should appear)</FieldLabel>
@@ -520,15 +630,40 @@ export default function OrderFormClient({
           </div>
         </SectionCard>
 
-        <SectionCard title="Attachments" subtitle="A photo, PDF, or other file to go with this order — an alternative to emailing or posting it.">
-          <FileUpload
-            value={data.attachment_url}
-            onChange={(url) => setField('attachment_url', url)}
-            folder="order-form-attachments"
-            filenamePrefix={enquiry.id.slice(0, 8).toUpperCase()}
-            label="Attach a file"
-            helperText="PNG, JPG, WebP, AVIF, GIF, HEIC, or PDF up to 25MB"
-          />
+        <SectionCard title="Attachments" subtitle="Photos, PDFs, or other files to go with this order — an alternative to emailing or posting them. Add as many as you need.">
+          {data.attachment_urls.map((url, index) => (
+            <FileUpload
+              key={url}
+              value={url}
+              // An empty url means the file was removed — drop it from the
+              // list rather than leaving a blank slot behind.
+              onChange={(next) =>
+                setField(
+                  'attachment_urls',
+                  next
+                    ? data.attachment_urls.map((entry, i) => (i === index ? next : entry))
+                    : data.attachment_urls.filter((_, i) => i !== index)
+                )
+              }
+              folder="order-form-attachments"
+              filenamePrefix={enquiry.id.slice(0, 8).toUpperCase()}
+              label={`File ${index + 1}`}
+              helperText="PNG, JPG, WebP, AVIF, GIF, HEIC, or PDF up to 25MB"
+            />
+          ))}
+          {data.attachment_urls.length < 20 && (
+            <FileUpload
+              // Re-keyed on the count so the dropzone resets itself after
+              // each upload, ready for the next file.
+              key={`add-${data.attachment_urls.length}`}
+              value=""
+              onChange={(url) => url && setField('attachment_urls', [...data.attachment_urls, url])}
+              folder="order-form-attachments"
+              filenamePrefix={enquiry.id.slice(0, 8).toUpperCase()}
+              label={data.attachment_urls.length > 0 ? 'Add another file' : 'Attach a file'}
+              helperText="PNG, JPG, WebP, AVIF, GIF, HEIC, or PDF up to 25MB"
+            />
+          )}
         </SectionCard>
 
         {status === 'error' && errorMessage && (
