@@ -274,6 +274,13 @@ function normalizeOrderForm(row: any): OrderForm {
     additional_notes: row.additional_notes != null ? String(row.additional_notes) : null,
     backpage_information: row.backpage_information != null ? String(row.backpage_information) : null,
     attachment_url: row.attachment_url != null ? String(row.attachment_url) : null,
+    // Rows written before multi-file support only have the single column —
+    // fall back to it so their attachment doesn't vanish from the UI.
+    attachment_urls: Array.isArray(row.attachment_urls)
+      ? row.attachment_urls.map(String).filter(Boolean)
+      : row.attachment_url
+        ? [String(row.attachment_url)]
+        : [],
     status: row.status === 'submitted' ? 'submitted' : 'draft',
     created_at: toIsoTimestampString(row.created_at),
     updated_at: toIsoTimestampString(row.updated_at),
@@ -738,6 +745,26 @@ export async function cancelEnquiry(id: string): Promise<Enquiry | null> {
   return rows.length > 0 ? normalizeEnquiry(rows[0]) : null;
 }
 
+// The design/product the quote is for, chosen on the order form when the
+// quote itself was raised without one (see OrderFormClient). Lives on the
+// enquiry rather than the order form so every existing view of a quote —
+// admin lists, order conversion, pricing — picks it up unchanged.
+export async function setEnquiryPortfolioItems(
+  id: string,
+  items: PortfolioItemRef[]
+): Promise<Enquiry | null> {
+  const db = getDrizzle();
+  if (!db) return null;
+
+  const rows = await db
+    .update(enquiriesTable)
+    .set({ portfolio_items: items.length > 0 ? items : null })
+    .where(eq(enquiriesTable.id, id))
+    .returning();
+
+  return rows.length > 0 ? normalizeEnquiry(rows[0]) : null;
+}
+
 // Matches by user_id when given (the reliable link) as well as email
 // (the guest-checkout fallback, and what covers enquiries submitted before
 // this account existed) — either match includes the row.
@@ -780,6 +807,11 @@ export async function upsertOrderForm(
     throw new Error('Database is not configured. Please set DATABASE_URL in .env.local.');
   }
 
+  const attachmentUrls = (input.attachment_urls ?? (input.attachment_url ? [input.attachment_url] : []))
+    .map((url) => url.trim())
+    .filter(Boolean)
+    .slice(0, 20);
+
   const values = {
     deceased_name: input.deceased_name?.trim() || null,
     funeral_date: input.funeral_date || null,
@@ -803,7 +835,10 @@ export async function upsertOrderForm(
     callback_phone: input.callback_phone?.trim() || null,
     additional_notes: input.additional_notes?.trim() || null,
     backpage_information: input.backpage_information?.trim() || null,
-    attachment_url: input.attachment_url?.trim() || null,
+    attachment_urls: attachmentUrls,
+    // Kept in step with the array's first entry so pre-multi-file readers
+    // (and the fallback in normalizeOrderForm) stay correct.
+    attachment_url: attachmentUrls[0] ?? null,
     status: submit ? 'submitted' : 'draft',
   };
 

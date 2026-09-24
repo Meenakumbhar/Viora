@@ -12,4 +12,5 @@ export {
   cancelEnquiry,
   getEnquiriesByEmail,
   getAllEnquiries,
+  setEnquiryPortfolioItems,
 } from '@/lib/db';

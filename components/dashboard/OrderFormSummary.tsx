@@ -67,6 +67,14 @@ export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enqu
         </span>
       </div>
 
+      {enquiry.portfolio_items && enquiry.portfolio_items.length > 0 && (
+        <Section title="What they're ordering">
+          {enquiry.portfolio_items.map((item) => (
+            <Field key={item.id} label={item.category} value={item.title} />
+          ))}
+        </Section>
+      )}
+
       <Section title="The person being honoured">
         <Field label="Deceased name" value={f.deceased_name} />
         <Field label="Date of birth" value={formatDate(f.date_of_birth)} />
@@ -126,17 +134,20 @@ export default function OrderFormSummary({ enquiry, orderForm }: { enquiry: Enqu
         </Section>
       )}
 
-      <Section title="Attachment">
-        <div className="sm:col-span-2 lg:col-span-3">
-          {f.attachment_url ? (
-            <a
-              href={f.attachment_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-sm text-[#C6A85C] hover:text-white hover:underline"
-            >
-              {f.attachment_url.split('/').pop()} — view / download →
-            </a>
+      <Section title={`Attachments${f.attachment_urls.length > 0 ? ` (${f.attachment_urls.length})` : ''}`}>
+        <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+          {f.attachment_urls.length > 0 ? (
+            f.attachment_urls.map((url) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block font-mono text-sm text-[#C6A85C] hover:text-white hover:underline"
+              >
+                {url.split('/').pop()} — view / download →
+              </a>
+            ))
           ) : (
             <span className="font-mono text-sm text-white/30">No file attached.</span>
           )}
